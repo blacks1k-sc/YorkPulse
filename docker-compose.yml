@@ -7,7 +7,7 @@ services:
     container_name: yorkpulse-db
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: yorkpulse
     ports:
       - "5432:5432"
