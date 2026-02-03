@@ -1,0 +1,19 @@
+{
+  "name": "yorkpulse",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Community and safety platform for York University students",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && uvicorn app.main:app --reload --port 8000",
+    "build:frontend": "cd frontend && npm run build",
+    "lint": "concurrently \"npm run lint:frontend\" \"npm run lint:backend\"",
+    "lint:frontend": "cd frontend && npm run lint",
+    "lint:backend": "cd backend && ruff check .",
+    "format:backend": "cd backend && ruff format ."
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
