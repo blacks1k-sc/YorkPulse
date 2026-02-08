@@ -45,7 +45,7 @@ const vibeLevels: { value: VibeLevel; label: string; emoji: string }[] = [
 ];
 
 const timeQuickOptions = [
-  { label: "Now", getValue: () => new Date().toISOString() },
+  { label: "Now", getValue: () => new Date(Date.now() + 60 * 1000).toISOString() }, // 1 minute buffer
   { label: "In 1 hour", getValue: () => new Date(Date.now() + 60 * 60 * 1000).toISOString() },
   { label: "Custom", getValue: () => null },
 ];

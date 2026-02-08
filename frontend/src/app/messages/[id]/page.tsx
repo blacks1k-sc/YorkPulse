@@ -35,7 +35,7 @@ import {
   useMarkAsRead,
 } from "@/hooks/useMessaging";
 import { useRealtimeMessages } from "@/hooks/useRealtimeMessages";
-import { useAuthStore } from "@/stores/auth";
+import { useUser } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -43,7 +43,7 @@ export default function ConversationPage() {
   const params = useParams();
   const router = useRouter();
   const conversationId = params.id as string;
-  const { user } = useAuthStore();
+  const { data: user } = useUser();
   const { toast } = useToast();
 
   const [message, setMessage] = useState("");

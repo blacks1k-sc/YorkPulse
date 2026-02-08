@@ -49,6 +49,7 @@ import {
   useCompleteQuest,
   useApproveParticipant,
   useRemoveParticipant,
+  useMyQuests,
 } from "@/hooks/useQuests";
 import { useUserRatingSummary } from "@/hooks/useReviews";
 import { useStartConversation } from "@/hooks/useMessaging";
@@ -84,6 +85,10 @@ export default function QuestDetailPage() {
   const { data: participantsData } = useQuestParticipants(questId);
   const { data: hostRating } = useUserRatingSummary(quest?.host.id || "");
 
+  // Also check my-quests to reliably determine if user has joined
+  const { data: myParticipantQuests } = useMyQuests("participant");
+  const { data: myPendingQuests } = useMyQuests("pending");
+
   const joinMutation = useJoinQuest();
   const leaveMutation = useLeaveQuest();
   const deleteMutation = useDeleteQuest();
@@ -94,10 +99,19 @@ export default function QuestDetailPage() {
 
   const participants = participantsData?.items || [];
   const isHost = user?.id === quest?.host.id;
+
+  // Check join status from multiple sources for reliability
   const myParticipation = participants.find((p) => p.user.id === user?.id);
-  const isJoined = !!myParticipation;
-  const isPending = myParticipation?.status === "pending";
-  const isAccepted = myParticipation?.status === "accepted";
+  const myJoinedQuestIds = new Set(
+    myParticipantQuests?.pages?.flatMap((page) => page.items.map((q) => q.id)) || []
+  );
+  const myPendingQuestIds = new Set(
+    myPendingQuests?.pages?.flatMap((page) => page.items.map((q) => q.id)) || []
+  );
+
+  const isJoined = !!myParticipation || myJoinedQuestIds.has(questId) || myPendingQuestIds.has(questId);
+  const isPending = myParticipation?.status === "pending" || myPendingQuestIds.has(questId);
+  const isAccepted = myParticipation?.status === "accepted" || myJoinedQuestIds.has(questId);
 
   const formatTime = (date: string) => {
     const d = new Date(date);

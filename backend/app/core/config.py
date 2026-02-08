@@ -17,6 +17,7 @@ class Settings(BaseSettings):
 
     # Database
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/yorkpulse"
+    db_password: str = ""
 
     # Redis
     redis_url: str = "redis://localhost:6379"

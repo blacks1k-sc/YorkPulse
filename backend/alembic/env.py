@@ -14,8 +14,8 @@ from app.models import user, vault, marketplace, buddy, messaging, review  # noq
 # this is the Alembic Config object
 config = context.config
 
-# Set the database URL from settings
-config.set_main_option("sqlalchemy.url", settings.database_url)
+# Set the database URL from settings (escape % for configparser)
+config.set_main_option("sqlalchemy.url", settings.database_url.replace("%", "%%"))
 
 # Interpret the config file for Python logging
 if config.config_file_name is not None:

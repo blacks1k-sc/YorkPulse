@@ -133,6 +133,7 @@ export function useJoinQuest() {
     mutationFn: ({ id, message }: { id: string; message?: string }) =>
       api.quests.joinQuest(id, message),
     onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ["quests", "list"] });
       queryClient.invalidateQueries({ queryKey: ["quests", "detail", id] });
       queryClient.invalidateQueries({ queryKey: ["quests", "participants", id] });
       queryClient.invalidateQueries({ queryKey: ["quests", "my-quests"] });
@@ -146,6 +147,7 @@ export function useLeaveQuest() {
   return useMutation({
     mutationFn: (id: string) => api.quests.leaveQuest(id),
     onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: ["quests", "list"] });
       queryClient.invalidateQueries({ queryKey: ["quests", "detail", id] });
       queryClient.invalidateQueries({ queryKey: ["quests", "participants", id] });
       queryClient.invalidateQueries({ queryKey: ["quests", "my-quests"] });
@@ -175,6 +177,7 @@ export function useApproveParticipant() {
       action: "accept" | "reject";
     }) => api.quests.approveParticipant(questId, participantId, action),
     onSuccess: (_, { questId }) => {
+      queryClient.invalidateQueries({ queryKey: ["quests", "list"] });
       queryClient.invalidateQueries({ queryKey: ["quests", "participants", questId] });
       queryClient.invalidateQueries({ queryKey: ["quests", "detail", questId] });
     },
@@ -193,6 +196,7 @@ export function useRemoveParticipant() {
       userId: string;
     }) => api.quests.removeParticipant(questId, userId),
     onSuccess: (_, { questId }) => {
+      queryClient.invalidateQueries({ queryKey: ["quests", "list"] });
       queryClient.invalidateQueries({ queryKey: ["quests", "participants", questId] });
       queryClient.invalidateQueries({ queryKey: ["quests", "detail", questId] });
     },

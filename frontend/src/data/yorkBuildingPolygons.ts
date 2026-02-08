@@ -221,27 +221,52 @@ function calculatePolygonArea(coords: [number, number][]): number {
   return Math.abs(area / 2) * 111000 * 111000; // Convert to approximate square meters
 }
 
-// Fetch building polygons from Overpass API
+// Overpass API endpoints (multiple for redundancy)
+const OVERPASS_ENDPOINTS = [
+  "https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
+  "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+];
+
+// Fetch building polygons from Overpass API with retry and fallback
 export async function fetchBuildingPolygons(): Promise<BuildingPolygon[]> {
-  try {
-    const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(OVERPASS_QUERY)}`;
+  // Try each endpoint
+  for (const endpoint of OVERPASS_ENDPOINTS) {
+    try {
+      const url = `${endpoint}?data=${encodeURIComponent(OVERPASS_QUERY)}`;
 
-    const response = await fetch(url, {
-      headers: {
-        "Accept": "application/json",
-      },
-    });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
 
-    if (!response.ok) {
-      throw new Error(`Overpass API error: ${response.status}`);
+      const response = await fetch(url, {
+        headers: {
+          "Accept": "application/json",
+        },
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        console.warn(`Overpass API (${endpoint}) returned ${response.status}, trying next...`);
+        continue;
+      }
+
+      const data = await response.json();
+      const buildings = parseOSMResponse(data);
+
+      if (buildings.length > 0) {
+        return buildings;
+      }
+    } catch (error) {
+      console.warn(`Overpass API (${endpoint}) failed:`, error);
+      continue;
     }
-
-    const data = await response.json();
-    return parseOSMResponse(data);
-  } catch (error) {
-    console.error("Failed to fetch building polygons:", error);
-    return [];
   }
+
+  // All endpoints failed - return fallback buildings
+  console.info("Using fallback building data");
+  return fallbackBuildings;
 }
 
 // Fallback building data with rectangular approximations

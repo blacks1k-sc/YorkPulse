@@ -36,8 +36,9 @@ class BuddyRequestCreate(BaseModel):
     @field_validator("start_time")
     @classmethod
     def validate_start_time(cls, v: datetime) -> datetime:
-        # Must be in the future
-        if v < datetime.now(v.tzinfo):
+        from datetime import timedelta
+        # Must be in the future (with 30 second tolerance for network latency)
+        if v < datetime.now(v.tzinfo) - timedelta(seconds=30):
             raise ValueError("start_time must be in the future")
         return v
 

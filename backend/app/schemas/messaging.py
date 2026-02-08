@@ -109,3 +109,9 @@ class MarkReadRequest(BaseModel):
     """Request to mark messages as read."""
 
     message_ids: list[str] | None = None  # None = mark all as read
+
+
+class ConversationAction(BaseModel):
+    """Schema for accepting/rejecting a conversation request."""
+
+    action: Literal["accept", "reject"]

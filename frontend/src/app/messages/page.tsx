@@ -17,13 +17,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useConversations, usePendingRequests } from "@/hooks/useMessaging";
 import { useRealtimeConversations } from "@/hooks/useRealtimeMessages";
+import { useUser } from "@/hooks/useAuth";
 import { useAuthStore } from "@/stores/auth";
 import { cn } from "@/lib/utils";
 import type { Conversation } from "@/types";
 
-function ConversationCard({ conversation }: { conversation: Conversation }) {
-  const { user } = useAuthStore();
-  const otherUser = conversation.participants.find((p) => p.id !== user?.id);
+function ConversationCard({ conversation, userId }: { conversation: Conversation; userId?: string }) {
+  const otherUser = conversation.participants.find((p) => p.id !== userId);
 
   const timeAgo = (date: string) => {
     const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
@@ -35,7 +35,7 @@ function ConversationCard({ conversation }: { conversation: Conversation }) {
 
   const isUnread = conversation.unread_count > 0;
   const isPending = conversation.status === "pending";
-  const isInitiator = conversation.initiator_id === user?.id;
+  const isInitiator = conversation.initiator_id === userId;
 
   return (
     <motion.div
@@ -106,7 +106,7 @@ function ConversationCard({ conversation }: { conversation: Conversation }) {
               <div className="flex items-center gap-1.5">
                 {conversation.last_message && (
                   <>
-                    {conversation.last_message.sender_id === user?.id && (
+                    {conversation.last_message.sender_id === userId && (
                       <span className="text-zinc-500 flex-shrink-0">
                         {conversation.last_message.is_read ? (
                           <CheckCheck className="w-3.5 h-3.5 text-purple-400" />
@@ -136,9 +136,8 @@ function ConversationCard({ conversation }: { conversation: Conversation }) {
   );
 }
 
-function RequestCard({ conversation }: { conversation: Conversation }) {
-  const { user } = useAuthStore();
-  const otherUser = conversation.participants.find((p) => p.id !== user?.id);
+function RequestCard({ conversation, userId }: { conversation: Conversation; userId?: string }) {
+  const otherUser = conversation.participants.find((p) => p.id !== userId);
 
   return (
     <motion.div
@@ -204,7 +203,8 @@ function ConversationSkeleton() {
 }
 
 export default function MessagesPage() {
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
+  const { data: user } = useUser();
 
   // Real-time subscription for conversations
   useRealtimeConversations(user?.id || null);
@@ -302,7 +302,7 @@ export default function MessagesPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.05 }}
                 >
-                  <ConversationCard conversation={conversation} />
+                  <ConversationCard conversation={conversation} userId={user?.id} />
                 </motion.div>
               ))}
 
@@ -353,7 +353,7 @@ export default function MessagesPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
               >
-                <RequestCard conversation={request} />
+                <RequestCard conversation={request} userId={user?.id} />
               </motion.div>
             ))
           )}

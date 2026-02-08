@@ -370,11 +370,36 @@ async def join_quest(
     # Check if already participating
     existing = await db.execute(
         select(BuddyParticipant)
+        .options(selectinload(BuddyParticipant.user))
         .where(BuddyParticipant.buddy_request_id == quest.id)
         .where(BuddyParticipant.user_id == user.id)
     )
-    if existing.scalar_one_or_none():
-        raise HTTPException(status_code=400, detail="Already requested to join")
+    existing_participant = existing.scalar_one_or_none()
+
+    # If participant exists but was cancelled, allow rejoining
+    if existing_participant:
+        if existing_participant.status == ParticipantStatus.CANCELLED:
+            # Reactivate the cancelled participant
+            # Check capacity first
+            if quest.current_participants >= quest.max_participants:
+                raise HTTPException(status_code=400, detail="Quest is full")
+
+            # Determine new status based on approval setting
+            new_status = ParticipantStatus.PENDING if quest.requires_approval else ParticipantStatus.ACCEPTED
+            existing_participant.status = new_status
+            existing_participant.message = request.message
+
+            # If auto-accept, update participant count
+            if not quest.requires_approval:
+                quest.current_participants += 1
+                if quest.current_participants >= quest.max_participants:
+                    quest.status = BuddyRequestStatus.FULL
+
+            await db.commit()
+            await db.refresh(existing_participant, ["user"])
+            return _participant_to_response(existing_participant)
+        else:
+            raise HTTPException(status_code=400, detail="Already requested to join")
 
     # Check capacity
     if quest.current_participants >= quest.max_participants:
