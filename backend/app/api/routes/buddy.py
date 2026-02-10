@@ -17,6 +17,7 @@ from app.models.buddy import (
     BuddyRequest,
     BuddyRequestStatus,
     ParticipantStatus,
+    QuestMessage,
     VibeLevel,
 )
 from app.schemas.buddy import (
@@ -28,6 +29,9 @@ from app.schemas.buddy import (
     ParticipantAction,
     ParticipantListResponse,
     ParticipantResponse,
+    QuestMessageCreate,
+    QuestMessageResponse,
+    QuestMessagesResponse,
 )
 from app.schemas.user import UserMinimal
 
@@ -649,3 +653,120 @@ async def expire_quests(
 
     count = await expire_past_quests(db)
     return {"expired": count}
+
+
+# Quest Group Chat
+
+async def _is_quest_member(db: AsyncSession, quest: BuddyRequest, user_id: uuid.UUID) -> bool:
+    """Check if user is a member of the quest (host or accepted participant)."""
+    # Host is always a member
+    if quest.user_id == user_id:
+        return True
+
+    # Check if user is an accepted participant
+    result = await db.execute(
+        select(BuddyParticipant)
+        .where(BuddyParticipant.buddy_request_id == quest.id)
+        .where(BuddyParticipant.user_id == user_id)
+        .where(BuddyParticipant.status == ParticipantStatus.ACCEPTED)
+    )
+    return result.scalar_one_or_none() is not None
+
+
+def _message_to_response(message: QuestMessage) -> QuestMessageResponse:
+    """Convert quest message model to response."""
+    return QuestMessageResponse(
+        id=str(message.id),
+        content=message.content if not message.is_deleted else "[Message deleted]",
+        sender=UserMinimal(
+            id=str(message.sender.id),
+            name=message.sender.name,
+            avatar_url=message.sender.avatar_url,
+        ),
+        created_at=message.created_at,
+        is_deleted=message.is_deleted,
+    )
+
+
+@router.get("/{quest_id}/chat", response_model=QuestMessagesResponse)
+async def get_quest_messages(
+    quest_id: str,
+    user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    before: str | None = None,
+    limit: Annotated[int, Query(ge=1, le=100)] = 50,
+):
+    """Get messages from quest group chat. Only accessible to quest members."""
+    result = await db.execute(
+        select(BuddyRequest).where(BuddyRequest.id == quest_id)
+    )
+    quest = result.scalar_one_or_none()
+
+    if not quest:
+        raise HTTPException(status_code=404, detail="Quest not found")
+
+    # Verify user is a member
+    if not await _is_quest_member(db, quest, user.id):
+        raise HTTPException(status_code=403, detail="Only quest members can access the chat")
+
+    # Build query
+    query = (
+        select(QuestMessage)
+        .options(selectinload(QuestMessage.sender))
+        .where(QuestMessage.quest_id == quest.id)
+    )
+
+    if before:
+        query = query.where(QuestMessage.id < before)
+
+    query = query.order_by(QuestMessage.created_at.desc()).limit(limit + 1)
+
+    result = await db.execute(query)
+    messages = result.scalars().all()
+
+    has_more = len(messages) > limit
+    if has_more:
+        messages = messages[:limit]
+
+    # Reverse to get chronological order
+    messages = list(reversed(messages))
+
+    return QuestMessagesResponse(
+        messages=[_message_to_response(m) for m in messages],
+        has_more=has_more,
+    )
+
+
+@router.post("/{quest_id}/chat", response_model=QuestMessageResponse, status_code=status.HTTP_201_CREATED)
+async def send_quest_message(
+    quest_id: str,
+    request: QuestMessageCreate,
+    user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Send a message to the quest group chat. Only accessible to quest members."""
+    result = await db.execute(
+        select(BuddyRequest).where(BuddyRequest.id == quest_id)
+    )
+    quest = result.scalar_one_or_none()
+
+    if not quest:
+        raise HTTPException(status_code=404, detail="Quest not found")
+
+    # Verify user is a member
+    if not await _is_quest_member(db, quest, user.id):
+        raise HTTPException(status_code=403, detail="Only quest members can send messages")
+
+    # Create message
+    message = QuestMessage(
+        id=uuid.uuid4(),
+        quest_id=quest.id,
+        sender_id=user.id,
+        content=request.content,
+    )
+
+    db.add(message)
+    await db.commit()
+    await db.refresh(message, ["sender"])
+
+    return _message_to_response(message)

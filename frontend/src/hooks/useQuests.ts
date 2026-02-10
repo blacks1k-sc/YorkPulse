@@ -203,6 +203,34 @@ export function useRemoveParticipant() {
   });
 }
 
+// Quest Group Chat hooks
+export function useQuestMessages(questId: string, enabled = true) {
+  return useInfiniteQuery({
+    queryKey: ["quests", "messages", questId],
+    queryFn: ({ pageParam }) =>
+      api.quests.getQuestMessages(questId, { before: pageParam, limit: 50 }),
+    getNextPageParam: (lastPage) => {
+      if (!lastPage.has_more || lastPage.messages.length === 0) return undefined;
+      return lastPage.messages[lastPage.messages.length - 1].id;
+    },
+    initialPageParam: undefined as string | undefined,
+    enabled: !!questId && enabled,
+    refetchInterval: 5000, // Poll every 5 seconds for new messages
+  });
+}
+
+export function useSendQuestMessage() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ questId, content }: { questId: string; content: string }) =>
+      api.quests.sendQuestMessage(questId, content),
+    onSuccess: (_, { questId }) => {
+      queryClient.invalidateQueries({ queryKey: ["quests", "messages", questId] });
+    },
+  });
+}
+
 // Legacy exports for backwards compatibility
 export {
   useQuests as useBuddyRequests,

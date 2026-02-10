@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -27,12 +28,14 @@ import {
   Gamepad2,
   Sparkles,
   MessageCircle,
+  Send,
 } from "lucide-react";
 import { QuestLocationMapWrapper } from "@/components/QuestLocationMapWrapper";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,13 +53,15 @@ import {
   useApproveParticipant,
   useRemoveParticipant,
   useMyQuests,
+  useQuestMessages,
+  useSendQuestMessage,
 } from "@/hooks/useQuests";
 import { useUserRatingSummary } from "@/hooks/useReviews";
 import { useStartConversation } from "@/hooks/useMessaging";
 import { useAuthStore } from "@/stores/auth";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import type { QuestCategory, VibeLevel, ParticipantStatus } from "@/types";
+import type { QuestCategory, VibeLevel, ParticipantStatus, QuestMessage } from "@/types";
 
 const categoryConfig: Record<QuestCategory, { label: string; icon: typeof Dumbbell; color: string }> = {
   gym: { label: "Gym", icon: Dumbbell, color: "bg-red-500/20 text-red-400" },
@@ -99,6 +104,47 @@ export default function QuestDetailPage() {
 
   const participants = participantsData?.items || [];
   const isHost = user?.id === quest?.host.id;
+
+  // Check if user is a quest member (host or accepted participant)
+  const isQuestMember = isHost || participants.some(
+    (p) => p.user.id === user?.id && p.status === "accepted"
+  );
+
+  // Quest chat
+  const { data: messagesData, fetchNextPage, hasNextPage, isFetchingNextPage } = useQuestMessages(questId, isQuestMember);
+  const sendMessageMutation = useSendQuestMessage();
+  const [messageInput, setMessageInput] = useState("");
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const [showChat, setShowChat] = useState(false);
+
+  // Get all messages in chronological order
+  const allMessages = messagesData?.pages?.flatMap((page) => page.messages).reverse() || [];
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (chatContainerRef.current && showChat) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [allMessages.length, showChat]);
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!messageInput.trim()) return;
+
+    try {
+      await sendMessageMutation.mutateAsync({
+        questId,
+        content: messageInput.trim(),
+      });
+      setMessageInput("");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to send message",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Check join status from multiple sources for reliability
   const myParticipation = participants.find((p) => p.user.id === user?.id);
@@ -439,19 +485,20 @@ export default function QuestDetailPage() {
       <div className="p-4 rounded-xl bg-white/5 border border-white/10 mb-6">
         <p className="text-xs text-zinc-500 mb-3">Host</p>
         <div className="flex items-center gap-3">
-          <Avatar className="w-12 h-12">
-            <AvatarImage src={quest.host.avatar_url || undefined} />
-            <AvatarFallback className="bg-green-500/20 text-green-400">
-              {quest.host.name
-                .split(" ")
-                .map((n) => n[0])
-                .join("")
-                .toUpperCase()
-                .slice(0, 2)}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1">
-            <p className="font-medium">{quest.host.name}</p>
+          <Link href={`/profile/${quest.host.id}`} className="flex items-center gap-3 flex-1 hover:opacity-80 transition-opacity">
+            <Avatar className="w-12 h-12">
+              <AvatarImage src={quest.host.avatar_url || undefined} />
+              <AvatarFallback className="bg-green-500/20 text-green-400">
+                {quest.host.name
+                  .split(" ")
+                  .map((n) => n[0])
+                  .join("")
+                  .toUpperCase()
+                  .slice(0, 2)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+              <p className="font-medium hover:text-purple-400 transition-colors">{quest.host.name}</p>
             {hostRating?.buddy_rating && (
               <div className="flex items-center gap-1 text-sm text-zinc-400">
                 <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" />
@@ -459,7 +506,8 @@ export default function QuestDetailPage() {
                 <span className="text-zinc-600">({hostRating.buddy_count} reviews)</span>
               </div>
             )}
-          </div>
+            </div>
+          </Link>
           {isAuthenticated && !isHost && (
             <Button
               variant="outline"
@@ -488,18 +536,20 @@ export default function QuestDetailPage() {
         </h2>
 
         {/* Host as first participant */}
-        <div className="p-3 rounded-lg bg-white/5 border border-white/10 flex items-center gap-3">
-          <Avatar className="w-8 h-8">
-            <AvatarImage src={quest.host.avatar_url || undefined} />
-            <AvatarFallback className="text-xs bg-green-500/20 text-green-400">
-              {quest.host.name.charAt(0)}
-            </AvatarFallback>
-          </Avatar>
-          <span className="flex-1 text-sm">{quest.host.name}</span>
-          <Badge variant="secondary" className="bg-green-500/20 text-green-400 text-xs">
-            Host
-          </Badge>
-        </div>
+        <Link href={`/profile/${quest.host.id}`} className="block">
+          <div className="p-3 rounded-lg bg-white/5 border border-white/10 flex items-center gap-3 hover:border-white/20 transition-colors">
+            <Avatar className="w-8 h-8">
+              <AvatarImage src={quest.host.avatar_url || undefined} />
+              <AvatarFallback className="text-xs bg-green-500/20 text-green-400">
+                {quest.host.name.charAt(0)}
+              </AvatarFallback>
+            </Avatar>
+            <span className="flex-1 text-sm hover:text-purple-400 transition-colors">{quest.host.name}</span>
+            <Badge variant="secondary" className="bg-green-500/20 text-green-400 text-xs">
+              Host
+            </Badge>
+          </div>
+        </Link>
 
         {acceptedParticipants.length === 0 ? (
           <p className="text-zinc-500 text-sm pl-2">No other participants yet</p>
@@ -510,13 +560,15 @@ export default function QuestDetailPage() {
                 key={p.id}
                 className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10"
               >
-                <Avatar className="w-8 h-8">
-                  <AvatarImage src={p.user.avatar_url || undefined} />
-                  <AvatarFallback className="text-xs bg-zinc-800">
-                    {p.user.name.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="flex-1 text-sm">{p.user.name}</span>
+                <Link href={`/profile/${p.user.id}`} className="flex items-center gap-3 flex-1 hover:opacity-80 transition-opacity">
+                  <Avatar className="w-8 h-8">
+                    <AvatarImage src={p.user.avatar_url || undefined} />
+                    <AvatarFallback className="text-xs bg-zinc-800">
+                      {p.user.name.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="flex-1 text-sm hover:text-purple-400 transition-colors">{p.user.name}</span>
+                </Link>
                 <span className="text-xs text-zinc-500">
                   Joined {timeAgo(p.created_at)}
                 </span>
@@ -587,6 +639,153 @@ export default function QuestDetailPage() {
           </>
         )}
       </div>
+
+      {/* Group Chat - Only visible to quest members */}
+      {isQuestMember && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-6 rounded-xl bg-white/5 border border-white/10 overflow-hidden"
+        >
+          {/* Chat Header */}
+          <button
+            onClick={() => setShowChat(!showChat)}
+            className="w-full p-4 flex items-center justify-between hover:bg-white/5 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <MessageCircle className="w-5 h-5 text-green-400" />
+              <span className="font-semibold">Group Chat</span>
+              {allMessages.length > 0 && (
+                <Badge variant="secondary" className="bg-green-500/20 text-green-400 text-xs">
+                  {allMessages.length}
+                </Badge>
+              )}
+            </div>
+            <span className="text-zinc-500 text-sm">
+              {showChat ? "Hide" : "Show"}
+            </span>
+          </button>
+
+          {/* Chat Body */}
+          {showChat && (
+            <div className="border-t border-white/10">
+              {/* Messages */}
+              <div
+                ref={chatContainerRef}
+                className="h-80 overflow-y-auto p-4 space-y-3"
+              >
+                {/* Load more button */}
+                {hasNextPage && (
+                  <div className="text-center">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => fetchNextPage()}
+                      disabled={isFetchingNextPage}
+                    >
+                      {isFetchingNextPage ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        "Load earlier messages"
+                      )}
+                    </Button>
+                  </div>
+                )}
+
+                {allMessages.length === 0 ? (
+                  <div className="h-full flex items-center justify-center">
+                    <p className="text-zinc-500 text-sm">
+                      No messages yet. Start the conversation!
+                    </p>
+                  </div>
+                ) : (
+                  allMessages.map((message) => {
+                    const isOwnMessage = message.sender.id === user?.id;
+                    return (
+                      <div
+                        key={message.id}
+                        className={cn(
+                          "flex gap-2",
+                          isOwnMessage ? "flex-row-reverse" : "flex-row"
+                        )}
+                      >
+                        {!isOwnMessage && (
+                          <Link href={`/profile/${message.sender.id}`}>
+                            <Avatar className="w-8 h-8 shrink-0">
+                              <AvatarImage src={message.sender.avatar_url || undefined} />
+                              <AvatarFallback className="text-xs bg-zinc-800">
+                                {message.sender.name.charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                          </Link>
+                        )}
+                        <div
+                          className={cn(
+                            "max-w-[70%] rounded-lg px-3 py-2",
+                            isOwnMessage
+                              ? "bg-green-600 text-white"
+                              : "bg-white/10"
+                          )}
+                        >
+                          {!isOwnMessage && (
+                            <p className="text-xs text-zinc-400 mb-0.5">
+                              {message.sender.name}
+                              {message.sender.id === quest?.host.id && (
+                                <span className="ml-1 text-green-400">(Host)</span>
+                              )}
+                            </p>
+                          )}
+                          <p className="text-sm whitespace-pre-wrap break-words">
+                            {message.is_deleted ? (
+                              <span className="italic text-zinc-500">Message deleted</span>
+                            ) : (
+                              message.content
+                            )}
+                          </p>
+                          <p
+                            className={cn(
+                              "text-xs mt-1",
+                              isOwnMessage ? "text-green-200" : "text-zinc-500"
+                            )}
+                          >
+                            {timeAgo(message.created_at)}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Message Input */}
+              <form
+                onSubmit={handleSendMessage}
+                className="p-4 border-t border-white/10 flex gap-2"
+              >
+                <Input
+                  value={messageInput}
+                  onChange={(e) => setMessageInput(e.target.value)}
+                  placeholder="Type a message..."
+                  className="flex-1 bg-white/5 border-white/10"
+                  disabled={sendMessageMutation.isPending}
+                />
+                <Button
+                  type="submit"
+                  size="icon"
+                  className="bg-green-600 hover:bg-green-700"
+                  disabled={!messageInput.trim() || sendMessageMutation.isPending}
+                >
+                  {sendMessageMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Send className="w-4 h-4" />
+                  )}
+                </Button>
+              </form>
+            </div>
+          )}
+        </motion.div>
+      )}
     </div>
   );
 }

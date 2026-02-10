@@ -203,5 +203,49 @@ class BuddyParticipant(Base, UUIDMixin, TimestampMixin):
         return f"<BuddyParticipant {self.user_id} - {self.status.value}>"
 
 
+class QuestMessage(Base, UUIDMixin, TimestampMixin):
+    """Group chat messages for Side Quest activities."""
+
+    __tablename__ = "quest_messages"
+
+    # Content
+    content: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+    )
+
+    # Relations
+    quest_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("buddy_requests.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    sender_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    # Soft delete
+    is_deleted: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+    )
+
+    # Relationships
+    quest: Mapped["BuddyRequest"] = relationship(
+        "BuddyRequest",
+    )
+    sender: Mapped["User"] = relationship(
+        "User",
+    )
+
+    def __repr__(self) -> str:
+        return f"<QuestMessage {self.id}>"
+
+
 # Import for type hints
 from app.models.user import User  # noqa: E402, F401

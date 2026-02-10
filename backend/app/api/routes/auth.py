@@ -11,6 +11,8 @@ from app.core.database import get_db
 from app.core.dependencies import CurrentUser
 from app.models.user import User
 from app.schemas.auth import (
+    AvatarUploadRequest,
+    AvatarUploadResponse,
     IDUploadRequest,
     IDUploadResponse,
     IDVerificationRequest,
@@ -19,6 +21,7 @@ from app.schemas.auth import (
     NameVerificationRequest,
     NameVerificationResponse,
     ProfileUpdateRequest,
+    PublicUserResponse,
     RefreshTokenRequest,
     SignupRequest,
     SignupResponse,
@@ -381,6 +384,8 @@ async def update_profile(
         user.program = request.program
     if request.bio is not None:
         user.bio = request.bio
+    if request.avatar_url is not None:
+        user.avatar_url = request.avatar_url
     if request.campus_days is not None:
         user.campus_days = request.campus_days
     if request.interests is not None:
@@ -400,4 +405,60 @@ async def update_profile(
         avatar_url=user.avatar_url,
         campus_days=user.campus_days,
         interests=user.interests,
+    )
+
+
+@router.post("/avatar-upload", response_model=AvatarUploadResponse)
+async def get_avatar_upload_url(
+    request: AvatarUploadRequest,
+    user: CurrentUser,
+):
+    """Get a presigned URL for uploading an avatar image."""
+    try:
+        upload_url, file_key = s3_service.generate_upload_url(
+            folder="avatars",
+            filename=request.filename,
+            content_type=request.content_type,
+            expires_in=300,  # 5 minutes
+        )
+
+        # Construct the public file URL
+        file_url = f"https://{s3_service.bucket_name}.s3.{s3_service.region}.amazonaws.com/{file_key}"
+
+        return AvatarUploadResponse(
+            upload_url=upload_url,
+            file_url=file_url,
+            expires_in=300,
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(e),
+        )
+
+
+@router.get("/users/{user_id}", response_model=PublicUserResponse)
+async def get_public_profile(
+    user_id: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Get a user's public profile."""
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    return PublicUserResponse(
+        id=str(user.id),
+        name=user.name,
+        name_verified=user.name_verified,
+        program=user.program,
+        bio=user.bio,
+        avatar_url=user.avatar_url,
+        interests=user.interests,
+        created_at=user.created_at.isoformat() if user.created_at else None,
     )

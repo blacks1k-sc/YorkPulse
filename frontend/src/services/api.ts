@@ -7,6 +7,7 @@ import type {
   QuestCategory,
   VibeLevel,
   QuestStatus,
+  QuestMessage,
   Conversation,
   Message,
   Review,
@@ -164,6 +165,24 @@ class ApiClient {
 
     refreshToken: (refreshToken: string) =>
       this.post<LoginResponse>("/auth/refresh", { refresh_token: refreshToken }),
+
+    getAvatarUploadUrl: (filename: string, contentType: string) =>
+      this.post<{ upload_url: string; file_url: string; expires_in: number }>(
+        "/auth/avatar-upload",
+        { filename, content_type: contentType }
+      ),
+
+    getPublicProfile: (userId: string) =>
+      this.get<{
+        id: string;
+        name: string;
+        name_verified: boolean;
+        program: string | null;
+        bio: string | null;
+        avatar_url: string | null;
+        interests: string[] | null;
+        created_at: string | null;
+      }>(`/auth/users/${userId}`),
   };
 
   // Vault endpoints
@@ -346,6 +365,18 @@ class ApiClient {
       const query = searchParams.toString();
       return this.get<PaginatedResponse<SideQuest> & { has_more: boolean }>(`/quests/my-quests${query ? `?${query}` : ""}`);
     },
+
+    // Quest Group Chat
+    getQuestMessages: (questId: string, params?: { before?: string; limit?: number }) => {
+      const searchParams = new URLSearchParams();
+      if (params?.before) searchParams.set("before", params.before);
+      if (params?.limit) searchParams.set("limit", params.limit.toString());
+      const query = searchParams.toString();
+      return this.get<{ messages: QuestMessage[]; has_more: boolean }>(`/quests/${questId}/chat${query ? `?${query}` : ""}`);
+    },
+
+    sendQuestMessage: (questId: string, content: string) =>
+      this.post<QuestMessage>(`/quests/${questId}/chat`, { content }),
   };
 
   // Legacy alias for backwards compatibility
@@ -436,6 +467,16 @@ class ApiClient {
     },
 
     deleteReview: (id: string) => this.delete<void>(`/reviews/${id}`),
+  };
+
+  // LionGuide AI Assistant
+  ask = {
+    question: (question: string) =>
+      this.post<{
+        answer: string;
+        sources: Array<{ title: string; url: string }>;
+        chunks_used: number;
+      }>("/ask", { question }),
   };
 }
 

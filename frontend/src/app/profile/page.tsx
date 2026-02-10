@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   User,
@@ -15,7 +15,16 @@ import {
   ShoppingBag,
   Users,
   MessageCircle,
+  Camera,
+  Upload,
+  ImagePlus,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,19 +39,23 @@ import { useMyBuddyRequests, useMyParticipation } from "@/hooks/useBuddy";
 import { useMyReviews } from "@/hooks/useReviews";
 import { useAuthStore } from "@/stores/auth";
 import { useToast } from "@/hooks/use-toast";
+import { api } from "@/services/api";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
 export default function ProfilePage() {
   const { user, isAuthenticated } = useAuthStore();
   const { toast } = useToast();
-  const { isLoading } = useUser();
+  const { isLoading, refetch } = useUser();
   const updateProfileMutation = useUpdateProfile();
 
   const [isEditing, setIsEditing] = useState(false);
   const [program, setProgram] = useState(user?.program || "");
   const [bio, setBio] = useState(user?.bio || "");
   const [interests, setInterests] = useState(user?.interests?.join(", ") || "");
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const { data: listingsData } = useMyListings();
   const { data: questsData } = useMyBuddyRequests();
@@ -69,6 +82,79 @@ export default function ProfilePage() {
         description: error instanceof Error ? error.message : "Failed to update profile",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!validTypes.includes(file.type)) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload a JPEG, PNG, WebP, or GIF image",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please upload an image smaller than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    try {
+      // Get presigned URL
+      const { upload_url, file_url } = await api.auth.getAvatarUploadUrl(
+        file.name,
+        file.type
+      );
+
+      // Upload to S3
+      const uploadResponse = await fetch(upload_url, {
+        method: "PUT",
+        body: file,
+        headers: {
+          "Content-Type": file.type,
+        },
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error("Failed to upload image");
+      }
+
+      // Update profile with new avatar URL
+      await updateProfileMutation.mutateAsync({
+        avatar_url: file_url,
+      });
+
+      // Refresh user data
+      await refetch();
+
+      toast({ title: "Profile picture updated" });
+    } catch (error) {
+      toast({
+        title: "Upload failed",
+        description: error instanceof Error ? error.message : "Failed to upload profile picture",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingAvatar(false);
+      // Reset file inputs
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      if (cameraInputRef.current) {
+        cameraInputRef.current.value = "";
+      }
     }
   };
 
@@ -108,22 +194,64 @@ export default function ProfilePage() {
         className="p-6 rounded-xl bg-white/5 border border-white/10 mb-6"
       >
         <div className="flex items-start gap-4">
-          <Avatar className="w-20 h-20">
-            <AvatarImage src={user?.avatar_url || undefined} />
-            <AvatarFallback className="text-2xl bg-purple-500/20 text-purple-400">
-              {user?.name
-                ?.split(" ")
-                .map((n) => n[0])
-                .join("")
-                .toUpperCase()
-                .slice(0, 2) || "?"}
-            </AvatarFallback>
-          </Avatar>
+          <div className="relative group">
+            <Avatar className="w-20 h-20">
+              <AvatarImage src={user?.avatar_url || undefined} />
+              <AvatarFallback className="text-2xl bg-purple-500/20 text-purple-400">
+                {user?.name
+                  ?.split(" ")
+                  .map((n) => n[0])
+                  .join("")
+                  .toUpperCase()
+                  .slice(0, 2) || "?"}
+              </AvatarFallback>
+            </Avatar>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild disabled={isUploadingAvatar}>
+                <button
+                  className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer disabled:cursor-not-allowed"
+                >
+                  {isUploadingAvatar ? (
+                    <Loader2 className="w-6 h-6 text-white animate-spin" />
+                  ) : (
+                    <ImagePlus className="w-6 h-6 text-white" />
+                  )}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48">
+                <DropdownMenuItem onClick={() => cameraInputRef.current?.click()}>
+                  <Camera className="w-4 h-4 mr-2" />
+                  Take Photo
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
+                  <Upload className="w-4 h-4 mr-2" />
+                  Upload Photo
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            {/* Camera capture input */}
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="user"
+              onChange={handleAvatarUpload}
+              className="hidden"
+            />
+            {/* File upload input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              onChange={handleAvatarUpload}
+              className="hidden"
+            />
+          </div>
 
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <h1 className="text-xl font-bold">{user?.name}</h1>
-              {user?.is_verified && (
+              {user?.name_verified && (
                 <Badge variant="secondary" className="bg-green-500/20 text-green-400">
                   <Shield className="w-3 h-3 mr-1" />
                   Verified

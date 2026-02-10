@@ -151,21 +151,40 @@ class ProfileUpdateRequest(BaseModel):
 
     program: Annotated[str | None, Field(max_length=200)] = None
     bio: Annotated[str | None, Field(max_length=500)] = None
+    avatar_url: Annotated[str | None, Field(max_length=500)] = None
     campus_days: list[str] | None = None
     interests: list[str] | None = None
 
-    @field_validator("campus_days")
-    @classmethod
-    def validate_campus_days(cls, v: list[str] | None) -> list[str] | None:
-        """Validate campus days."""
-        if v is None:
-            return None
-        valid_days = {"monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"}
-        cleaned = [day.lower() for day in v]
-        for day in cleaned:
-            if day not in valid_days:
-                raise ValueError(f"Invalid day: {day}")
-        return cleaned
+
+class AvatarUploadRequest(BaseModel):
+    """Request for presigned URL to upload avatar."""
+
+    filename: str
+    content_type: Annotated[str, Field(pattern=r"^image/(jpeg|png|webp|gif)$")]
+
+
+class AvatarUploadResponse(BaseModel):
+    """Response with presigned upload URL for avatar."""
+
+    upload_url: str
+    file_url: str
+    expires_in: int  # seconds
+
+
+class PublicUserResponse(BaseModel):
+    """Public user profile response (for viewing other users)."""
+
+    id: str
+    name: str
+    name_verified: bool
+    program: str | None = None
+    bio: str | None = None
+    avatar_url: str | None = None
+    interests: list[str] | None = None
+    created_at: str | None = None
+
+    class Config:
+        from_attributes = True
 
     @field_validator("interests")
     @classmethod

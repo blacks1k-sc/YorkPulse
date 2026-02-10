@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.middleware import RateLimitMiddleware
-from app.api.routes import auth, buddy, health, marketplace, messaging, reviews, vault
+from app.api.routes import ask, auth, buddy, health, marketplace, messaging, reviews, vault
 from app.services.redis import redis_service
 from app.core.database import async_session_maker
 
@@ -43,14 +43,14 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # Startup
     print(f"Starting {settings.app_name}...")
 
-    # Run initial cleanup on startup
-    try:
-        from app.services.quest_cleanup import cleanup_quests
-        async with async_session_maker() as db:
-            result = await cleanup_quests(db)
-            print(f"Initial quest cleanup: {result}")
-    except Exception as e:
-        print(f"Initial cleanup failed: {e}")
+    # Run initial cleanup on startup (disabled for faster startup)
+    # try:
+    #     from app.services.quest_cleanup import cleanup_quests
+    #     async with async_session_maker() as db:
+    #         result = await cleanup_quests(db)
+    #         print(f"Initial quest cleanup: {result}")
+    # except Exception as e:
+    #     print(f"Initial cleanup failed: {e}")
 
     # Start background cleanup task
     cleanup_task = asyncio.create_task(run_quest_cleanup_task())
@@ -102,6 +102,7 @@ app.include_router(marketplace.router, prefix=settings.api_prefix)
 app.include_router(buddy.router, prefix=settings.api_prefix)
 app.include_router(messaging.router, prefix=settings.api_prefix)
 app.include_router(reviews.router, prefix=settings.api_prefix)
+app.include_router(ask.router, prefix=settings.api_prefix)
 
 
 @app.get("/")

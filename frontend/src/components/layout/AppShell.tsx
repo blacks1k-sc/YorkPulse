@@ -6,6 +6,7 @@ import { BottomNav } from "./BottomNav";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
 import { CreateQuestModal } from "@/components/CreateQuestModal";
 import { CreateModal } from "@/components/modals/CreateModal";
+import { LionGuide } from "@/components/LionGuide";
 import { cn } from "@/lib/utils";
 
 interface AppShellProps {
@@ -34,6 +35,9 @@ export function AppShell({ children }: AppShellProps) {
       {/* Global Modals */}
       <CreateModal />
       <CreateQuestModal />
+
+      {/* LionGuide AI Assistant */}
+      {!isAuthPage && <LionGuide />}
     </div>
   );
 }

@@ -144,3 +144,31 @@ class ParticipantAction(BaseModel):
     """Action on a participant (accept/reject)."""
 
     action: Annotated[str, Field(pattern=r"^(accept|reject)$")]
+
+
+# Quest Group Chat schemas
+
+class QuestMessageCreate(BaseModel):
+    """Schema for sending a message in quest group chat."""
+
+    content: Annotated[str, Field(min_length=1, max_length=2000)]
+
+
+class QuestMessageResponse(BaseModel):
+    """Response schema for a quest message."""
+
+    id: str
+    content: str
+    sender: UserMinimal
+    created_at: datetime
+    is_deleted: bool = False
+
+    class Config:
+        from_attributes = True
+
+
+class QuestMessagesResponse(BaseModel):
+    """Response for list of quest messages."""
+
+    messages: list[QuestMessageResponse]
+    has_more: bool

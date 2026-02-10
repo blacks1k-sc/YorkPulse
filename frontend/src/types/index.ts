@@ -3,12 +3,14 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  is_verified: boolean;
+  name_verified: boolean;
+  email_verified: boolean;
   program?: string;
   bio?: string;
   interests?: string[];
   avatar_url?: string;
-  created_at: string;
+  campus_days?: string[];
+  created_at?: string;
 }
 
 // Vault types
@@ -104,6 +106,18 @@ export interface QuestParticipant {
   status: ParticipantStatus;
   message: string | null;
   created_at: string;
+}
+
+export interface QuestMessage {
+  id: string;
+  content: string;
+  sender: {
+    id: string;
+    name: string;
+    avatar_url: string | null;
+  };
+  created_at: string;
+  is_deleted: boolean;
 }
 
 // Legacy alias for backwards compatibility
