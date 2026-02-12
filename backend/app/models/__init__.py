@@ -23,6 +23,9 @@ from app.models.messaging import (
     ConversationStatus,
 )
 from app.models.review import Review, ReviewType
+from app.models.transaction import MarketplaceTransaction
+from app.models.marketplace_review import MarketplaceReview
+from app.models.report import UserReport, ReportReason, ReportStatus
 
 __all__ = [
     # Base
@@ -54,4 +57,12 @@ __all__ = [
     # Review
     "Review",
     "ReviewType",
+    # Transaction
+    "MarketplaceTransaction",
+    # Marketplace Review
+    "MarketplaceReview",
+    # Report
+    "UserReport",
+    "ReportReason",
+    "ReportStatus",
 ]

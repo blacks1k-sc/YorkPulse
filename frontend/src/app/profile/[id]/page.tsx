@@ -6,16 +6,12 @@ import { motion } from "framer-motion";
 import {
   User,
   GraduationCap,
-  Star,
   Shield,
-  ShoppingBag,
-  Users,
   MessageCircle,
   ArrowLeft,
   Calendar,
   Loader2,
-  Plus,
-  X,
+  Flag,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -23,14 +19,27 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { api } from "@/services/api";
 import { useAuthStore } from "@/stores/auth";
 import { useStartConversation } from "@/hooks/useMessaging";
-import { useUserReviews, useUserRatingSummary, useCreateReview } from "@/hooks/useReviews";
 import { useToast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
-import Link from "next/link";
 
 interface PublicUser {
   id: string;
@@ -50,14 +59,12 @@ export default function PublicProfilePage() {
   const { user: currentUser, isAuthenticated } = useAuthStore();
   const { toast } = useToast();
   const startConversationMutation = useStartConversation();
-  const createReviewMutation = useCreateReview();
 
-  // Review form state
-  const [showReviewForm, setShowReviewForm] = useState(false);
-  const [reviewRating, setReviewRating] = useState(0);
-  const [reviewComment, setReviewComment] = useState("");
-  const [reviewType, setReviewType] = useState<"marketplace" | "buddy">("buddy");
-  const [hoverRating, setHoverRating] = useState(0);
+  // Report form state
+  const [showReportDialog, setShowReportDialog] = useState(false);
+  const [reportReason, setReportReason] = useState<string>("");
+  const [reportExplanation, setReportExplanation] = useState("");
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
 
   // Check if viewing own profile
   const isOwnProfile = currentUser?.id === userId;
@@ -69,53 +76,59 @@ export default function PublicProfilePage() {
     enabled: !!userId && !isOwnProfile,
   });
 
-  // Fetch user reviews and rating summary
-  const { data: ratingSummary } = useUserRatingSummary(userId);
-  const { data: reviewsData } = useUserReviews(userId);
-  const reviews = reviewsData?.pages.flatMap((p) => p.items) || [];
-
   // Redirect to own profile page if viewing self
   if (isOwnProfile) {
     router.replace("/profile");
     return null;
   }
 
-  const handleSubmitReview = async () => {
+  const handleSubmitReport = async () => {
     if (!isAuthenticated) {
       toast({
         title: "Sign in required",
-        description: "Please sign in to leave a review",
+        description: "Please sign in to submit a report",
         variant: "destructive",
       });
       return;
     }
 
-    if (reviewRating === 0) {
+    if (!reportReason) {
       toast({
-        title: "Rating required",
-        description: "Please select a star rating",
+        title: "Reason required",
+        description: "Please select a reason for the report",
         variant: "destructive",
       });
       return;
     }
 
-    try {
-      await createReviewMutation.mutateAsync({
-        reviewed_id: userId,
-        rating: reviewRating,
-        comment: reviewComment || undefined,
-        review_type: reviewType,
+    if (reportExplanation.length < 10) {
+      toast({
+        title: "Explanation required",
+        description: "Please provide more details (at least 10 characters)",
+        variant: "destructive",
       });
-      toast({ title: "Review submitted!" });
-      setShowReviewForm(false);
-      setReviewRating(0);
-      setReviewComment("");
+      return;
+    }
+
+    setIsSubmittingReport(true);
+    try {
+      await api.reports.submitReport({
+        reported_user_id: userId,
+        reason: reportReason,
+        explanation: reportExplanation,
+      });
+      toast({ title: "Report submitted", description: "Thank you for helping keep our community safe." });
+      setShowReportDialog(false);
+      setReportReason("");
+      setReportExplanation("");
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to submit review",
+        description: error instanceof Error ? error.message : "Failed to submit report",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmittingReport(false);
     }
   };
 
@@ -149,18 +162,6 @@ export default function PublicProfilePage() {
     if (!dateString) return "Unknown";
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
-  };
-
-  const timeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    if (diffDays === 0) return "today";
-    if (diffDays === 1) return "yesterday";
-    if (diffDays < 7) return `${diffDays} days ago`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-    return `${Math.floor(diffDays / 30)} months ago`;
   };
 
   if (isLoading) {
@@ -290,236 +291,76 @@ export default function PublicProfilePage() {
             )}
             Send Message
           </Button>
-        </div>
-      </motion.div>
 
-      {/* Rating Summary */}
-      {ratingSummary && ratingSummary.total_reviews > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="p-4 rounded-xl bg-white/5 border border-white/10 mb-6"
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1">
-                <Star className="w-6 h-6 fill-yellow-500 text-yellow-500" />
-                <span className="text-2xl font-bold">
-                  {ratingSummary.overall_rating?.toFixed(1) || "-"}
-                </span>
-              </div>
-              <span className="text-zinc-500">
-                ({ratingSummary.total_reviews} review{ratingSummary.total_reviews !== 1 ? "s" : ""})
-              </span>
-            </div>
-            <div className="flex gap-4 text-sm">
-              {ratingSummary.buddy_count > 0 && (
-                <div className="flex items-center gap-1 text-green-400">
-                  <Users className="w-4 h-4" />
-                  {ratingSummary.buddy_rating?.toFixed(1)} ({ratingSummary.buddy_count})
-                </div>
-              )}
-              {ratingSummary.marketplace_count > 0 && (
-                <div className="flex items-center gap-1 text-orange-400">
-                  <ShoppingBag className="w-4 h-4" />
-                  {ratingSummary.marketplace_rating?.toFixed(1)} ({ratingSummary.marketplace_count})
-                </div>
-              )}
-            </div>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Reviews Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15 }}
-        className="p-6 rounded-xl bg-white/5 border border-white/10"
-      >
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <Star className="w-5 h-5 text-yellow-500" />
-            Reviews
-          </h2>
-          {isAuthenticated && !showReviewForm && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowReviewForm(true)}
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              Leave Review
-            </Button>
-          )}
-        </div>
-
-        {/* Review Form */}
-        {showReviewForm && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            className="mb-6 p-4 rounded-lg bg-white/5 border border-white/10"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-medium">Write a Review</h3>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => {
-                  setShowReviewForm(false);
-                  setReviewRating(0);
-                  setReviewComment("");
-                }}
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-
-            {/* Review Type */}
-            <div className="mb-4">
-              <Label className="text-sm text-zinc-400 mb-2 block">Review Type</Label>
-              <div className="flex gap-2">
-                <Button
-                  variant={reviewType === "buddy" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setReviewType("buddy")}
-                  className={reviewType === "buddy" ? "bg-green-600 hover:bg-green-700" : ""}
-                >
-                  <Users className="w-4 h-4 mr-1" />
-                  Quest
+          {/* Report Button */}
+          {isAuthenticated && (
+            <Dialog open={showReportDialog} onOpenChange={setShowReportDialog}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="text-red-400 border-red-400/30 hover:bg-red-500/10">
+                  <Flag className="w-4 h-4 mr-2" />
+                  Report
                 </Button>
-                <Button
-                  variant={reviewType === "marketplace" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setReviewType("marketplace")}
-                  className={reviewType === "marketplace" ? "bg-orange-600 hover:bg-orange-700" : ""}
-                >
-                  <ShoppingBag className="w-4 h-4 mr-1" />
-                  Marketplace
-                </Button>
-              </div>
-            </div>
-
-            {/* Star Rating */}
-            <div className="mb-4">
-              <Label className="text-sm text-zinc-400 mb-2 block">Rating</Label>
-              <div className="flex gap-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    type="button"
-                    onClick={() => setReviewRating(star)}
-                    onMouseEnter={() => setHoverRating(star)}
-                    onMouseLeave={() => setHoverRating(0)}
-                    className="p-1 transition-transform hover:scale-110"
-                  >
-                    <Star
-                      className={cn(
-                        "w-8 h-8 transition-colors",
-                        star <= (hoverRating || reviewRating)
-                          ? "fill-yellow-500 text-yellow-500"
-                          : "text-zinc-600"
-                      )}
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Report User</DialogTitle>
+                  <DialogDescription>
+                    Help keep our community safe by reporting inappropriate behavior.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label>Reason for report</Label>
+                    <Select value={reportReason} onValueChange={setReportReason}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a reason" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="harassment_safety">Harassment / Safety concern</SelectItem>
+                        <SelectItem value="scam_fraud">Scam / Fraud</SelectItem>
+                        <SelectItem value="no_show_pattern">No-show pattern</SelectItem>
+                        <SelectItem value="spam_bot">Spam / Bot account</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Please explain (required)</Label>
+                    <Textarea
+                      placeholder="Provide details about what happened..."
+                      value={reportExplanation}
+                      onChange={(e) => setReportExplanation(e.target.value)}
+                      className="min-h-[100px]"
                     />
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Comment */}
-            <div className="mb-4">
-              <Label className="text-sm text-zinc-400 mb-2 block">Comment (optional)</Label>
-              <Textarea
-                placeholder="Share your experience..."
-                value={reviewComment}
-                onChange={(e) => setReviewComment(e.target.value)}
-                className="min-h-[80px]"
-              />
-            </div>
-
-            {/* Submit */}
-            <Button
-              onClick={handleSubmitReview}
-              disabled={createReviewMutation.isPending || reviewRating === 0}
-              className="w-full bg-purple-600 hover:bg-purple-700"
-            >
-              {createReviewMutation.isPending ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : null}
-              Submit Review
-            </Button>
-          </motion.div>
-        )}
-
-        {/* Reviews List */}
-        {reviews.length === 0 ? (
-          <p className="text-center text-zinc-500 py-8">No reviews yet</p>
-        ) : (
-          <div className="space-y-4">
-            {reviews.map((review) => (
-              <div
-                key={review.id}
-                className="p-4 rounded-lg bg-white/5 border border-white/10"
-              >
-                <div className="flex items-start gap-3">
-                  <Link href={`/profile/${review.reviewer.id}`}>
-                    <Avatar className="w-10 h-10">
-                      <AvatarImage src={review.reviewer.avatar_url || undefined} />
-                      <AvatarFallback className="text-sm bg-zinc-800">
-                        {review.reviewer.name.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Link>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <Link
-                        href={`/profile/${review.reviewer.id}`}
-                        className="font-medium hover:text-purple-400 transition-colors"
-                      >
-                        {review.reviewer.name}
-                      </Link>
-                      <span className="text-xs text-zinc-500">
-                        {timeAgo(review.created_at)}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="flex">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star
-                            key={star}
-                            className={cn(
-                              "w-4 h-4",
-                              star <= review.rating
-                                ? "fill-yellow-500 text-yellow-500"
-                                : "text-zinc-700"
-                            )}
-                          />
-                        ))}
-                      </div>
-                      <Badge
-                        variant="secondary"
-                        className={cn(
-                          "text-xs",
-                          review.review_type === "buddy"
-                            ? "bg-green-500/20 text-green-400"
-                            : "bg-orange-500/20 text-orange-400"
-                        )}
-                      >
-                        {review.review_type === "buddy" ? "Quest" : "Marketplace"}
-                      </Badge>
-                    </div>
-                    {review.comment && (
-                      <p className="text-sm text-zinc-300">{review.comment}</p>
-                    )}
+                    <p className="text-xs text-zinc-500">
+                      Minimum 10 characters required
+                    </p>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
+                <DialogFooter>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setShowReportDialog(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleSubmitReport}
+                    disabled={isSubmittingReport || !reportReason || reportExplanation.length < 10}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    {isSubmittingReport ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Flag className="w-4 h-4 mr-2" />
+                    )}
+                    Submit Report
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
       </motion.div>
     </div>
   );

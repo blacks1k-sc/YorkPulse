@@ -1,4 +1,4 @@
-from sqlalchemy import String, Boolean, ARRAY, Text
+from sqlalchemy import String, Boolean, ARRAY, Text, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -18,6 +18,20 @@ class User(Base, UUIDMixin, TimestampMixin):
         index=True,
     )
     email_verified: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+    )
+
+    # Trust system
+    completed_transactions: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+        nullable=False,
+    )
+
+    # Admin flag
+    is_admin: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
         nullable=False,
@@ -103,6 +117,45 @@ class User(Base, UUIDMixin, TimestampMixin):
         back_populates="reviewed",
         lazy="dynamic",
     )
+    # Transaction relationships
+    sales_transactions: Mapped[list["MarketplaceTransaction"]] = relationship(
+        "MarketplaceTransaction",
+        foreign_keys="MarketplaceTransaction.seller_id",
+        back_populates="seller",
+        lazy="dynamic",
+    )
+    purchase_transactions: Mapped[list["MarketplaceTransaction"]] = relationship(
+        "MarketplaceTransaction",
+        foreign_keys="MarketplaceTransaction.buyer_id",
+        back_populates="buyer",
+        lazy="dynamic",
+    )
+    # Marketplace review relationships
+    marketplace_reviews_given: Mapped[list["MarketplaceReview"]] = relationship(
+        "MarketplaceReview",
+        foreign_keys="MarketplaceReview.reviewer_id",
+        back_populates="reviewer",
+        lazy="dynamic",
+    )
+    marketplace_reviews_received: Mapped[list["MarketplaceReview"]] = relationship(
+        "MarketplaceReview",
+        foreign_keys="MarketplaceReview.reviewee_id",
+        back_populates="reviewee",
+        lazy="dynamic",
+    )
+    # Report relationships
+    reports_submitted: Mapped[list["UserReport"]] = relationship(
+        "UserReport",
+        foreign_keys="UserReport.reporter_id",
+        back_populates="reporter",
+        lazy="dynamic",
+    )
+    reports_received: Mapped[list["UserReport"]] = relationship(
+        "UserReport",
+        foreign_keys="UserReport.reported_user_id",
+        back_populates="reported_user",
+        lazy="dynamic",
+    )
 
     def __repr__(self) -> str:
         return f"<User {self.email}>"
@@ -113,3 +166,6 @@ from app.models.vault import VaultPost, VaultComment  # noqa: E402, F401
 from app.models.marketplace import MarketplaceListing  # noqa: E402, F401
 from app.models.buddy import BuddyRequest  # noqa: E402, F401
 from app.models.review import Review  # noqa: E402, F401
+from app.models.transaction import MarketplaceTransaction  # noqa: E402, F401
+from app.models.marketplace_review import MarketplaceReview  # noqa: E402, F401
+from app.models.report import UserReport  # noqa: E402, F401

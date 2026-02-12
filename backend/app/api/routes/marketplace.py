@@ -1,6 +1,7 @@
 """Marketplace API routes."""
 
 import uuid
+from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -16,6 +17,9 @@ from app.models.marketplace import (
     MarketplaceCategory,
     MarketplaceListing,
 )
+from app.models.marketplace_review import MarketplaceReview
+from app.models.transaction import MarketplaceTransaction
+from app.models.user import User
 from app.schemas.marketplace import (
     ImageUploadRequest,
     ImageUploadResponse,
@@ -24,8 +28,20 @@ from app.schemas.marketplace import (
     ListingResponse,
     ListingUpdate,
 )
+from app.schemas.marketplace_review import (
+    MarketplaceReputationResponse,
+    MarketplaceReviewCreate,
+    MarketplaceReviewResponse,
+    PendingReviewResponse,
+    PendingReviewsListResponse,
+)
 from app.schemas.user import UserMinimal
 from app.services.s3 import s3_service
+
+# Review window in days
+REVIEW_WINDOW_DAYS = 7
+# Grace period - reviews hidden until this many completed transactions
+GRACE_PERIOD_TRANSACTIONS = 3
 
 router = APIRouter(prefix="/marketplace", tags=["Marketplace"])
 
@@ -379,3 +395,260 @@ async def mark_as_sold(
     await db.refresh(listing)
 
     return _listing_to_response(listing)
+
+
+# =====================
+# Marketplace Reviews
+# =====================
+
+
+def _review_to_response(review: MarketplaceReview) -> MarketplaceReviewResponse:
+    """Convert marketplace review model to response."""
+    return MarketplaceReviewResponse(
+        id=str(review.id),
+        transaction_id=str(review.transaction_id),
+        reviewer=UserMinimal(
+            id=str(review.reviewer.id),
+            name=review.reviewer.name,
+            avatar_url=review.reviewer.avatar_url,
+        ),
+        reviewee=UserMinimal(
+            id=str(review.reviewee.id),
+            name=review.reviewee.name,
+            avatar_url=review.reviewee.avatar_url,
+        ),
+        item_accuracy=review.item_accuracy,
+        communication=review.communication,
+        punctuality=review.punctuality,
+        average_rating=review.average_rating,
+        text_feedback=review.text_feedback,
+        created_at=review.created_at,
+    )
+
+
+@router.post("/reviews", response_model=MarketplaceReviewResponse, status_code=status.HTTP_201_CREATED)
+async def submit_marketplace_review(
+    request: MarketplaceReviewCreate,
+    user: VerifiedUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Submit a marketplace review for a completed transaction."""
+    # Validate transaction ID
+    try:
+        txn_uuid = uuid.UUID(request.transaction_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid transaction ID format")
+
+    # Get transaction
+    result = await db.execute(
+        select(MarketplaceTransaction)
+        .options(
+            selectinload(MarketplaceTransaction.seller),
+            selectinload(MarketplaceTransaction.buyer),
+        )
+        .where(MarketplaceTransaction.id == txn_uuid)
+    )
+    transaction = result.scalar_one_or_none()
+
+    if not transaction:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+
+    # Check user is part of transaction
+    is_seller = transaction.seller_id == user.id
+    is_buyer = transaction.buyer_id == user.id
+
+    if not is_seller and not is_buyer:
+        raise HTTPException(
+            status_code=403,
+            detail="You are not part of this transaction",
+        )
+
+    # Check transaction is completed
+    if not transaction.completed_at:
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot review an incomplete transaction",
+        )
+
+    # Check 7-day review window
+    review_deadline = transaction.completed_at + timedelta(days=REVIEW_WINDOW_DAYS)
+    now = datetime.now(timezone.utc)
+    if now > review_deadline:
+        raise HTTPException(
+            status_code=403,
+            detail="Review window has expired (7 days after transaction)",
+        )
+
+    # Determine reviewee
+    reviewee_id = transaction.buyer_id if is_seller else transaction.seller_id
+
+    # Check for existing review
+    existing = await db.execute(
+        select(MarketplaceReview).where(
+            MarketplaceReview.transaction_id == txn_uuid,
+            MarketplaceReview.reviewer_id == user.id,
+        )
+    )
+    if existing.scalar_one_or_none():
+        raise HTTPException(
+            status_code=400,
+            detail="You have already reviewed this transaction",
+        )
+
+    # Create review
+    review = MarketplaceReview(
+        id=uuid.uuid4(),
+        transaction_id=txn_uuid,
+        reviewer_id=user.id,
+        reviewee_id=reviewee_id,
+        item_accuracy=request.item_accuracy,
+        communication=request.communication,
+        punctuality=request.punctuality,
+        text_feedback=request.text_feedback,
+    )
+
+    db.add(review)
+    await db.commit()
+
+    # Refresh with relationships
+    result = await db.execute(
+        select(MarketplaceReview)
+        .options(
+            selectinload(MarketplaceReview.reviewer),
+            selectinload(MarketplaceReview.reviewee),
+        )
+        .where(MarketplaceReview.id == review.id)
+    )
+    review = result.scalar_one()
+
+    return _review_to_response(review)
+
+
+@router.get("/reviews/pending", response_model=PendingReviewsListResponse)
+async def get_pending_reviews(
+    user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Get transactions that user can still review."""
+    now = datetime.now(timezone.utc)
+    review_cutoff = now - timedelta(days=REVIEW_WINDOW_DAYS)
+
+    # Find completed transactions where user hasn't reviewed yet
+    query = (
+        select(MarketplaceTransaction)
+        .options(
+            selectinload(MarketplaceTransaction.listing),
+            selectinload(MarketplaceTransaction.seller),
+            selectinload(MarketplaceTransaction.buyer),
+        )
+        .where(
+            MarketplaceTransaction.completed_at.isnot(None),
+            MarketplaceTransaction.completed_at > review_cutoff,
+            or_(
+                MarketplaceTransaction.seller_id == user.id,
+                MarketplaceTransaction.buyer_id == user.id,
+            ),
+        )
+    )
+
+    result = await db.execute(query)
+    transactions = result.scalars().all()
+
+    pending = []
+    for txn in transactions:
+        # Check if user already reviewed this transaction
+        existing = await db.execute(
+            select(MarketplaceReview).where(
+                MarketplaceReview.transaction_id == txn.id,
+                MarketplaceReview.reviewer_id == user.id,
+            )
+        )
+        if existing.scalar_one_or_none():
+            continue
+
+        # Determine role and other party
+        is_seller = txn.seller_id == user.id
+        role = "seller" if is_seller else "buyer"
+        other_party = txn.buyer if is_seller else txn.seller
+
+        pending.append(
+            PendingReviewResponse(
+                transaction_id=str(txn.id),
+                listing_title=txn.listing.title,
+                other_party=UserMinimal(
+                    id=str(other_party.id),
+                    name=other_party.name,
+                    avatar_url=other_party.avatar_url,
+                ),
+                role=role,
+                completed_at=txn.completed_at,
+                review_deadline=txn.completed_at + timedelta(days=REVIEW_WINDOW_DAYS),
+            )
+        )
+
+    return PendingReviewsListResponse(items=pending)
+
+
+@router.get("/users/{user_id}/reputation", response_model=MarketplaceReputationResponse)
+async def get_user_marketplace_reputation(
+    user_id: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Get a user's marketplace reputation."""
+    # Validate user ID
+    try:
+        user_uuid = uuid.UUID(user_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid user ID format")
+
+    # Get user
+    result = await db.execute(select(User).where(User.id == user_uuid))
+    target_user = result.scalar_one_or_none()
+
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Check grace period
+    reviews_visible = target_user.completed_transactions >= GRACE_PERIOD_TRANSACTIONS
+
+    # Get all reviews for this user
+    result = await db.execute(
+        select(MarketplaceReview)
+        .options(
+            selectinload(MarketplaceReview.reviewer),
+            selectinload(MarketplaceReview.reviewee),
+        )
+        .where(MarketplaceReview.reviewee_id == user_uuid)
+        .order_by(MarketplaceReview.created_at.desc())
+    )
+    reviews = result.scalars().all()
+
+    total_reviews = len(reviews)
+
+    # Calculate averages
+    if total_reviews > 0:
+        avg_item_accuracy = sum(r.item_accuracy for r in reviews) / total_reviews
+        avg_communication = sum(r.communication for r in reviews) / total_reviews
+        avg_punctuality = sum(r.punctuality for r in reviews) / total_reviews
+        overall_average = (avg_item_accuracy + avg_communication + avg_punctuality) / 3
+    else:
+        avg_item_accuracy = None
+        avg_communication = None
+        avg_punctuality = None
+        overall_average = None
+
+    # Build response
+    review_list = None
+    if reviews_visible:
+        review_list = [_review_to_response(r) for r in reviews]
+
+    return MarketplaceReputationResponse(
+        user_id=user_id,
+        avg_item_accuracy=round(avg_item_accuracy, 2) if avg_item_accuracy else None,
+        avg_communication=round(avg_communication, 2) if avg_communication else None,
+        avg_punctuality=round(avg_punctuality, 2) if avg_punctuality else None,
+        overall_average=round(overall_average, 2) if overall_average else None,
+        total_reviews=total_reviews,
+        reviews_visible=reviews_visible,
+        reviews=review_list,
+    )

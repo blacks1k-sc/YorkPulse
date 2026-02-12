@@ -121,6 +121,11 @@ class MarketplaceListing(Base, UUIDMixin, TimestampMixin):
         "User",
         back_populates="marketplace_listings",
     )
+    transaction: Mapped["MarketplaceTransaction | None"] = relationship(
+        "MarketplaceTransaction",
+        back_populates="listing",
+        uselist=False,
+    )
 
     def __repr__(self) -> str:
         return f"<MarketplaceListing {self.id} - {self.title}>"
@@ -128,3 +133,4 @@ class MarketplaceListing(Base, UUIDMixin, TimestampMixin):
 
 # Import for type hints
 from app.models.user import User  # noqa: E402, F401
+from app.models.transaction import MarketplaceTransaction  # noqa: E402, F401

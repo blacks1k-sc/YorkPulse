@@ -6,7 +6,6 @@ import {
   User,
   Mail,
   GraduationCap,
-  Star,
   Edit,
   Save,
   X,
@@ -14,7 +13,6 @@ import {
   Shield,
   ShoppingBag,
   Users,
-  MessageCircle,
   Camera,
   Upload,
   ImagePlus,
@@ -36,7 +34,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUser, useUpdateProfile } from "@/hooks/useAuth";
 import { useMyListings } from "@/hooks/useMarketplace";
 import { useMyBuddyRequests, useMyParticipation } from "@/hooks/useBuddy";
-import { useMyReviews } from "@/hooks/useReviews";
 import { useAuthStore } from "@/stores/auth";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/services/api";
@@ -59,11 +56,9 @@ export default function ProfilePage() {
 
   const { data: listingsData } = useMyListings();
   const { data: questsData } = useMyBuddyRequests();
-  const { data: reviewsData } = useMyReviews("received");
 
   const listings = listingsData?.pages.flatMap((p) => p.items) || [];
   const quests = questsData?.pages.flatMap((p) => p.items) || [];
-  const reviews = reviewsData?.pages.flatMap((p) => p.items) || [];
 
   const handleSave = async () => {
     try {
@@ -350,7 +345,7 @@ export default function ProfilePage() {
       </motion.div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-2 gap-4 mb-6">
         <div className="p-4 rounded-xl bg-white/5 border border-white/10 text-center">
           <ShoppingBag className="w-5 h-5 mx-auto mb-2 text-coral-400" />
           <p className="text-2xl font-bold">{listings.length}</p>
@@ -360,17 +355,6 @@ export default function ProfilePage() {
           <Users className="w-5 h-5 mx-auto mb-2 text-green-400" />
           <p className="text-2xl font-bold">{quests.length}</p>
           <p className="text-xs text-zinc-500">Quests</p>
-        </div>
-        <div className="p-4 rounded-xl bg-white/5 border border-white/10 text-center">
-          <Star className="w-5 h-5 mx-auto mb-2 text-yellow-400" />
-          <p className="text-2xl font-bold">
-            {reviews.length > 0
-              ? (
-                  reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
-                ).toFixed(1)
-              : "-"}
-          </p>
-          <p className="text-xs text-zinc-500">Rating</p>
         </div>
       </div>
 
@@ -382,9 +366,6 @@ export default function ProfilePage() {
           </TabsTrigger>
           <TabsTrigger value="quests" className="flex-1">
             Quests
-          </TabsTrigger>
-          <TabsTrigger value="reviews" className="flex-1">
-            Reviews
           </TabsTrigger>
         </TabsList>
 
@@ -447,41 +428,6 @@ export default function ProfilePage() {
                   </div>
                 </div>
               </Link>
-            ))
-          )}
-        </TabsContent>
-
-        <TabsContent value="reviews" className="mt-4 space-y-3">
-          {reviews.length === 0 ? (
-            <p className="text-center text-zinc-500 py-8">No reviews yet</p>
-          ) : (
-            reviews.slice(0, 5).map((review) => (
-              <div
-                key={review.id}
-                className="p-4 rounded-lg bg-white/5 border border-white/10"
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="flex">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Star
-                        key={star}
-                        className={cn(
-                          "w-4 h-4",
-                          star <= review.rating
-                            ? "fill-yellow-500 text-yellow-500"
-                            : "text-zinc-700"
-                        )}
-                      />
-                    ))}
-                  </div>
-                  <span className="text-sm text-zinc-500">
-                    from {review.reviewer.name}
-                  </span>
-                </div>
-                {review.comment && (
-                  <p className="text-sm text-zinc-400">{review.comment}</p>
-                )}
-              </div>
             ))
           )}
         </TabsContent>

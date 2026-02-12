@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.middleware import RateLimitMiddleware
-from app.api.routes import ask, auth, buddy, health, marketplace, messaging, reviews, vault
+from app.api.routes import auth, buddy, health, marketplace, messaging, reports, reviews, transactions, vault
 from app.services.redis import redis_service
 from app.core.database import async_session_maker
 
@@ -102,7 +102,8 @@ app.include_router(marketplace.router, prefix=settings.api_prefix)
 app.include_router(buddy.router, prefix=settings.api_prefix)
 app.include_router(messaging.router, prefix=settings.api_prefix)
 app.include_router(reviews.router, prefix=settings.api_prefix)
-app.include_router(ask.router, prefix=settings.api_prefix)
+app.include_router(transactions.router, prefix=settings.api_prefix)
+app.include_router(reports.router, prefix=settings.api_prefix)
 
 
 @app.get("/")

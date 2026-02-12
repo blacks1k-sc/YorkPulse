@@ -469,15 +469,21 @@ class ApiClient {
     deleteReview: (id: string) => this.delete<void>(`/reviews/${id}`),
   };
 
-  // LionGuide AI Assistant
-  ask = {
-    question: (question: string) =>
-      this.post<{
-        answer: string;
-        sources: Array<{ title: string; url: string }>;
-        chunks_used: number;
-      }>("/ask", { question }),
+  // Reports endpoints
+  reports = {
+    submitReport: (data: {
+      reported_user_id: string;
+      reason: string;
+      explanation: string;
+    }) => this.post<{
+      id: string;
+      reported_user_id: string;
+      reason: string;
+      status: string;
+      created_at: string;
+    }>("/users/report", data),
   };
+
 }
 
 export const api = new ApiClient(API_URL);
