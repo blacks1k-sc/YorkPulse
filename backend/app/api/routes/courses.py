@@ -175,30 +175,37 @@ async def get_course_hierarchy(
 @router.get("/search", response_model=CourseSearchResponse)
 async def search_courses(
     db: Annotated[AsyncSession, Depends(get_db)],
-    q: Annotated[str, Query(min_length=2)],
-    limit: Annotated[int, Query(ge=1, le=50)] = 20,
+    q: Annotated[str, Query(min_length=1)],
+    limit: Annotated[int, Query(ge=1, le=50)] = 50,
 ):
     """Search courses by code or name with fuzzy matching."""
     # Normalize query: remove spaces and lowercase for code matching
     normalized_query = q.replace(" ", "").lower()
     normalized_search_term = f"%{normalized_query}%"
+    starts_with_term = f"{normalized_query}%"
 
     # Original query for name matching (preserve spaces)
     name_search_term = f"%{q.lower()}%"
+
+    # Normalized code column for reuse
+    normalized_code = func.lower(func.replace(Course.code, " ", ""))
 
     query = (
         select(Course)
         .where(
             or_(
                 # Code search: normalize both sides by removing spaces
-                func.lower(func.replace(Course.code, " ", "")).like(normalized_search_term),
+                normalized_code.like(normalized_search_term),
                 # Name search: keep original spacing
                 func.lower(Course.name).like(name_search_term),
             )
         )
         .order_by(
-            # Exact code match first (normalized)
-            func.lower(func.replace(Course.code, " ", "")).like(normalized_query).desc(),
+            # Exact code match first
+            (normalized_code == normalized_query).desc(),
+            # Then codes starting with query
+            normalized_code.like(starts_with_term).desc(),
+            # Then by popularity
             Course.member_count.desc(),
             Course.code,
         )
