@@ -27,6 +27,8 @@ from app.schemas.course import (
     ChannelListResponse,
     ChannelResponse,
     ChannelJoinResponse,
+    ChatImageUploadRequest,
+    ChatImageUploadResponse,
     CourseInHierarchy,
     CourseResponse,
     CourseSearchResponse,
@@ -49,6 +51,7 @@ from app.schemas.course import (
     VoteStatusResponse,
     YearNode,
 )
+from app.services.s3 import s3_service
 
 router = APIRouter(prefix="/courses", tags=["Courses"])
 
@@ -114,6 +117,7 @@ def _message_to_response(msg: CourseMessage, user: User) -> MessageResponse:
         id=str(msg.id),
         channel_id=str(msg.channel_id),
         message=msg.message,
+        image_url=msg.image_url,
         author=MessageAuthor(
             id=str(user.id),
             name=user.name,
@@ -687,6 +691,35 @@ async def vote_for_professor(
 # ============ Messaging ============
 
 
+@router.post("/chat/upload-image", response_model=ChatImageUploadResponse)
+async def get_chat_image_upload_url(
+    request: ChatImageUploadRequest,
+    user: VerifiedUser,
+):
+    """Get a presigned URL for uploading a chat image."""
+    try:
+        upload_url, file_key = s3_service.generate_upload_url(
+            folder="chat-images",
+            filename=request.filename,
+            content_type=request.content_type,
+            expires_in=300,  # 5 minutes
+        )
+
+        # Construct the public file URL
+        file_url = f"https://{s3_service.bucket_name}.s3.{s3_service.region}.amazonaws.com/{file_key}"
+
+        return ChatImageUploadResponse(
+            upload_url=upload_url,
+            file_url=file_url,
+            expires_in=300,
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(e),
+        )
+
+
 @router.get("/channels/{channel_id}/messages", response_model=MessageListResponse)
 async def get_channel_messages(
     channel_id: str,
@@ -788,6 +821,7 @@ async def send_channel_message(
         channel_id=channel.id,
         user_id=user.id,
         message=request.message,
+        image_url=request.image_url,
     )
     db.add(message)
 

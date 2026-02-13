@@ -51,7 +51,7 @@ export default function SetupProfilePage() {
       if (result.name_verified) {
         // Name matched email pattern - auto verified
         setStep("success");
-        setTimeout(() => router.push("/vault"), 2000);
+        setTimeout(() => router.push("/"), 2000);
       } else if (result.requires_id_upload) {
         // Need to upload ID for verification
         setStep("upload");
@@ -118,7 +118,7 @@ export default function SetupProfilePage() {
 
       if (result.verified) {
         setStep("success");
-        setTimeout(() => router.push("/vault"), 2000);
+        setTimeout(() => router.push("/"), 2000);
       } else {
         setStep("upload");
         toast({

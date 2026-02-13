@@ -14,6 +14,8 @@ from app.core.dependencies import CurrentUser, VerifiedUser
 from app.models.messaging import Conversation, ConversationStatus, Message
 from app.models.user import User
 from app.schemas.messaging import (
+    ChatImageUploadRequest,
+    ChatImageUploadResponse,
     ConversationCreate,
     ConversationDetailResponse,
     ConversationListResponse,
@@ -25,8 +27,38 @@ from app.schemas.messaging import (
     ParticipantInfo,
     PendingRequestsResponse,
 )
+from app.services.s3 import s3_service
 
 router = APIRouter(prefix="/messages", tags=["Messaging"])
+
+
+@router.post("/upload-image", response_model=ChatImageUploadResponse)
+async def get_chat_image_upload_url(
+    request: ChatImageUploadRequest,
+    user: VerifiedUser,
+):
+    """Get a presigned URL for uploading a chat image in DMs."""
+    try:
+        upload_url, file_key = s3_service.generate_upload_url(
+            folder="dm-images",
+            filename=request.filename,
+            content_type=request.content_type,
+            expires_in=300,  # 5 minutes
+        )
+
+        # Construct the public file URL
+        file_url = f"https://{s3_service.bucket_name}.s3.{s3_service.region}.amazonaws.com/{file_key}"
+
+        return ChatImageUploadResponse(
+            upload_url=upload_url,
+            file_url=file_url,
+            expires_in=300,
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(e),
+        )
 
 
 def _message_to_response(message: Message) -> MessageResponse:
@@ -36,6 +68,7 @@ def _message_to_response(message: Message) -> MessageResponse:
         conversation_id=str(message.conversation_id),
         sender_id=str(message.sender_id),
         content="" if message.is_deleted else message.content,
+        image_url=None if message.is_deleted else message.image_url,
         is_deleted=message.is_deleted,
         is_read=message.read_at is not None,
         read_at=message.read_at,
@@ -419,6 +452,7 @@ async def send_message(
         conversation_id=conversation.id,
         sender_id=user.id,
         content=request.content,
+        image_url=request.image_url,
     )
 
     db.add(message)

@@ -1,9 +1,37 @@
 """FastAPI middleware for rate limiting and other cross-cutting concerns."""
 
+import time
+import logging
+
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.services.redis import rate_limiter
+
+logger = logging.getLogger(__name__)
+
+
+class TimingMiddleware(BaseHTTPMiddleware):
+    """Middleware to log request timing for debugging slow endpoints."""
+
+    async def dispatch(self, request: Request, call_next) -> Response:
+        start_time = time.time()
+
+        response = await call_next(request)
+
+        process_time = time.time() - start_time
+
+        # Log slow requests (> 1 second)
+        if process_time > 1.0:
+            logger.warning(
+                f"SLOW REQUEST: {request.method} {request.url.path} "
+                f"took {process_time:.2f}s"
+            )
+
+        # Always add timing header
+        response.headers["X-Process-Time"] = f"{process_time:.3f}"
+
+        return response
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):

@@ -147,7 +147,8 @@ export interface Message {
   id: string;
   conversation_id: string;
   sender_id: string;
-  content: string;
+  content: string | null;
+  image_url: string | null;
   is_deleted: boolean;
   is_read: boolean;
   read_at: string | null;
@@ -214,7 +215,8 @@ export interface CourseChannel {
 export interface CourseMessage {
   id: string;
   channel_id: string;
-  message: string;
+  message: string | null;
+  image_url: string | null;
   author: {
     id: string;
     name: string;

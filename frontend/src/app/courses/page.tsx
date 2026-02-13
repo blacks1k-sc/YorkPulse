@@ -9,11 +9,9 @@ import {
   ChevronDown,
   Users,
   Hash,
-  Send,
   ArrowLeft,
   Loader2,
   GraduationCap,
-  Plus,
   LogOut,
   Vote,
 } from "lucide-react";
@@ -36,6 +34,8 @@ import { api } from "@/services/api";
 import { useAuthStore } from "@/stores/auth";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { ChatInput } from "@/components/chat/ChatInput";
+import { ChatMessage } from "@/components/chat/ChatMessage";
 import type { Course, CourseChannel, CourseMessage, VoteStatus } from "@/types";
 
 // View modes
@@ -56,7 +56,6 @@ export default function CoursesPage() {
   const [selectedChannel, setSelectedChannel] = useState<CourseChannel | null>(null);
   const [showVoteDialog, setShowVoteDialog] = useState(false);
   const [profNameInput, setProfNameInput] = useState("");
-  const [messageInput, setMessageInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Queries
@@ -134,10 +133,16 @@ export default function CoursesPage() {
   });
 
   const sendMessageMutation = useMutation({
-    mutationFn: ({ channelId, message }: { channelId: string; message: string }) =>
-      api.courses.sendMessage(channelId, message),
+    mutationFn: ({
+      channelId,
+      message,
+      imageUrl,
+    }: {
+      channelId: string;
+      message?: string;
+      imageUrl?: string;
+    }) => api.courses.sendMessage(channelId, message, imageUrl),
     onSuccess: () => {
-      setMessageInput("");
       queryClient.invalidateQueries({ queryKey: ["courses", "channels", selectedChannel?.id, "messages"] });
     },
   });
@@ -202,11 +207,12 @@ export default function CoursesPage() {
   };
 
   // Handle send message
-  const handleSendMessage = () => {
-    if (!messageInput.trim() || !selectedChannel) return;
-    sendMessageMutation.mutate({
+  const handleSendMessage = async (message: string | null, imageUrl: string | null) => {
+    if (!selectedChannel) return;
+    await sendMessageMutation.mutateAsync({
       channelId: selectedChannel.id,
-      message: messageInput.trim(),
+      message: message || undefined,
+      imageUrl: imageUrl || undefined,
     });
   };
 
@@ -563,33 +569,16 @@ export default function CoursesPage() {
             ) : (
               <div className="space-y-4">
                 {messages?.messages.map((msg) => (
-                  <div key={msg.id} className="flex gap-3 group">
-                    <Avatar className="w-8 h-8">
-                      <AvatarImage src={msg.author.avatar_url || undefined} />
-                      <AvatarFallback className="text-xs bg-purple-500/20 text-purple-300">
-                        {msg.author.name?.slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="flex items-baseline gap-2">
-                        <span
-                          className={cn(
-                            "text-sm font-medium",
-                            msg.author.id === user?.id ? "text-[#00ff88]" : "text-zinc-300"
-                          )}
-                        >
-                          {msg.author.name}
-                        </span>
-                        <span className="text-xs text-zinc-600">
-                          {new Date(msg.created_at).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </span>
-                      </div>
-                      <p className="text-sm text-zinc-300 mt-0.5">{msg.message}</p>
-                    </div>
-                  </div>
+                  <ChatMessage
+                    key={msg.id}
+                    message={msg.message}
+                    imageUrl={msg.image_url}
+                    authorName={msg.author.name}
+                    authorAvatarUrl={msg.author.avatar_url}
+                    authorId={msg.author.id}
+                    currentUserId={user?.id}
+                    timestamp={msg.created_at}
+                  />
                 ))}
                 <div ref={messagesEndRef} />
               </div>
@@ -598,32 +587,13 @@ export default function CoursesPage() {
 
           {/* Message Input */}
           <div className="p-4 border-t border-white/10">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSendMessage();
-              }}
-              className="flex gap-2"
-            >
-              <Input
-                placeholder={`Message #${selectedChannel?.name || "general"}`}
-                value={messageInput}
-                onChange={(e) => setMessageInput(e.target.value.slice(0, 500))}
-                className="flex-1 bg-white/5 border-white/10"
-              />
-              <Button
-                type="submit"
-                disabled={!messageInput.trim() || sendMessageMutation.isPending}
-                className="bg-[#00ff88] hover:bg-[#00ff88]/80 text-black"
-              >
-                {sendMessageMutation.isPending ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Send className="w-4 h-4" />
-                )}
-              </Button>
-            </form>
-            <p className="text-xs text-zinc-600 mt-1 text-right">{messageInput.length}/500</p>
+            <ChatInput
+              placeholder={`Message #${selectedChannel?.name || "general"}`}
+              maxLength={500}
+              onSend={handleSendMessage}
+              getUploadUrl={api.courses.getChatImageUploadUrl}
+              disabled={sendMessageMutation.isPending}
+            />
           </div>
         </div>
       </div>

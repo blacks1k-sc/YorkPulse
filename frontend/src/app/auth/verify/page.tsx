@@ -45,7 +45,7 @@ function VerifyContent() {
         if (data.requires_name_verification) {
           router.push("/auth/setup-profile");
         } else {
-          router.push("/vault");
+          router.push("/");
         }
       }, 1500);
     } catch {

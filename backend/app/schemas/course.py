@@ -149,7 +149,8 @@ class MessageResponse(BaseModel):
 
     id: str
     channel_id: str
-    message: str
+    message: str | None
+    image_url: str | None
     author: MessageAuthor
     created_at: datetime
 
@@ -160,7 +161,28 @@ class MessageResponse(BaseModel):
 class MessageCreate(BaseModel):
     """Create a new message."""
 
-    message: Annotated[str, Field(min_length=1, max_length=500)]
+    message: Annotated[str | None, Field(default=None, max_length=500)] = None
+    image_url: Annotated[str | None, Field(default=None, max_length=500)] = None
+
+    def model_post_init(self, __context) -> None:
+        """Validate that at least one of message or image_url is provided."""
+        if not self.message and not self.image_url:
+            raise ValueError("Message must have either text or an image (or both)")
+
+
+class ChatImageUploadRequest(BaseModel):
+    """Request for chat image upload URL."""
+
+    filename: str
+    content_type: Annotated[str, Field(pattern=r"^image/(jpeg|png|gif|webp)$")]
+
+
+class ChatImageUploadResponse(BaseModel):
+    """Response with presigned upload URL."""
+
+    upload_url: str
+    file_url: str
+    expires_in: int
 
 
 class MessageListResponse(BaseModel):

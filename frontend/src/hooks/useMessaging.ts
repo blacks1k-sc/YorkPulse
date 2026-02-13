@@ -115,8 +115,15 @@ export function useSendMessage() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ conversationId, content }: { conversationId: string; content: string }) =>
-      api.messaging.sendMessage(conversationId, content),
+    mutationFn: ({
+      conversationId,
+      content,
+      imageUrl,
+    }: {
+      conversationId: string;
+      content?: string;
+      imageUrl?: string;
+    }) => api.messaging.sendMessage(conversationId, content, imageUrl),
     onSuccess: (_, { conversationId }) => {
       queryClient.invalidateQueries({ queryKey: ["messaging", "messages", conversationId] });
       queryClient.invalidateQueries({ queryKey: ["messaging", "conversations"] });

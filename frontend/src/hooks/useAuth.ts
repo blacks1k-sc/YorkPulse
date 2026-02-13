@@ -7,7 +7,7 @@ import { useAuthStore } from "@/stores/auth";
 import type { User } from "@/types";
 
 export function useUser() {
-  const { isAuthenticated, setUser, setLoading } = useAuthStore();
+  const { isAuthenticated, setUser } = useAuthStore();
 
   return useQuery({
     queryKey: ["user", "me"],
@@ -19,9 +19,6 @@ export function useUser() {
     enabled: isAuthenticated,
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: false,
-    meta: {
-      onSettled: () => setLoading(false),
-    },
   });
 }
 

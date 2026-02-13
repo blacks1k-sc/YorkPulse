@@ -426,8 +426,17 @@ class ApiClient {
       return this.get<{ messages: Message[]; has_more: boolean }>(`/messages/conversations/${conversationId}/messages${query ? `?${query}` : ""}`);
     },
 
-    sendMessage: (conversationId: string, content: string) =>
-      this.post<Message>(`/messages/conversations/${conversationId}/messages`, { content }),
+    sendMessage: (conversationId: string, content?: string, imageUrl?: string) =>
+      this.post<Message>(`/messages/conversations/${conversationId}/messages`, {
+        content: content || null,
+        image_url: imageUrl || null,
+      }),
+
+    getChatImageUploadUrl: (filename: string, contentType: string) =>
+      this.post<{ upload_url: string; file_url: string; expires_in: number }>(
+        "/messages/upload-image",
+        { filename, content_type: contentType }
+      ),
 
     markAsRead: (conversationId: string) =>
       this.post<void>(`/messages/conversations/${conversationId}/read`),
@@ -557,10 +566,29 @@ class ApiClient {
       );
     },
 
-    sendMessage: (channelId: string, message: string) =>
+    sendMessage: (channelId: string, message?: string, imageUrl?: string) =>
       this.post<CourseMessage>(`/courses/channels/${channelId}/messages`, {
-        message,
+        message: message || null,
+        image_url: imageUrl || null,
       }),
+
+    getChatImageUploadUrl: (filename: string, contentType: string) =>
+      this.post<{ upload_url: string; file_url: string; expires_in: number }>(
+        "/courses/chat/upload-image",
+        { filename, content_type: contentType }
+      ),
+  };
+
+  // Dashboard endpoints
+  dashboard = {
+    getStats: () =>
+      this.get<{
+        marketplace_listings: number;
+        side_quests_active: number;
+        total_courses: number;
+        vault_posts_today: number;
+        total_users: number;
+      }>("/dashboard/stats"),
   };
 
 }

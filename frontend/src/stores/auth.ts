@@ -9,15 +9,13 @@ interface AuthState {
   accessToken: string | null;
   refreshToken: string | null;
   isAuthenticated: boolean;
-  isLoading: boolean;
-  _hasHydrated: boolean;
+  isHydrated: boolean;
 
   // Actions
   setTokens: (accessToken: string, refreshToken: string) => void;
   setUser: (user: User) => void;
   logout: () => void;
-  setLoading: (loading: boolean) => void;
-  setHasHydrated: (hasHydrated: boolean) => void;
+  setHydrated: () => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -27,8 +25,7 @@ export const useAuthStore = create<AuthState>()(
       accessToken: null,
       refreshToken: null,
       isAuthenticated: false,
-      isLoading: true,
-      _hasHydrated: false,
+      isHydrated: false,
 
       setTokens: (accessToken, refreshToken) =>
         set({
@@ -51,8 +48,7 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: false,
         }),
 
-      setLoading: (isLoading) => set({ isLoading }),
-      setHasHydrated: (_hasHydrated) => set({ _hasHydrated }),
+      setHydrated: () => set({ isHydrated: true }),
     }),
     {
       name: "yorkpulse-auth",
@@ -61,15 +57,22 @@ export const useAuthStore = create<AuthState>()(
         refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
       }),
-      onRehydrateStorage: () => (state, error) => {
-        if (!error && state) {
-          // Ensure isAuthenticated matches token presence
-          if (state.accessToken && !state.isAuthenticated) {
-            useAuthStore.setState({ isAuthenticated: true });
-          }
-          useAuthStore.setState({ _hasHydrated: true });
-        }
-      },
     }
   )
 );
+
+// Handle hydration after store is created
+// This runs once on client after the store is initialized
+if (typeof window !== "undefined") {
+  // Use a microtask to ensure store is fully initialized
+  Promise.resolve().then(() => {
+    useAuthStore.persist.onFinishHydration(() => {
+      useAuthStore.getState().setHydrated();
+    });
+
+    // If already hydrated (e.g., no persisted state), set immediately
+    if (useAuthStore.persist.hasHydrated()) {
+      useAuthStore.getState().setHydrated();
+    }
+  });
+}

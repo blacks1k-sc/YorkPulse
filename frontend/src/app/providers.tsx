@@ -10,8 +10,6 @@ import { api } from "@/services/api";
 import { useAuthStore } from "@/stores/auth";
 
 function AuthInitializer() {
-  const { setLoading, _hasHydrated } = useAuthStore();
-
   useEffect(() => {
     // Connect auth store to API client
     api.setTokenGetter(() => useAuthStore.getState().accessToken);
@@ -19,13 +17,6 @@ function AuthInitializer() {
       useAuthStore.getState().logout();
     });
   }, []);
-
-  useEffect(() => {
-    // Mark loading as complete only after hydration is done
-    if (_hasHydrated) {
-      setLoading(false);
-    }
-  }, [_hasHydrated, setLoading]);
 
   return null;
 }

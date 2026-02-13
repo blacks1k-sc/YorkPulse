@@ -2,7 +2,7 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import String, Text, ForeignKey, DateTime, Enum, Index
+from sqlalchemy import String, Text, ForeignKey, DateTime, Enum, Index, CheckConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -103,9 +103,13 @@ class Message(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "messages"
 
     # Content
-    content: Mapped[str] = mapped_column(
+    content: Mapped[str | None] = mapped_column(
         Text,
-        nullable=False,
+        nullable=True,
+    )
+    image_url: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
     )
 
     # Relations
@@ -141,6 +145,13 @@ class Message(Base, UUIDMixin, TimestampMixin):
     )
     sender: Mapped["User"] = relationship(
         "User",
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "content IS NOT NULL OR image_url IS NOT NULL",
+            name="ck_messages_has_content",
+        ),
     )
 
     def __repr__(self) -> str:

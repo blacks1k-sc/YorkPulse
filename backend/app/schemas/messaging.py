@@ -22,7 +22,8 @@ class MessageResponse(BaseModel):
     id: str
     conversation_id: str
     sender_id: str
-    content: str
+    content: str | None
+    image_url: str | None
     is_deleted: bool
     is_read: bool
     read_at: datetime | None
@@ -95,7 +96,28 @@ class ConversationDetailResponse(BaseModel):
 class MessageCreate(BaseModel):
     """Schema for sending a message."""
 
-    content: Annotated[str, Field(min_length=1, max_length=2000)]
+    content: Annotated[str | None, Field(default=None, max_length=2000)] = None
+    image_url: Annotated[str | None, Field(default=None, max_length=500)] = None
+
+    def model_post_init(self, __context) -> None:
+        """Validate that at least one of content or image_url is provided."""
+        if not self.content and not self.image_url:
+            raise ValueError("Message must have either text or an image (or both)")
+
+
+class ChatImageUploadRequest(BaseModel):
+    """Request for chat image upload URL."""
+
+    filename: str
+    content_type: Annotated[str, Field(pattern=r"^image/(jpeg|png|gif|webp)$")]
+
+
+class ChatImageUploadResponse(BaseModel):
+    """Response with presigned upload URL."""
+
+    upload_url: str
+    file_url: str
+    expires_in: int
 
 
 class MessageListResponse(BaseModel):

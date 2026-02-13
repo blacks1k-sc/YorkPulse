@@ -260,9 +260,13 @@ class CourseMessage(Base, UUIDMixin):
         nullable=False,
         index=True,
     )
-    message: Mapped[str] = mapped_column(
+    message: Mapped[str | None] = mapped_column(
         Text,
-        nullable=False,
+        nullable=True,
+    )
+    image_url: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -278,7 +282,14 @@ class CourseMessage(Base, UUIDMixin):
 
     __table_args__ = (
         Index("ix_course_messages_channel_created", "channel_id", "created_at"),
-        CheckConstraint("LENGTH(message) <= 500", name="ck_course_messages_length"),
+        CheckConstraint(
+            "message IS NOT NULL OR image_url IS NOT NULL",
+            name="ck_course_messages_has_content",
+        ),
+        CheckConstraint(
+            "message IS NULL OR LENGTH(message) <= 500",
+            name="ck_course_messages_length",
+        ),
     )
 
     def __repr__(self) -> str:

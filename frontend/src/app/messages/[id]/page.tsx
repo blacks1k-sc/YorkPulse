@@ -15,6 +15,7 @@ import {
   Loader2,
   AlertCircle,
   Clock,
+  ImagePlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -38,6 +39,7 @@ import { useRealtimeMessages } from "@/hooks/useRealtimeMessages";
 import { useUser } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { api } from "@/services/api";
 
 export default function ConversationPage() {
   const params = useParams();
@@ -47,9 +49,13 @@ export default function ConversationPage() {
   const { toast } = useToast();
 
   const [message, setMessage] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: conversation, isLoading: conversationLoading } =
     useConversation(conversationId);
@@ -98,24 +104,107 @@ export default function ConversationPage() {
     e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
   };
 
+  const processImageFile = (file: File) => {
+    if (!file.type.match(/^image\/(jpeg|png|gif|webp)$/)) {
+      toast({
+        title: "Invalid file type",
+        description: "Please select a JPG, PNG, GIF, or WebP image",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please select an image smaller than 5MB",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onload = (e) => setImagePreview(e.target?.result as string);
+    reader.readAsDataURL(file);
+    return true;
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    processImageFile(file);
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (file) {
+          const namedFile = new File(
+            [file],
+            `clipboard-${Date.now()}.png`,
+            { type: file.type }
+          );
+          processImageFile(namedFile);
+        }
+        break;
+      }
+    }
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!message.trim() || sendMessageMutation.isPending) return;
+    if ((!message.trim() && !imageFile) || sendMessageMutation.isPending || isUploading) return;
 
     // Can only send if active, or if pending and user is initiator
     if (isBlocked) return;
     if (isPending && !isInitiator) return;
 
+    let imageUrl: string | undefined;
+
     try {
+      // Upload image first if present
+      if (imageFile) {
+        setIsUploading(true);
+        const { upload_url, file_url } = await api.messaging.getChatImageUploadUrl(
+          imageFile.name,
+          imageFile.type
+        );
+
+        const uploadResponse = await fetch(upload_url, {
+          method: "PUT",
+          body: imageFile,
+          headers: { "Content-Type": imageFile.type },
+        });
+
+        if (!uploadResponse.ok) throw new Error("Failed to upload image");
+        imageUrl = file_url;
+        setIsUploading(false);
+      }
+
       await sendMessageMutation.mutateAsync({
         conversationId,
-        content: message.trim(),
+        content: message.trim() || undefined,
+        imageUrl,
       });
       setMessage("");
+      removeImage();
       if (inputRef.current) {
         inputRef.current.style.height = "auto";
       }
     } catch (error) {
+      setIsUploading(false);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to send message",
@@ -380,9 +469,27 @@ export default function ConversationPage() {
                       {msg.is_deleted ? (
                         <p className="text-sm italic text-zinc-400">Message deleted</p>
                       ) : (
-                        <p className="text-sm whitespace-pre-wrap break-words">
-                          {msg.content}
-                        </p>
+                        <>
+                          {msg.image_url && (
+                            <a
+                              href={msg.image_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block mb-2"
+                            >
+                              <img
+                                src={msg.image_url}
+                                alt="Shared image"
+                                className="max-w-full max-h-[200px] rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                              />
+                            </a>
+                          )}
+                          {msg.content && (
+                            <p className="text-sm whitespace-pre-wrap break-words">
+                              {msg.content}
+                            </p>
+                          )}
+                        </>
                       )}
                       <div
                         className={cn(
@@ -500,17 +607,66 @@ export default function ConversationPage() {
           onSubmit={handleSend}
           className="p-4 border-t border-white/10 bg-white/5 backdrop-blur-xl"
         >
+          {/* Image Preview */}
+          {imagePreview && (
+            <div className="mb-2 relative inline-block">
+              <div className="relative rounded-lg overflow-hidden border border-white/10 bg-white/5">
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  className="max-h-24 max-w-[150px] object-contain"
+                />
+                <button
+                  type="button"
+                  onClick={removeImage}
+                  disabled={isUploading || sendMessageMutation.isPending}
+                  className="absolute top-1 right-1 p-1 rounded-full bg-black/60 hover:bg-black/80 transition-colors"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+                {isUploading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                    <Loader2 className="w-5 h-5 animate-spin text-white" />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="flex items-end gap-2">
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/gif,image/webp"
+              onChange={handleImageSelect}
+              className="hidden"
+              disabled={isUploading || sendMessageMutation.isPending}
+            />
+
+            {/* Image upload button */}
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading || sendMessageMutation.isPending}
+              className="h-11 w-11 rounded-xl text-zinc-400 hover:text-zinc-200 hover:bg-white/10"
+            >
+              <ImagePlus className="w-5 h-5" />
+            </Button>
+
             <div className="flex-1 relative">
               <textarea
                 ref={inputRef}
-                placeholder="Type a message..."
+                placeholder={imageFile ? "Add a caption..." : "Type a message..."}
                 value={message}
                 onChange={handleTextareaChange}
                 onKeyDown={handleKeyDown}
+                onPaste={handlePaste}
                 rows={1}
                 className="w-full resize-none rounded-2xl bg-white/10 border border-white/10 px-4 py-3 text-sm placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
-                disabled={sendMessageMutation.isPending}
+                disabled={isUploading || sendMessageMutation.isPending}
                 style={{ maxHeight: "120px" }}
               />
             </div>
@@ -519,11 +675,11 @@ export default function ConversationPage() {
               size="icon"
               className={cn(
                 "h-11 w-11 rounded-xl transition-all duration-200",
-                message.trim()
+                (message.trim() || imageFile)
                   ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 shadow-lg shadow-purple-500/25"
                   : "bg-zinc-800 text-zinc-500"
               )}
-              disabled={!message.trim() || sendMessageMutation.isPending}
+              disabled={(!message.trim() && !imageFile) || isUploading || sendMessageMutation.isPending}
             >
               {sendMessageMutation.isPending ? (
                 <Loader2 className="w-5 h-5 animate-spin" />

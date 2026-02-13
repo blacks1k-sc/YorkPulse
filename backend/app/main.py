@@ -6,8 +6,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.core.middleware import RateLimitMiddleware
-from app.api.routes import auth, buddy, courses, health, marketplace, messaging, reports, reviews, transactions, vault
+from app.core.middleware import RateLimitMiddleware, TimingMiddleware
+from app.api.routes import auth, buddy, courses, dashboard, health, marketplace, messaging, reports, reviews, transactions, vault
 from app.services.redis import redis_service
 from app.core.database import async_session_maker
 
@@ -90,6 +90,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Timing middleware (logs slow requests > 1s)
+app.add_middleware(TimingMiddleware)
+
 # Rate limiting (add after CORS)
 # Uncomment when Redis is available:
 # app.add_middleware(RateLimitMiddleware)
@@ -105,6 +108,7 @@ app.include_router(reviews.router, prefix=settings.api_prefix)
 app.include_router(transactions.router, prefix=settings.api_prefix)
 app.include_router(reports.router, prefix=settings.api_prefix)
 app.include_router(courses.router, prefix=settings.api_prefix)
+app.include_router(dashboard.router, prefix=settings.api_prefix)
 
 
 @app.get("/")
