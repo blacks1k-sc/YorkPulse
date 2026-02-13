@@ -182,3 +182,76 @@ export interface ApiError {
   detail: string;
   code?: string;
 }
+
+// Course types
+export type ChannelType = "general" | "professor";
+
+export interface Course {
+  id: string;
+  code: string;
+  name: string;
+  faculty: string;
+  programs: string[];
+  year: number;
+  credits: number | null;
+  campus: string | null;
+  member_count: number;
+  created_at: string;
+}
+
+export interface CourseChannel {
+  id: string;
+  course_id: string;
+  name: string;
+  type: ChannelType;
+  member_count: number;
+  is_active: boolean;
+  prof_name: string | null;
+  semester: string | null;
+  created_at: string;
+}
+
+export interface CourseMessage {
+  id: string;
+  channel_id: string;
+  message: string;
+  author: {
+    id: string;
+    name: string;
+    avatar_url: string | null;
+  };
+  created_at: string;
+}
+
+export interface CourseHierarchy {
+  faculties: Array<{
+    name: string;
+    programs: Array<{
+      name: string;
+      years: Array<{
+        year: number;
+        courses: Array<{
+          id: string;
+          code: string;
+          name: string;
+          member_count: number;
+        }>;
+      }>;
+    }>;
+  }>;
+}
+
+export interface VoteStatus {
+  prof_name: string;
+  prof_name_normalized: string;
+  vote_count: number;
+  threshold: number;
+  has_voted: boolean;
+  semester: string;
+}
+
+export interface CourseMembership {
+  course: Course;
+  joined_at: string;
+  channel_count: number;
+}

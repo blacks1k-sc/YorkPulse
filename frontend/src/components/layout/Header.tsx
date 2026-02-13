@@ -13,6 +13,7 @@ import {
   User,
   LogOut,
   Plus,
+  GraduationCap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -32,6 +33,7 @@ const navItems = [
   { href: "/vault", label: "The Vault", icon: Shield },
   { href: "/marketplace", label: "Marketplace", icon: ShoppingBag },
   { href: "/quests", label: "Side Quests", icon: Users },
+  { href: "/courses", label: "Courses", icon: GraduationCap },
   { href: "/messages", label: "Messages", icon: MessageCircle },
 ];
 

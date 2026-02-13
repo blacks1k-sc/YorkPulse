@@ -12,6 +12,12 @@ import type {
   Message,
   Review,
   PaginatedResponse,
+  Course,
+  CourseChannel,
+  CourseMessage,
+  CourseHierarchy,
+  VoteStatus,
+  CourseMembership,
 } from "@/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -482,6 +488,79 @@ class ApiClient {
       status: string;
       created_at: string;
     }>("/users/report", data),
+  };
+
+  // Course chat endpoints
+  courses = {
+    // Discovery
+    getHierarchy: (campus?: string) => {
+      const query = campus ? `?campus=${campus}` : "";
+      return this.get<CourseHierarchy>(`/courses/hierarchy${query}`);
+    },
+
+    search: (q: string, limit = 20) =>
+      this.get<{ results: Array<{ id: string; code: string; name: string; faculty: string; year: number; member_count: number }>; total: number }>(
+        `/courses/search?q=${encodeURIComponent(q)}&limit=${limit}`
+      ),
+
+    getCourse: (courseId: string) => this.get<Course>(`/courses/${courseId}`),
+
+    // Membership
+    getMyCourses: () =>
+      this.get<{ courses: CourseMembership[] }>("/courses/my/courses"),
+
+    joinCourse: (courseId: string) =>
+      this.post<{
+        course: Course;
+        general_channel: CourseChannel;
+        message: string;
+      }>(`/courses/${courseId}/join`),
+
+    leaveCourse: (courseId: string) =>
+      this.post<{ message: string }>(`/courses/${courseId}/leave`),
+
+    // Channels
+    getChannels: (courseId: string) =>
+      this.get<{ channels: CourseChannel[] }>(`/courses/${courseId}/channels`),
+
+    joinChannel: (channelId: string) =>
+      this.post<{ channel: CourseChannel; message: string }>(
+        `/courses/channels/${channelId}/join`
+      ),
+
+    // Voting
+    getVoteStatus: (courseId: string) =>
+      this.get<{ votes: VoteStatus[]; current_semester: string }>(
+        `/courses/${courseId}/vote-status`
+      ),
+
+    voteForProfessor: (courseId: string, profName: string, semester?: string) =>
+      this.post<{
+        vote_count: number;
+        threshold: number;
+        channel_created: boolean;
+        channel: CourseChannel | null;
+        message: string;
+      }>(`/courses/${courseId}/vote-professor`, {
+        prof_name: profName,
+        semester,
+      }),
+
+    // Messages
+    getMessages: (channelId: string, params?: { before?: string; limit?: number }) => {
+      const searchParams = new URLSearchParams();
+      if (params?.before) searchParams.set("before", params.before);
+      if (params?.limit) searchParams.set("limit", params.limit.toString());
+      const query = searchParams.toString();
+      return this.get<{ messages: CourseMessage[]; has_more: boolean }>(
+        `/courses/channels/${channelId}/messages${query ? `?${query}` : ""}`
+      );
+    },
+
+    sendMessage: (channelId: string, message: string) =>
+      this.post<CourseMessage>(`/courses/channels/${channelId}/messages`, {
+        message,
+      }),
   };
 
 }

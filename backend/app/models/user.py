@@ -156,6 +156,12 @@ class User(Base, UUIDMixin, TimestampMixin):
         back_populates="reported_user",
         lazy="dynamic",
     )
+    # Course membership relationships
+    course_memberships: Mapped[list["CourseMember"]] = relationship(
+        "CourseMember",
+        back_populates="user",
+        lazy="dynamic",
+    )
 
     def __repr__(self) -> str:
         return f"<User {self.email}>"
@@ -169,3 +175,4 @@ from app.models.review import Review  # noqa: E402, F401
 from app.models.transaction import MarketplaceTransaction  # noqa: E402, F401
 from app.models.marketplace_review import MarketplaceReview  # noqa: E402, F401
 from app.models.report import UserReport  # noqa: E402, F401
+from app.models.course import CourseMember  # noqa: E402, F401
