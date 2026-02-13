@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.middleware import RateLimitMiddleware, TimingMiddleware
-from app.api.routes import auth, buddy, courses, dashboard, health, marketplace, messaging, reports, reviews, transactions, vault
+from app.api.routes import auth, buddy, courses, dashboard, feedback, health, marketplace, messaging, reports, reviews, transactions, vault
 from app.services.redis import redis_service
 from app.core.database import async_session_maker
 
@@ -109,6 +109,7 @@ app.include_router(transactions.router, prefix=settings.api_prefix)
 app.include_router(reports.router, prefix=settings.api_prefix)
 app.include_router(courses.router, prefix=settings.api_prefix)
 app.include_router(dashboard.router, prefix=settings.api_prefix)
+app.include_router(feedback.router, prefix=settings.api_prefix)
 
 
 @app.get("/")

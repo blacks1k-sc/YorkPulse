@@ -32,6 +32,42 @@ from app.services.s3 import s3_service
 router = APIRouter(prefix="/messages", tags=["Messaging"])
 
 
+@router.get("/unread-count")
+async def get_total_unread_count(
+    user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Get total unread message count across all conversations for the current user."""
+    # Get all active conversations for this user
+    conversations_result = await db.execute(
+        select(Conversation.id)
+        .where(
+            or_(
+                Conversation.user1_id == user.id,
+                Conversation.user2_id == user.id,
+            )
+        )
+        .where(Conversation.status == ConversationStatus.ACTIVE)
+    )
+    conversation_ids = [c for c in conversations_result.scalars().all()]
+
+    if not conversation_ids:
+        return {"unread_count": 0}
+
+    # Count unread messages (messages from others that haven't been read)
+    unread_result = await db.execute(
+        select(func.count())
+        .select_from(Message)
+        .where(Message.conversation_id.in_(conversation_ids))
+        .where(Message.sender_id != user.id)
+        .where(Message.read_at.is_(None))
+        .where(Message.is_deleted == False)
+    )
+    total_unread = unread_result.scalar() or 0
+
+    return {"unread_count": total_unread}
+
+
 @router.post("/upload-image", response_model=ChatImageUploadResponse)
 async def get_chat_image_upload_url(
     request: ChatImageUploadRequest,

@@ -22,7 +22,8 @@ class BuddyRequestCreate(BaseModel):
     latitude: Annotated[float | None, Field(ge=-90, le=90)] = None
     longitude: Annotated[float | None, Field(ge=-180, le=180)] = None
     vibe_level: VibeLevel = VibeLevel.CHILL
-    max_participants: Annotated[int, Field(ge=1, le=10)] = 2
+    custom_vibe_level: Annotated[str | None, Field(max_length=50)] = None
+    max_participants: Annotated[int, Field(ge=1, le=100)] = 2
     requires_approval: bool = True
 
     @field_validator("custom_category")
@@ -31,6 +32,14 @@ class BuddyRequestCreate(BaseModel):
         # custom_category required if category is CUSTOM
         if info.data.get("category") == BuddyCategory.CUSTOM and not v:
             raise ValueError("custom_category required when category is 'custom'")
+        return v
+
+    @field_validator("custom_vibe_level")
+    @classmethod
+    def validate_custom_vibe_level(cls, v: str | None, info) -> str | None:
+        # custom_vibe_level required if vibe_level is CUSTOM
+        if info.data.get("vibe_level") == VibeLevel.CUSTOM and not v:
+            raise ValueError("custom_vibe_level required when vibe_level is 'custom'")
         return v
 
     @field_validator("start_time")
@@ -64,7 +73,8 @@ class BuddyRequestUpdate(BaseModel):
     latitude: Annotated[float | None, Field(ge=-90, le=90)] = None
     longitude: Annotated[float | None, Field(ge=-180, le=180)] = None
     vibe_level: VibeLevel | None = None
-    max_participants: Annotated[int | None, Field(ge=1, le=10)] = None
+    custom_vibe_level: Annotated[str | None, Field(max_length=50)] = None
+    max_participants: Annotated[int | None, Field(ge=1, le=100)] = None
     requires_approval: bool | None = None
     status: BuddyRequestStatus | None = None
 
@@ -83,6 +93,7 @@ class BuddyRequestResponse(BaseModel):
     latitude: float | None
     longitude: float | None
     vibe_level: VibeLevel
+    custom_vibe_level: str | None
     max_participants: int
     current_participants: int
     requires_approval: bool

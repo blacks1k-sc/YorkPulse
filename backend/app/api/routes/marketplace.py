@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, UploadFile, File
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -367,6 +367,56 @@ async def get_image_upload_url(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e),
+        )
+
+
+@router.post("/upload-image-direct")
+async def upload_image_direct(
+    user: VerifiedUser,
+    file: UploadFile = File(...),
+):
+    """Upload an image directly through the backend (avoids CORS issues)."""
+    # Validate content type
+    allowed_types = ["image/jpeg", "image/png", "image/webp"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid file type. Only JPEG, PNG, and WebP are allowed.",
+        )
+
+    # Validate file size (max 5MB)
+    content = await file.read()
+    if len(content) > 5 * 1024 * 1024:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File too large. Maximum size is 5MB.",
+        )
+
+    try:
+        # Generate file key
+        from datetime import datetime
+        import uuid as uuid_module
+        timestamp = datetime.utcnow().strftime("%Y%m%d")
+        unique_id = str(uuid_module.uuid4())[:8]
+        extension = file.filename.rsplit(".", 1)[-1] if file.filename and "." in file.filename else "jpg"
+        file_key = f"marketplace/{timestamp}/{unique_id}.{extension}"
+
+        # Upload to S3
+        s3_service.client.put_object(
+            Bucket=s3_service.bucket_name,
+            Key=file_key,
+            Body=content,
+            ContentType=file.content_type,
+        )
+
+        # Generate public URL
+        public_url = f"https://{s3_service.bucket_name}.s3.{s3_service.region}.amazonaws.com/{file_key}"
+
+        return {"public_url": public_url, "file_key": file_key}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to upload image: {str(e)}",
         )
 
 

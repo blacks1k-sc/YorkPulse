@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   Shield,
   ShoppingBag,
   Loader2,
+  ImagePlus,
+  X,
 } from "lucide-react";
+import { api } from "@/services/api";
 import {
   Dialog,
   DialogContent,
@@ -71,6 +74,9 @@ export function CreateModal() {
   // Marketplace specific
   const [price, setPrice] = useState("");
   const [condition, setCondition] = useState("");
+  const [images, setImages] = useState<string[]>([]);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const createVaultPost = useCreateVaultPost();
   const createListing = useCreateListing();
@@ -90,6 +96,69 @@ export function CreateModal() {
     setIsAnonymous(true);
     setPrice("");
     setCondition("");
+    setImages([]);
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    // Limit to 5 images
+    if (images.length >= 5) {
+      toast({
+        title: "Maximum 5 images",
+        description: "You can only upload up to 5 images per listing",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploadingImage(true);
+
+    try {
+      for (const file of Array.from(files)) {
+        if (images.length >= 5) break;
+
+        // Validate file type
+        if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+          toast({
+            title: "Invalid file type",
+            description: "Only JPEG, PNG, and WebP images are allowed",
+            variant: "destructive",
+          });
+          continue;
+        }
+
+        // Validate file size (5MB max)
+        if (file.size > 5 * 1024 * 1024) {
+          toast({
+            title: "File too large",
+            description: "Maximum file size is 5MB",
+            variant: "destructive",
+          });
+          continue;
+        }
+
+        // Upload directly through backend (avoids CORS issues)
+        const { public_url } = await api.marketplace.uploadImageDirect(file);
+        setImages((prev) => [...prev, public_url]);
+      }
+    } catch (error) {
+      toast({
+        title: "Upload failed",
+        description: error instanceof Error ? error.message : "Failed to upload image",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingImage(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleClose = () => {
@@ -118,6 +187,7 @@ export function CreateModal() {
           price: parseFloat(price),
           category,
           condition,
+          images: images.length > 0 ? images : undefined,
         });
         toast({ title: "Listing created" });
         handleClose();
@@ -235,36 +305,89 @@ export function CreateModal() {
 
           {/* Marketplace specific fields */}
           {createModalType === "marketplace" && (
-            <div className="grid grid-cols-2 gap-4">
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="price">Price ($)</Label>
+                  <Input
+                    id="price"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Condition</Label>
+                  <Select value={condition} onValueChange={setCondition} required>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {conditions.map((cond) => (
+                        <SelectItem key={cond.value} value={cond.value}>
+                          {cond.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Image Upload */}
               <div className="space-y-2">
-                <Label htmlFor="price">Price ($)</Label>
-                <Input
-                  id="price"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  required
+                <Label>Photos (up to 5)</Label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  multiple
+                  className="hidden"
+                  onChange={handleImageUpload}
                 />
+                <div className="flex flex-wrap gap-2">
+                  {images.map((url, index) => (
+                    <div
+                      key={index}
+                      className="relative w-20 h-20 rounded-lg overflow-hidden border border-white/10"
+                    >
+                      <img
+                        src={url}
+                        alt={`Image ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index)}
+                        className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/70 flex items-center justify-center hover:bg-red-600 transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                  {images.length < 5 && (
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploadingImage}
+                      className="w-20 h-20 rounded-lg border-2 border-dashed border-white/20 hover:border-coral-500/50 transition-colors flex flex-col items-center justify-center gap-1 text-zinc-500 hover:text-coral-400"
+                    >
+                      {isUploadingImage ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : (
+                        <>
+                          <ImagePlus className="w-5 h-5" />
+                          <span className="text-[10px]">Add</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label>Condition</Label>
-                <Select value={condition} onValueChange={setCondition} required>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {conditions.map((cond) => (
-                      <SelectItem key={cond.value} value={cond.value}>
-                        {cond.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+            </>
           )}
 
           {/* Submit */}

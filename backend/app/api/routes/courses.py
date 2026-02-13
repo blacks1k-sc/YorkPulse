@@ -96,7 +96,7 @@ def _course_to_response(course: Course) -> CourseResponse:
     )
 
 
-def _channel_to_response(channel: CourseChannel) -> ChannelResponse:
+def _channel_to_response(channel: CourseChannel, unread_count: int = 0) -> ChannelResponse:
     """Convert channel model to response."""
     return ChannelResponse(
         id=str(channel.id),
@@ -108,6 +108,7 @@ def _channel_to_response(channel: CourseChannel) -> ChannelResponse:
         prof_name=channel.prof_name,
         semester=channel.semester,
         created_at=channel.created_at,
+        unread_count=unread_count,
     )
 
 
@@ -260,7 +261,7 @@ async def get_my_courses(
     user: CurrentUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    """Get user's joined courses."""
+    """Get user's joined courses with unread message counts."""
     result = await db.execute(
         select(CourseMember)
         .options(selectinload(CourseMember.course).selectinload(Course.channels))
@@ -272,12 +273,37 @@ async def get_my_courses(
     courses = []
     for membership in memberships:
         course = membership.course
-        channel_count = len([c for c in course.channels if c.is_active])
+        active_channels = [c for c in course.channels if c.is_active]
+        channel_count = len(active_channels)
+
+        # Calculate unread count across all channels in this course
+        unread_count = 0
+        for channel in active_channels:
+            # Get user's channel membership to check last_read_at
+            channel_member_result = await db.execute(
+                select(ChannelMember)
+                .where(ChannelMember.user_id == user.id)
+                .where(ChannelMember.channel_id == channel.id)
+            )
+            channel_member = channel_member_result.scalar_one_or_none()
+
+            if channel_member:
+                # Count messages after last_read_at (or joined_at if never read)
+                last_read = channel_member.last_read_at or channel_member.joined_at
+                count_result = await db.execute(
+                    select(func.count())
+                    .select_from(CourseMessage)
+                    .where(CourseMessage.channel_id == channel.id)
+                    .where(CourseMessage.created_at > last_read)
+                    .where(CourseMessage.user_id != user.id)  # Don't count own messages
+                )
+                unread_count += count_result.scalar() or 0
 
         courses.append(CourseMembershipResponse(
             course=_course_to_response(course),
             joined_at=membership.joined_at,
             channel_count=channel_count,
+            unread_count=unread_count,
         ))
 
     return MyCoursesResponse(courses=courses)
@@ -420,7 +446,7 @@ async def get_course_channels(
     user: CurrentUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    """Get all channels in a course."""
+    """Get all channels in a course with unread message counts."""
     # Verify user is a member
     membership = await db.execute(
         select(CourseMember)
@@ -438,9 +464,33 @@ async def get_course_channels(
     )
     channels = result.scalars().all()
 
-    return ChannelListResponse(
-        channels=[_channel_to_response(c) for c in channels]
-    )
+    # Calculate unread counts for each channel
+    channel_responses = []
+    for channel in channels:
+        unread_count = 0
+        # Get user's channel membership
+        channel_member_result = await db.execute(
+            select(ChannelMember)
+            .where(ChannelMember.user_id == user.id)
+            .where(ChannelMember.channel_id == channel.id)
+        )
+        channel_member = channel_member_result.scalar_one_or_none()
+
+        if channel_member:
+            # Count messages after last_read_at (or joined_at if never read)
+            last_read = channel_member.last_read_at or channel_member.joined_at
+            count_result = await db.execute(
+                select(func.count())
+                .select_from(CourseMessage)
+                .where(CourseMessage.channel_id == channel.id)
+                .where(CourseMessage.created_at > last_read)
+                .where(CourseMessage.user_id != user.id)
+            )
+            unread_count = count_result.scalar() or 0
+
+        channel_responses.append(_channel_to_response(channel, unread_count))
+
+    return ChannelListResponse(channels=channel_responses)
 
 
 @router.post("/channels/{channel_id}/join", response_model=ChannelJoinResponse)
@@ -770,6 +820,17 @@ async def get_channel_messages(
 
     # Reverse to chronological order
     messages = list(reversed(messages))
+
+    # Mark messages as read by updating last_read_at for this channel
+    channel_member_result = await db.execute(
+        select(ChannelMember)
+        .where(ChannelMember.user_id == user.id)
+        .where(ChannelMember.channel_id == channel.id)
+    )
+    channel_member = channel_member_result.scalar_one_or_none()
+    if channel_member:
+        channel_member.last_read_at = datetime.now(timezone.utc)
+        await db.commit()
 
     return MessageListResponse(
         messages=[_message_to_response(m, m.user) for m in messages],

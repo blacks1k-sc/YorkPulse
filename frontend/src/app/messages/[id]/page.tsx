@@ -323,20 +323,24 @@ export default function ConversationPage() {
           </Link>
         </Button>
 
-        <Avatar className="w-10 h-10 ring-2 ring-purple-500/30">
-          <AvatarImage src={otherUser?.avatar_url || undefined} />
-          <AvatarFallback className="bg-gradient-to-br from-purple-500/30 to-pink-500/30 text-purple-300 font-semibold">
-            {otherUser?.name
-              .split(" ")
-              .map((n) => n[0])
-              .join("")
-              .toUpperCase()
-              .slice(0, 2)}
-          </AvatarFallback>
-        </Avatar>
+        <Link href={`/profile/${otherUser?.id}`}>
+          <Avatar className="w-10 h-10 ring-2 ring-purple-500/30 cursor-pointer hover:ring-purple-500/50 transition-all">
+            <AvatarImage src={otherUser?.avatar_url || undefined} />
+            <AvatarFallback className="bg-gradient-to-br from-purple-500/30 to-pink-500/30 text-purple-300 font-semibold">
+              {otherUser?.name
+                .split(" ")
+                .map((n) => n[0])
+                .join("")
+                .toUpperCase()
+                .slice(0, 2)}
+            </AvatarFallback>
+          </Avatar>
+        </Link>
 
         <div className="flex-1 min-w-0">
-          <p className="font-medium truncate">{otherUser?.name || "Unknown"}</p>
+          <Link href={`/profile/${otherUser?.id}`} className="hover:underline">
+            <p className="font-medium truncate">{otherUser?.name || "Unknown"}</p>
+          </Link>
           {isPending && !isInitiator && (
             <p className="text-xs text-yellow-400 flex items-center gap-1">
               <Clock className="w-3 h-3" />
@@ -449,12 +453,14 @@ export default function ConversationPage() {
                     {!isOwn && (
                       <div className="w-6 flex-shrink-0">
                         {showAvatar && (
-                          <Avatar className="w-6 h-6">
-                            <AvatarImage src={otherUser?.avatar_url || undefined} />
-                            <AvatarFallback className="text-[10px] bg-purple-500/20 text-purple-300">
-                              {otherUser?.name?.[0]?.toUpperCase() || "?"}
-                            </AvatarFallback>
-                          </Avatar>
+                          <Link href={`/profile/${otherUser?.id}`}>
+                            <Avatar className="w-6 h-6 cursor-pointer hover:ring-2 hover:ring-purple-500/50 transition-all">
+                              <AvatarImage src={otherUser?.avatar_url || undefined} />
+                              <AvatarFallback className="text-[10px] bg-purple-500/20 text-purple-300">
+                                {otherUser?.name?.[0]?.toUpperCase() || "?"}
+                              </AvatarFallback>
+                            </Avatar>
+                          </Link>
                         )}
                       </div>
                     )}

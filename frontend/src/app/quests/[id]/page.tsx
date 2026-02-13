@@ -77,6 +77,7 @@ const vibeLevelLabels: Record<VibeLevel, { label: string; emoji: string }> = {
   intermediate: { label: "Intermediate", emoji: "👍" },
   high_energy: { label: "High Energy", emoji: "⚡" },
   intense: { label: "Intense", emoji: "🔥" },
+  custom: { label: "Custom", emoji: "✨" },
 };
 
 export default function QuestDetailPage() {
@@ -345,7 +346,9 @@ export default function QuestDetailPage() {
                   : catConfig.label}
               </Badge>
               <Badge variant="outline" className="text-sm border-white/10">
-                {vibeInfo.emoji} {vibeInfo.label}
+                {vibeInfo.emoji} {quest.vibe_level === "custom" && quest.custom_vibe_level
+                  ? quest.custom_vibe_level
+                  : vibeInfo.label}
               </Badge>
             </div>
             <Badge
@@ -432,7 +435,9 @@ export default function QuestDetailPage() {
           )}
           <div className="flex items-center gap-3">
             <Zap className="w-5 h-5 text-green-400" />
-            <span>{vibeInfo.emoji} {vibeInfo.label} vibe</span>
+            <span>{vibeInfo.emoji} {quest.vibe_level === "custom" && quest.custom_vibe_level
+              ? quest.custom_vibe_level
+              : vibeInfo.label} vibe</span>
           </div>
           <div className="flex items-center gap-3">
             <Users className="w-5 h-5 text-green-400" />

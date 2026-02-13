@@ -226,6 +226,10 @@ class ChannelMember(Base, UUIDMixin):
         server_default="now()",
         nullable=False,
     )
+    last_read_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
 
     # Relationships
     user: Mapped["User"] = relationship("User")

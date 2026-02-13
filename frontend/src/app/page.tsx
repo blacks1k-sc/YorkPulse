@@ -18,10 +18,21 @@ import {
   Lion,
   ArrowRight,
   CheckCircle2,
+  MessageSquarePlus,
+  Bug,
+  Lightbulb,
+  AlertCircle,
+  HelpCircle,
+  Send,
+  Loader2,
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 import { useAuthStore } from "@/stores/auth";
 import { api } from "@/services/api";
 import { cn } from "@/lib/utils";
@@ -220,6 +231,7 @@ const itemVariants = {
 function FeatureCard({
   feature,
   stats,
+  unreadMessages,
 }: {
   feature: (typeof dashboardFeatures)[0];
   stats?: {
@@ -229,8 +241,10 @@ function FeatureCard({
     vault_posts_today: number;
     total_users: number;
   };
+  unreadMessages?: number;
 }) {
   const statValue = stats?.[feature.statKey];
+  const isMessagesFeature = feature.href === "/messages";
 
   return (
     <Link href={feature.href}>
@@ -253,20 +267,32 @@ function FeatureCard({
           )}
         />
 
+        {/* Unread badge for messages */}
+        {isMessagesFeature && unreadMessages && unreadMessages > 0 && (
+          <div className="absolute top-4 right-4 min-w-[24px] h-6 flex items-center justify-center px-2 text-xs font-bold text-white bg-red-500 rounded-full z-10">
+            {unreadMessages > 99 ? "99+" : unreadMessages}
+          </div>
+        )}
+
         {/* Content */}
         <div className="relative">
           {/* Icon + Emoji */}
           <div className="flex items-center gap-3 mb-4">
             <div
               className={cn(
-                "w-12 h-12 rounded-xl flex items-center justify-center",
+                "w-12 h-12 rounded-xl flex items-center justify-center relative",
                 "bg-white/5 group-hover:bg-white/10 transition-colors"
               )}
             >
               <span className="text-2xl">{feature.emoji}</span>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-white">{feature.title}</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg font-semibold text-white">{feature.title}</h3>
+                {isMessagesFeature && unreadMessages && unreadMessages > 0 && (
+                  <span className="text-xs text-red-400">({unreadMessages} unread)</span>
+                )}
+              </div>
               {statValue !== undefined && (
                 <p className="text-xs text-zinc-500">
                   {statValue.toLocaleString()} {feature.statLabel}
@@ -367,6 +393,151 @@ function SafetyBanner() {
   );
 }
 
+// Feedback types with icons
+const feedbackTypes = [
+  { value: "suggestion" as const, label: "Suggestion", icon: Lightbulb, color: "text-yellow-400" },
+  { value: "bug" as const, label: "Bug Report", icon: Bug, color: "text-red-400" },
+  { value: "problem" as const, label: "Problem", icon: AlertCircle, color: "text-orange-400" },
+  { value: "other" as const, label: "Other", icon: HelpCircle, color: "text-blue-400" },
+];
+
+// Feedback Form Component
+function FeedbackForm() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [type, setType] = useState<"suggestion" | "bug" | "problem" | "other">("suggestion");
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
+  const { toast } = useToast();
+
+  const submitMutation = useMutation({
+    mutationFn: () => api.feedback.submit({ type, subject, message }),
+    onSuccess: (data) => {
+      toast({
+        title: "Feedback Submitted",
+        description: data.message,
+      });
+      setSubject("");
+      setMessage("");
+      setType("suggestion");
+      setIsOpen(false);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to submit feedback",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const isValid = subject.trim().length >= 5 && message.trim().length >= 20;
+
+  return (
+    <div className="rounded-2xl bg-white/[0.03] border border-white/10 overflow-hidden">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full px-6 py-4 flex items-center justify-between hover:bg-white/5 transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          <MessageSquarePlus className="w-5 h-5 text-purple-400" />
+          <span className="font-medium">Submit a Suggestion or Report a Problem</span>
+        </div>
+        <ChevronDown
+          className={cn(
+            "w-5 h-5 text-zinc-500 transition-transform duration-200",
+            isOpen && "rotate-180"
+          )}
+        />
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="border-t border-white/10"
+          >
+            <div className="p-6 space-y-4">
+              {/* Feedback Type Selection */}
+              <div className="space-y-2">
+                <Label>Type</Label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {feedbackTypes.map((ft) => (
+                    <button
+                      key={ft.value}
+                      onClick={() => setType(ft.value)}
+                      className={cn(
+                        "flex items-center gap-2 px-3 py-2 rounded-lg border transition-all text-sm",
+                        type === ft.value
+                          ? "border-purple-500 bg-purple-500/10 text-white"
+                          : "border-white/10 hover:border-white/20 text-zinc-400"
+                      )}
+                    >
+                      <ft.icon className={cn("w-4 h-4", type === ft.value ? ft.color : "")} />
+                      {ft.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Subject */}
+              <div className="space-y-2">
+                <Label htmlFor="feedback-subject">Subject</Label>
+                <Input
+                  id="feedback-subject"
+                  placeholder="Brief summary of your feedback"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  maxLength={200}
+                  className="bg-white/5 border-white/10"
+                />
+                <p className="text-xs text-zinc-500">{subject.length}/200 (min 5 characters)</p>
+              </div>
+
+              {/* Message */}
+              <div className="space-y-2">
+                <Label htmlFor="feedback-message">Message</Label>
+                <Textarea
+                  id="feedback-message"
+                  placeholder="Describe your suggestion, bug, or problem in detail..."
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  maxLength={2000}
+                  className="min-h-[120px] bg-white/5 border-white/10"
+                />
+                <p className="text-xs text-zinc-500">{message.length}/2000 (min 20 characters)</p>
+              </div>
+
+              {/* Submit Button */}
+              <div className="flex justify-end">
+                <Button
+                  onClick={() => submitMutation.mutate()}
+                  disabled={!isValid || submitMutation.isPending}
+                  className="bg-purple-600 hover:bg-purple-700"
+                >
+                  {submitMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4 mr-2" />
+                      Submit Feedback
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 // Dashboard View (for authenticated users)
 function DashboardView() {
   const { user } = useAuthStore();
@@ -375,6 +546,13 @@ function DashboardView() {
     queryKey: ["dashboard", "stats"],
     queryFn: () => api.dashboard.getStats(),
     staleTime: 60000, // Cache for 1 minute
+  });
+
+  const { data: unreadMessages } = useQuery({
+    queryKey: ["messages", "unread-count"],
+    queryFn: () => api.messaging.getUnreadCount(),
+    staleTime: 30000, // Cache for 30 seconds
+    enabled: !!user, // Only fetch when user is authenticated
   });
 
   const firstName = user?.name?.split(" ")[0] || "there";
@@ -408,7 +586,11 @@ function DashboardView() {
         >
           {dashboardFeatures.map((feature) => (
             <motion.div key={feature.href} variants={itemVariants}>
-              <FeatureCard feature={feature} stats={stats} />
+              <FeatureCard
+                feature={feature}
+                stats={stats}
+                unreadMessages={unreadMessages?.unread_count}
+              />
             </motion.div>
           ))}
         </motion.div>
@@ -446,6 +628,16 @@ function DashboardView() {
           className="mb-8"
         >
           <QuickStartGuide />
+        </motion.div>
+
+        {/* Feedback Form */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6 }}
+          className="mb-8"
+        >
+          <FeedbackForm />
         </motion.div>
 
         {/* Safety Banner */}

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -40,12 +41,14 @@ export function ChatMessage({
     <div className={cn("flex gap-3 group", isOwn && "flex-row-reverse")}>
       {/* Avatar */}
       {showAvatar && (
-        <Avatar className="w-8 h-8 flex-shrink-0">
-          <AvatarImage src={authorAvatarUrl || undefined} />
-          <AvatarFallback className="text-xs bg-purple-500/20 text-purple-300">
-            {authorName?.slice(0, 2).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
+        <Link href={`/profile/${authorId}`} className="flex-shrink-0">
+          <Avatar className="w-8 h-8 cursor-pointer hover:ring-2 hover:ring-purple-500/50 transition-all">
+            <AvatarImage src={authorAvatarUrl || undefined} />
+            <AvatarFallback className="text-xs bg-purple-500/20 text-purple-300">
+              {authorName?.slice(0, 2).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+        </Link>
       )}
       {!showAvatar && <div className="w-8" />}
 
@@ -58,14 +61,15 @@ export function ChatMessage({
             isOwn && "flex-row-reverse"
           )}
         >
-          <span
+          <Link
+            href={`/profile/${authorId}`}
             className={cn(
-              "text-sm font-medium",
+              "text-sm font-medium hover:underline cursor-pointer",
               isOwn ? "text-[#00ff88]" : "text-zinc-300"
             )}
           >
             {authorName}
-          </span>
+          </Link>
           <span className="text-xs text-zinc-600">{formattedTime}</span>
         </div>
 

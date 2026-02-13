@@ -55,6 +55,7 @@ const vibeLevelLabels: Record<VibeLevel, { label: string; emoji: string }> = {
   intermediate: { label: "Intermediate", emoji: "👍" },
   high_energy: { label: "High Energy", emoji: "⚡" },
   intense: { label: "Intense", emoji: "🔥" },
+  custom: { label: "Custom", emoji: "✨" },
 };
 
 const statusLabels: Record<QuestStatus, { label: string; color: string }> = {
@@ -139,7 +140,9 @@ function QuestCard({ quest, joinedQuestIds, pendingQuestIds }: { quest: SideQues
                 : catConfig.label}
             </Badge>
             <Badge variant="outline" className="text-xs border-white/10">
-              {vibeInfo.emoji} {vibeInfo.label}
+              {vibeInfo.emoji} {quest.vibe_level === "custom" && quest.custom_vibe_level
+                ? quest.custom_vibe_level
+                : vibeInfo.label}
             </Badge>
           </div>
 

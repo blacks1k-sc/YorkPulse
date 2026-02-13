@@ -26,6 +26,7 @@ from app.models.review import Review, ReviewType
 from app.models.transaction import MarketplaceTransaction
 from app.models.marketplace_review import MarketplaceReview
 from app.models.report import UserReport, ReportReason, ReportStatus
+from app.models.feedback import UserFeedback, FeedbackType, FeedbackStatus
 from app.models.course import (
     Course,
     CourseChannel,
@@ -74,6 +75,10 @@ __all__ = [
     "UserReport",
     "ReportReason",
     "ReportStatus",
+    # Feedback
+    "UserFeedback",
+    "FeedbackType",
+    "FeedbackStatus",
     # Course
     "Course",
     "CourseChannel",

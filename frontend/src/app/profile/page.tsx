@@ -40,6 +40,56 @@ import { api } from "@/services/api";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
+// Program suggestions from York University courses
+const PROGRAM_SUGGESTIONS = [
+  "Accounting",
+  "Biology",
+  "Business Administration",
+  "Chemistry",
+  "Civil Engineering",
+  "Commerce",
+  "Computer Engineering",
+  "Computer Science",
+  "Computer Science for Software Development",
+  "Dance",
+  "Digital Arts",
+  "Digital Technologies",
+  "Earth and Space Science Engineering",
+  "Economics",
+  "Education",
+  "English",
+  "Finance",
+  "Geomatics Engineering",
+  "Health Science",
+  "Health Studies",
+  "History",
+  "Humanities",
+  "Information Systems",
+  "Information Technology",
+  "Kinesiology",
+  "Management",
+  "Marketing",
+  "Mathematics",
+  "Mechanical Engineering",
+  "Music",
+  "Nursing",
+  "Operations Management",
+  "Philosophy",
+  "Physics",
+  "Political Science",
+  "Psychology",
+  "Sociology",
+  "Software Engineering",
+  "Statistics",
+  "Theatre",
+  "Visual Arts",
+];
+
+// Capitalize first letter of each word
+const capitalizeWords = (str: string) => {
+  return str.replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
 export default function ProfilePage() {
   const { user, isAuthenticated } = useAuthStore();
   const { toast } = useToast();
@@ -51,6 +101,19 @@ export default function ProfilePage() {
   const [bio, setBio] = useState(user?.bio || "");
   const [interests, setInterests] = useState(user?.interests?.join(", ") || "");
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+
+  // Validation constants
+  const MIN_PROGRAM_LENGTH = 3;
+  const MIN_BIO_LENGTH = 20;
+
+  // Validation state
+  const programError = program.trim().length > 0 && program.trim().length < MIN_PROGRAM_LENGTH
+    ? `Program must be at least ${MIN_PROGRAM_LENGTH} characters`
+    : !program.trim() ? "Program is required" : "";
+  const bioError = bio.trim().length > 0 && bio.trim().length < MIN_BIO_LENGTH
+    ? `Bio must be at least ${MIN_BIO_LENGTH} characters`
+    : !bio.trim() ? "Bio is required" : "";
+  const isFormValid = program.trim().length >= MIN_PROGRAM_LENGTH && bio.trim().length >= MIN_BIO_LENGTH;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -280,24 +343,47 @@ export default function ProfilePage() {
         {isEditing ? (
           <div className="mt-6 space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="program">Program</Label>
+              <Label htmlFor="program">
+                Program <span className="text-red-400">*</span>
+              </Label>
               <Input
                 id="program"
+                list="program-suggestions"
                 placeholder="e.g., Computer Science"
                 value={program}
-                onChange={(e) => setProgram(e.target.value)}
+                onChange={(e) => setProgram(capitalizeWords(e.target.value))}
+                className={cn(programError && program.length > 0 && "border-red-500 focus-visible:ring-red-500")}
               />
+              <datalist id="program-suggestions">
+                {PROGRAM_SUGGESTIONS.map((p) => (
+                  <option key={p} value={p} />
+                ))}
+              </datalist>
+              <div className="flex justify-between text-xs">
+                <span className={cn(programError && program.length > 0 ? "text-red-400" : "text-zinc-500")}>
+                  {programError && program.length > 0 ? programError : `Min ${MIN_PROGRAM_LENGTH} characters`}
+                </span>
+                <span className="text-zinc-500">{program.trim().length} chars</span>
+              </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="bio">Bio</Label>
+              <Label htmlFor="bio">
+                Bio <span className="text-red-400">*</span>
+              </Label>
               <Textarea
                 id="bio"
                 placeholder="Tell us about yourself..."
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
-                className="min-h-[100px]"
+                className={cn("min-h-[100px]", bioError && bio.length > 0 && "border-red-500 focus-visible:ring-red-500")}
               />
+              <div className="flex justify-between text-xs">
+                <span className={cn(bioError && bio.length > 0 ? "text-red-400" : "text-zinc-500")}>
+                  {bioError && bio.length > 0 ? bioError : `Min ${MIN_BIO_LENGTH} characters`}
+                </span>
+                <span className="text-zinc-500">{bio.trim().length} chars</span>
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -317,7 +403,7 @@ export default function ProfilePage() {
               <Button
                 onClick={handleSave}
                 className="bg-purple-600 hover:bg-purple-700"
-                disabled={updateProfileMutation.isPending}
+                disabled={updateProfileMutation.isPending || !isFormValid}
               >
                 {updateProfileMutation.isPending ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />

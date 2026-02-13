@@ -28,6 +28,7 @@ class VibeLevel(str, enum.Enum):
     INTERMEDIATE = "intermediate"
     HIGH_ENERGY = "high_energy"
     INTENSE = "intense"
+    CUSTOM = "custom"
 
 
 class BuddyRequestStatus(str, enum.Enum):
@@ -69,6 +70,10 @@ class BuddyRequest(Base, UUIDMixin, TimestampMixin):
         Enum(VibeLevel, values_callable=lambda x: [e.value for e in x]),
         default=VibeLevel.CHILL,
         nullable=False,
+    )
+    custom_vibe_level: Mapped[str | None] = mapped_column(
+        String(50),
+        nullable=True,
     )
 
     # When and where

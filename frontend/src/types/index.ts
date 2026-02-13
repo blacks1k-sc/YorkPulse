@@ -68,7 +68,7 @@ export interface MarketplaceListing {
 
 // Side Quest (Buddy) types
 export type QuestCategory = "gym" | "food" | "game" | "commute" | "study" | "custom";
-export type VibeLevel = "chill" | "intermediate" | "high_energy" | "intense";
+export type VibeLevel = "chill" | "intermediate" | "high_energy" | "intense" | "custom";
 export type QuestStatus = "open" | "in_progress" | "full" | "completed" | "cancelled";
 export type ParticipantStatus = "pending" | "accepted" | "rejected" | "cancelled";
 
@@ -84,6 +84,7 @@ export interface SideQuest {
   latitude: number | null;
   longitude: number | null;
   vibe_level: VibeLevel;
+  custom_vibe_level: string | null;
   max_participants: number;
   current_participants: number;
   requires_approval: boolean;
@@ -210,6 +211,7 @@ export interface CourseChannel {
   prof_name: string | null;
   semester: string | null;
   created_at: string;
+  unread_count: number;
 }
 
 export interface CourseMessage {
@@ -256,4 +258,5 @@ export interface CourseMembership {
   course: Course;
   joined_at: string;
   channel_count: number;
+  unread_count: number;
 }

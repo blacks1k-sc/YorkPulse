@@ -170,6 +170,17 @@ export default function CoursesPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages?.messages]);
 
+  // Refresh channels when messages are loaded (to update unread counts after marking as read)
+  useEffect(() => {
+    if (messages && selectedCourse) {
+      // Invalidate channels after a short delay to let the backend update last_read_at
+      const timeout = setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["courses", selectedCourse.id, "channels"] });
+      }, 500);
+      return () => clearTimeout(timeout);
+    }
+  }, [selectedChannel?.id, messages, selectedCourse, queryClient]);
+
   // Check if user is member of a course
   const isCourseMember = (courseId: string) => {
     return myCourses?.courses.some((m) => m.course.id === courseId);
@@ -324,9 +335,14 @@ export default function CoursesPage() {
                   setSelectedCourse(membership.course);
                   setViewMode("chat");
                 }}
-                className="px-3 py-2 rounded-lg bg-[#00ff88]/10 border border-[#00ff88]/30 cursor-pointer"
+                className="relative px-3 py-2 rounded-lg bg-[#00ff88]/10 border border-[#00ff88]/30 cursor-pointer"
               >
                 <span className="font-mono text-sm text-[#00ff88]">{membership.course.code}</span>
+                {membership.unread_count > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center px-1 text-[10px] font-bold text-white bg-red-500 rounded-full">
+                    {membership.unread_count > 99 ? "99+" : membership.unread_count}
+                  </span>
+                )}
               </motion.div>
             ))}
           </div>
@@ -454,6 +470,8 @@ export default function CoursesPage() {
             setViewMode("browse");
             setSelectedCourse(null);
             setSelectedChannel(null);
+            // Refresh my courses to update unread counts
+            queryClient.invalidateQueries({ queryKey: ["courses", "my"] });
           }}
         >
           <ArrowLeft className="w-4 h-4" />
@@ -500,9 +518,13 @@ export default function CoursesPage() {
                       : "hover:bg-white/5 text-zinc-400"
                   )}
                 >
-                  <Hash className="w-4 h-4" />
-                  <span className="truncate">{channel.name}</span>
-                  <span className="text-xs text-zinc-600 ml-auto">{channel.member_count}</span>
+                  <Hash className="w-4 h-4 flex-shrink-0" />
+                  <span className="truncate flex-1">{channel.name}</span>
+                  {channel.unread_count > 0 && (
+                    <span className="min-w-[18px] h-[18px] flex items-center justify-center px-1 text-[10px] font-bold text-white bg-red-500 rounded-full">
+                      {channel.unread_count > 99 ? "99+" : channel.unread_count}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>

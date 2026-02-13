@@ -42,6 +42,7 @@ const vibeLevels: { value: VibeLevel; label: string; emoji: string }[] = [
   { value: "intermediate", label: "Intermediate", emoji: "👍" },
   { value: "high_energy", label: "High Energy", emoji: "⚡" },
   { value: "intense", label: "Intense", emoji: "🔥" },
+  { value: "custom", label: "Custom", emoji: "✨" },
 ];
 
 const timeQuickOptions = [
@@ -70,6 +71,7 @@ export function CreateQuestModal() {
   const [showCustomTime, setShowCustomTime] = useState(false);
   const [selectedTimeOption, setSelectedTimeOption] = useState<string | null>(null);
   const [vibeLevel, setVibeLevel] = useState<VibeLevel>("chill");
+  const [customVibeLevel, setCustomVibeLevel] = useState("");
   const [maxParticipants, setMaxParticipants] = useState(2);
   const [requiresApproval, setRequiresApproval] = useState(true);
 
@@ -86,6 +88,7 @@ export function CreateQuestModal() {
     setShowCustomTime(false);
     setSelectedTimeOption(null);
     setVibeLevel("chill");
+    setCustomVibeLevel("");
     setMaxParticipants(2);
     setRequiresApproval(true);
   };
@@ -145,6 +148,15 @@ export function CreateQuestModal() {
       return;
     }
 
+    if (vibeLevel === "custom" && !customVibeLevel.trim()) {
+      toast({
+        title: "Custom vibe level required",
+        description: "Please specify your custom vibe level",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       await createMutation.mutateAsync({
         category,
@@ -157,6 +169,7 @@ export function CreateQuestModal() {
         latitude: locationData.lat || undefined,
         longitude: locationData.lng || undefined,
         vibe_level: vibeLevel,
+        custom_vibe_level: vibeLevel === "custom" ? customVibeLevel : undefined,
         max_participants: maxParticipants,
         requires_approval: requiresApproval,
       });
@@ -369,6 +382,23 @@ export function CreateQuestModal() {
                     </button>
                   ))}
                 </div>
+
+                {/* Custom Vibe Level Input */}
+                {vibeLevel === "custom" && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mt-2"
+                  >
+                    <Input
+                      placeholder="Enter custom vibe level..."
+                      value={customVibeLevel}
+                      onChange={(e) => setCustomVibeLevel(e.target.value)}
+                      maxLength={50}
+                    />
+                  </motion.div>
+                )}
               </div>
 
               {/* Peer Limit */}
@@ -377,19 +407,49 @@ export function CreateQuestModal() {
                   <Users className="w-4 h-4 inline-block mr-1" />
                   How many buddies? ({maxParticipants})
                 </Label>
-                <input
-                  id="maxParticipants"
-                  type="range"
-                  min={1}
-                  max={10}
-                  value={maxParticipants}
-                  onChange={(e) => setMaxParticipants(parseInt(e.target.value))}
-                  className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-green-500"
-                />
-                <div className="flex justify-between text-xs text-zinc-500">
-                  <span>1</span>
-                  <span>10</span>
-                </div>
+                {maxParticipants <= 10 ? (
+                  <>
+                    <input
+                      id="maxParticipants"
+                      type="range"
+                      min={1}
+                      max={10}
+                      value={maxParticipants}
+                      onChange={(e) => setMaxParticipants(parseInt(e.target.value))}
+                      className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-green-500"
+                    />
+                    <div className="flex justify-between text-xs text-zinc-500">
+                      <span>1</span>
+                      <span>10</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setMaxParticipants(11)}
+                      className="text-xs text-green-400 hover:text-green-300 transition-colors"
+                    >
+                      Need more than 10?
+                    </button>
+                  </>
+                ) : (
+                  <div className="space-y-2">
+                    <Input
+                      id="maxParticipants"
+                      type="number"
+                      min={1}
+                      max={100}
+                      value={maxParticipants}
+                      onChange={(e) => setMaxParticipants(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))}
+                      className="w-full"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setMaxParticipants(10)}
+                      className="text-xs text-zinc-400 hover:text-zinc-300 transition-colors"
+                    >
+                      Back to slider (1-10)
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Requires Approval */}

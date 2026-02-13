@@ -141,6 +141,35 @@ class ApiClient {
     return this.request<T>(endpoint, { method: "DELETE" });
   }
 
+  async postFormData<T>(endpoint: string, formData: FormData): Promise<T> {
+    const headers: HeadersInit = {};
+    // Don't set Content-Type for FormData - browser will set it with boundary
+    const token = this.getToken?.();
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${this.baseUrl}${API_PREFIX}${endpoint}`, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+
+    if (response.status === 401) {
+      this.onUnauthorized?.();
+      throw new Error("Unauthorized");
+    }
+
+    if (!response.ok) {
+      const error: ApiError = await response.json().catch(() => ({
+        detail: "An unexpected error occurred",
+      }));
+      throw new Error(error.detail);
+    }
+
+    return response.json();
+  }
+
   // Auth endpoints
   auth = {
     signup: (email: string) =>
@@ -285,8 +314,23 @@ class ApiClient {
       return this.get<PaginatedResponse<MarketplaceListing>>(`/marketplace/my-listings${query}`);
     },
 
-    getPresignedUrl: (listingId: string, fileType: string) =>
-      this.post<PresignedUrlResponse>(`/marketplace/${listingId}/images`, { file_type: fileType }),
+    getUploadUrl: (filename: string, contentType: string) =>
+      this.post<{
+        upload_url: string;
+        file_key: string;
+        public_url: string;
+        expires_in: number;
+      }>("/marketplace/upload-image", { filename, content_type: contentType }),
+
+    uploadImageDirect: (file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      // Use the API client's request method to get proper auth headers
+      return api.postFormData<{ public_url: string; file_key: string }>(
+        "/marketplace/upload-image-direct",
+        formData
+      );
+    },
   };
 
   // Side Quests endpoints
@@ -443,6 +487,9 @@ class ApiClient {
 
     getPendingRequests: () =>
       this.get<{ requests: Conversation[] }>("/messages/requests"),
+
+    getUnreadCount: () =>
+      this.get<{ unread_count: number }>("/messages/unread-count"),
   };
 
   // Reviews endpoints
@@ -589,6 +636,37 @@ class ApiClient {
         vault_posts_today: number;
         total_users: number;
       }>("/dashboard/stats"),
+  };
+
+  // Feedback endpoints
+  feedback = {
+    submit: (data: { type: "suggestion" | "bug" | "problem" | "other"; subject: string; message: string }) =>
+      this.post<{
+        feedback: {
+          id: string;
+          type: string;
+          subject: string;
+          message: string;
+          status: string;
+          created_at: string;
+        };
+        message: string;
+      }>("/feedback", data),
+
+    getMyFeedback: (page = 1, perPage = 20) =>
+      this.get<{
+        items: Array<{
+          id: string;
+          type: string;
+          subject: string;
+          message: string;
+          status: string;
+          admin_response: string | null;
+          responded_at: string | null;
+          created_at: string;
+        }>;
+        total: number;
+      }>(`/feedback/my?page=${page}&per_page=${perPage}`),
   };
 
 }

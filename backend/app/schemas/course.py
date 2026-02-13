@@ -118,6 +118,7 @@ class ChannelResponse(ChannelBase):
     prof_name: str | None
     semester: str | None
     created_at: datetime
+    unread_count: int = 0
 
 
 class ChannelListResponse(BaseModel):
@@ -239,6 +240,7 @@ class CourseMembershipResponse(BaseModel):
     course: CourseResponse
     joined_at: datetime
     channel_count: int
+    unread_count: int = 0
 
 
 class MyCoursesResponse(BaseModel):

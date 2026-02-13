@@ -149,11 +149,31 @@ class UserResponse(BaseModel):
 class ProfileUpdateRequest(BaseModel):
     """Request to update user profile."""
 
-    program: Annotated[str | None, Field(max_length=200)] = None
-    bio: Annotated[str | None, Field(max_length=500)] = None
+    program: Annotated[str | None, Field(min_length=3, max_length=200)] = None
+    bio: Annotated[str | None, Field(min_length=20, max_length=500)] = None
     avatar_url: Annotated[str | None, Field(max_length=500)] = None
     campus_days: list[str] | None = None
     interests: list[str] | None = None
+
+    @field_validator("program")
+    @classmethod
+    def validate_program(cls, v: str | None) -> str | None:
+        """Validate program is not just whitespace."""
+        if v is not None:
+            v = v.strip()
+            if len(v) < 3:
+                raise ValueError("Program must be at least 3 characters")
+        return v
+
+    @field_validator("bio")
+    @classmethod
+    def validate_bio(cls, v: str | None) -> str | None:
+        """Validate bio is not just whitespace."""
+        if v is not None:
+            v = v.strip()
+            if len(v) < 20:
+                raise ValueError("Bio must be at least 20 characters")
+        return v
 
 
 class AvatarUploadRequest(BaseModel):
