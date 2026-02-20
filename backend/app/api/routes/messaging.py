@@ -23,6 +23,7 @@ from app.schemas.messaging import (
     MarkReadRequest,
     MessageCreate,
     MessageListResponse,
+    MessageReplyInfo,
     MessageResponse,
     ParticipantInfo,
     PendingRequestsResponse,
@@ -99,12 +100,21 @@ async def get_chat_image_upload_url(
 
 def _message_to_response(message: Message) -> MessageResponse:
     """Convert message model to response."""
+    reply_info = None
+    if message.reply_to and not message.reply_to.is_deleted:
+        reply_info = MessageReplyInfo(
+            id=str(message.reply_to.id),
+            sender_id=str(message.reply_to.sender_id),
+            content=message.reply_to.content,
+            image_url=message.reply_to.image_url,
+        )
     return MessageResponse(
         id=str(message.id),
         conversation_id=str(message.conversation_id),
         sender_id=str(message.sender_id),
         content="" if message.is_deleted else message.content,
         image_url=None if message.is_deleted else message.image_url,
+        reply_to=reply_info,
         is_deleted=message.is_deleted,
         is_read=message.read_at is not None,
         read_at=message.read_at,
@@ -415,9 +425,10 @@ async def get_messages(
     if conversation.status == ConversationStatus.BLOCKED:
         raise HTTPException(status_code=403, detail="Conversation is blocked")
 
-    # Build query for messages
+    # Build query for messages with reply_to relationship
     query = (
         select(Message)
+        .options(selectinload(Message.reply_to))
         .where(Message.conversation_id == conversation.id)
     )
 
@@ -489,6 +500,7 @@ async def send_message(
         sender_id=user.id,
         content=request.content,
         image_url=request.image_url,
+        reply_to_id=uuid.UUID(request.reply_to_id) if request.reply_to_id else None,
     )
 
     db.add(message)
@@ -497,7 +509,14 @@ async def send_message(
     conversation.updated_at = datetime.now(timezone.utc)
 
     await db.commit()
+
+    # Refresh and load reply_to relationship
     await db.refresh(message)
+    if message.reply_to_id:
+        reply_result = await db.execute(
+            select(Message).where(Message.id == message.reply_to_id)
+        )
+        message.reply_to = reply_result.scalar_one_or_none()
 
     return _message_to_response(message)
 

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { Shield, ShoppingBag, Users, MessageCircle, GraduationCap } from "lucide-react";
+import { Shield, ShoppingBag, Users, MessageCircle, GraduationCap, Briefcase } from "lucide-react";
 import { useAuthStore } from "@/stores/auth";
 import { cn } from "@/lib/utils";
 
@@ -11,7 +11,7 @@ const navItems = [
   { href: "/vault", label: "Vault", icon: Shield },
   { href: "/marketplace", label: "Market", icon: ShoppingBag },
   { href: "/quests", label: "Quests", icon: Users },
-  { href: "/courses", label: "Courses", icon: GraduationCap },
+  { href: "/gigs", label: "Gigs", icon: Briefcase },
   { href: "/messages", label: "DMs", icon: MessageCircle },
 ];
 

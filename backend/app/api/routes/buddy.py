@@ -30,6 +30,7 @@ from app.schemas.buddy import (
     ParticipantListResponse,
     ParticipantResponse,
     QuestMessageCreate,
+    QuestMessageReplyInfo,
     QuestMessageResponse,
     QuestMessagesResponse,
 )
@@ -675,6 +676,17 @@ async def _is_quest_member(db: AsyncSession, quest: BuddyRequest, user_id: uuid.
 
 def _message_to_response(message: QuestMessage) -> QuestMessageResponse:
     """Convert quest message model to response."""
+    reply_info = None
+    if message.reply_to and message.reply_to.sender and not message.reply_to.is_deleted:
+        reply_info = QuestMessageReplyInfo(
+            id=str(message.reply_to.id),
+            content=message.reply_to.content,
+            sender=UserMinimal(
+                id=str(message.reply_to.sender.id),
+                name=message.reply_to.sender.name,
+                avatar_url=message.reply_to.sender.avatar_url,
+            ),
+        )
     return QuestMessageResponse(
         id=str(message.id),
         content=message.content if not message.is_deleted else "[Message deleted]",
@@ -683,6 +695,7 @@ def _message_to_response(message: QuestMessage) -> QuestMessageResponse:
             name=message.sender.name,
             avatar_url=message.sender.avatar_url,
         ),
+        reply_to=reply_info,
         created_at=message.created_at,
         is_deleted=message.is_deleted,
     )
@@ -709,10 +722,13 @@ async def get_quest_messages(
     if not await _is_quest_member(db, quest, user.id):
         raise HTTPException(status_code=403, detail="Only quest members can access the chat")
 
-    # Build query
+    # Build query with reply_to relationship
     query = (
         select(QuestMessage)
-        .options(selectinload(QuestMessage.sender))
+        .options(
+            selectinload(QuestMessage.sender),
+            selectinload(QuestMessage.reply_to).selectinload(QuestMessage.sender),
+        )
         .where(QuestMessage.quest_id == quest.id)
     )
 
@@ -763,10 +779,20 @@ async def send_quest_message(
         quest_id=quest.id,
         sender_id=user.id,
         content=request.content,
+        reply_to_id=uuid.UUID(request.reply_to_id) if request.reply_to_id else None,
     )
 
     db.add(message)
     await db.commit()
     await db.refresh(message, ["sender"])
+
+    # Load reply_to if needed
+    if message.reply_to_id:
+        reply_result = await db.execute(
+            select(QuestMessage)
+            .options(selectinload(QuestMessage.sender))
+            .where(QuestMessage.id == message.reply_to_id)
+        )
+        message.reply_to = reply_result.scalar_one_or_none()
 
     return _message_to_response(message)

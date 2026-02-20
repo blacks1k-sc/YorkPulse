@@ -119,11 +119,13 @@ export function useSendMessage() {
       conversationId,
       content,
       imageUrl,
+      replyToId,
     }: {
       conversationId: string;
       content?: string;
       imageUrl?: string;
-    }) => api.messaging.sendMessage(conversationId, content, imageUrl),
+      replyToId?: string;
+    }) => api.messaging.sendMessage(conversationId, content, imageUrl, replyToId),
     onSuccess: (_, { conversationId }) => {
       queryClient.invalidateQueries({ queryKey: ["messaging", "messages", conversationId] });
       queryClient.invalidateQueries({ queryKey: ["messaging", "conversations"] });

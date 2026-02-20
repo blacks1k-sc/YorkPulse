@@ -125,6 +125,13 @@ class Message(Base, UUIDMixin, TimestampMixin):
         nullable=False,
         index=True,
     )
+    # Reply to another message
+    reply_to_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("messages.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
 
     # Read status
     read_at: Mapped[datetime | None] = mapped_column(
@@ -145,6 +152,11 @@ class Message(Base, UUIDMixin, TimestampMixin):
     )
     sender: Mapped["User"] = relationship(
         "User",
+    )
+    reply_to: Mapped["Message | None"] = relationship(
+        "Message",
+        remote_side="Message.id",
+        foreign_keys=[reply_to_id],
     )
 
     __table_args__ = (

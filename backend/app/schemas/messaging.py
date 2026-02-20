@@ -16,6 +16,18 @@ class ParticipantInfo(BaseModel):
     avatar_url: str | None
 
 
+class MessageReplyInfo(BaseModel):
+    """Minimal info about a replied message."""
+
+    id: str
+    sender_id: str
+    content: str | None
+    image_url: str | None
+
+    class Config:
+        from_attributes = True
+
+
 class MessageResponse(BaseModel):
     """Response schema for a message."""
 
@@ -24,6 +36,7 @@ class MessageResponse(BaseModel):
     sender_id: str
     content: str | None
     image_url: str | None
+    reply_to: MessageReplyInfo | None = None
     is_deleted: bool
     is_read: bool
     read_at: datetime | None
@@ -98,6 +111,7 @@ class MessageCreate(BaseModel):
 
     content: Annotated[str | None, Field(default=None, max_length=2000)] = None
     image_url: Annotated[str | None, Field(default=None, max_length=500)] = None
+    reply_to_id: str | None = None
 
     def model_post_init(self, __context) -> None:
         """Validate that at least one of content or image_url is provided."""

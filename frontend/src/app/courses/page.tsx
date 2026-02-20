@@ -56,6 +56,7 @@ export default function CoursesPage() {
   const [selectedChannel, setSelectedChannel] = useState<CourseChannel | null>(null);
   const [showVoteDialog, setShowVoteDialog] = useState(false);
   const [profNameInput, setProfNameInput] = useState("");
+  const [replyTo, setReplyTo] = useState<{ id: string; authorName: string; content: string | null } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Queries
@@ -137,13 +138,16 @@ export default function CoursesPage() {
       channelId,
       message,
       imageUrl,
+      replyToId,
     }: {
       channelId: string;
       message?: string;
       imageUrl?: string;
-    }) => api.courses.sendMessage(channelId, message, imageUrl),
+      replyToId?: string;
+    }) => api.courses.sendMessage(channelId, message, imageUrl, replyToId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["courses", "channels", selectedChannel?.id, "messages"] });
+      setReplyTo(null);
     },
   });
 
@@ -218,13 +222,19 @@ export default function CoursesPage() {
   };
 
   // Handle send message
-  const handleSendMessage = async (message: string | null, imageUrl: string | null) => {
+  const handleSendMessage = async (message: string | null, imageUrl: string | null, replyToId?: string) => {
     if (!selectedChannel) return;
     await sendMessageMutation.mutateAsync({
       channelId: selectedChannel.id,
       message: message || undefined,
       imageUrl: imageUrl || undefined,
+      replyToId: replyToId,
     });
+  };
+
+  // Handle reply
+  const handleReply = (messageId: string, authorName: string, content: string | null) => {
+    setReplyTo({ id: messageId, authorName, content });
   };
 
   // Toggle faculty expansion
@@ -593,6 +603,7 @@ export default function CoursesPage() {
                 {messages?.messages.map((msg) => (
                   <ChatMessage
                     key={msg.id}
+                    id={msg.id}
                     message={msg.message}
                     imageUrl={msg.image_url}
                     authorName={msg.author.name}
@@ -600,6 +611,8 @@ export default function CoursesPage() {
                     authorId={msg.author.id}
                     currentUserId={user?.id}
                     timestamp={msg.created_at}
+                    replyTo={msg.reply_to}
+                    onReply={handleReply}
                   />
                 ))}
                 <div ref={messagesEndRef} />
@@ -615,6 +628,8 @@ export default function CoursesPage() {
               onSend={handleSendMessage}
               getUploadUrl={api.courses.getChatImageUploadUrl}
               disabled={sendMessageMutation.isPending}
+              replyTo={replyTo}
+              onCancelReply={() => setReplyTo(null)}
             />
           </div>
         </div>

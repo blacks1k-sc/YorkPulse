@@ -16,6 +16,7 @@ import {
   AlertCircle,
   Clock,
   ImagePlus,
+  Reply,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -52,6 +53,7 @@ export default function ConversationPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [replyTo, setReplyTo] = useState<{ id: string; senderName: string; content: string | null } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -197,9 +199,11 @@ export default function ConversationPage() {
         conversationId,
         content: message.trim() || undefined,
         imageUrl,
+        replyToId: replyTo?.id,
       });
       setMessage("");
       removeImage();
+      setReplyTo(null);
       if (inputRef.current) {
         inputRef.current.style.height = "auto";
       }
@@ -259,6 +263,11 @@ export default function ConversationPage() {
         variant: "destructive",
       });
     }
+  };
+
+  const handleReply = (msgId: string, senderName: string, content: string | null) => {
+    setReplyTo({ id: msgId, senderName, content });
+    inputRef.current?.focus();
   };
 
   const formatTime = (date: string) => {
@@ -476,6 +485,17 @@ export default function ConversationPage() {
                         <p className="text-sm italic text-zinc-400">Message deleted</p>
                       ) : (
                         <>
+                          {/* Reply Preview */}
+                          {msg.reply_to && (
+                            <div className="mb-2 px-2 py-1.5 rounded-lg border-l-2 border-purple-500/50 bg-black/20 text-xs">
+                              <p className="text-purple-300 font-medium mb-0.5">
+                                {msg.reply_to.sender_id === user?.id ? "You" : otherUser?.name || "Unknown"}
+                              </p>
+                              <p className="text-zinc-400 line-clamp-1">
+                                {msg.reply_to.image_url && !msg.reply_to.content ? "Photo" : msg.reply_to.content || "Message"}
+                              </p>
+                            </div>
+                          )}
                           {msg.image_url && (
                             <a
                               href={msg.image_url}
@@ -521,6 +541,20 @@ export default function ConversationPage() {
                           </span>
                         )}
                       </div>
+                      {/* Reply button */}
+                      {!msg.is_deleted && (
+                        <button
+                          onClick={() => handleReply(
+                            msg.id,
+                            isOwn ? "yourself" : (otherUser?.name || "Unknown"),
+                            msg.content
+                          )}
+                          className="absolute -top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-full bg-zinc-800/80 hover:bg-zinc-700 border border-white/10"
+                          title="Reply"
+                        >
+                          <Reply className="w-3 h-3 text-zinc-300" />
+                        </button>
+                      )}
                     </div>
                   </motion.div>
                 </div>
@@ -613,6 +647,26 @@ export default function ConversationPage() {
           onSubmit={handleSend}
           className="p-4 border-t border-white/10 bg-white/5 backdrop-blur-xl"
         >
+          {/* Reply Preview */}
+          {replyTo && (
+            <div className="mb-2 flex items-center gap-2 px-3 py-2 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+              <div className="w-1 h-8 bg-purple-500 rounded-full" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-purple-400 font-medium">Replying to {replyTo.senderName}</p>
+                <p className="text-xs text-zinc-400 truncate">
+                  {replyTo.content || "Photo"}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setReplyTo(null)}
+                className="p-1 hover:bg-white/10 rounded transition-colors"
+              >
+                <X className="w-4 h-4 text-zinc-400" />
+              </button>
+            </div>
+          )}
+
           {/* Image Preview */}
           {imagePreview && (
             <div className="mb-2 relative inline-block">

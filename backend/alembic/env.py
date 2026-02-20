@@ -9,7 +9,7 @@ from alembic import context
 
 from app.core.config import settings
 from app.core.database import Base
-from app.models import user, vault, marketplace, buddy, messaging, review  # noqa: F401
+from app.models import user, vault, marketplace, buddy, messaging, review, gig  # noqa: F401
 
 # this is the Alembic Config object
 config = context.config
@@ -52,6 +52,7 @@ async def run_async_migrations() -> None:
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        connect_args={"statement_cache_size": 0},  # Disable prepared statements for pgbouncer
     )
 
     async with connectable.connect() as connection:

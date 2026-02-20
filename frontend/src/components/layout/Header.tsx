@@ -14,6 +14,7 @@ import {
   LogOut,
   Plus,
   GraduationCap,
+  Briefcase,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -33,6 +34,7 @@ const navItems = [
   { href: "/vault", label: "The Vault", icon: Shield },
   { href: "/marketplace", label: "Marketplace", icon: ShoppingBag },
   { href: "/quests", label: "Side Quests", icon: Users },
+  { href: "/gigs", label: "Quick Gigs", icon: Briefcase },
   { href: "/courses", label: "Courses", icon: GraduationCap },
   { href: "/messages", label: "Messages", icon: MessageCircle },
 ];
@@ -110,6 +112,12 @@ export function Header() {
                     <DropdownMenuItem onClick={() => openCreateModal("quest")}>
                       <Users className="w-4 h-4 mr-2" />
                       Side Quest
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/gigs/create">
+                        <Briefcase className="w-4 h-4 mr-2" />
+                        Quick Gig
+                      </Link>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

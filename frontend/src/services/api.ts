@@ -18,6 +18,16 @@ import type {
   CourseHierarchy,
   VoteStatus,
   CourseMembership,
+  Gig,
+  GigResponse,
+  GigTransaction,
+  GigRating,
+  GigProfile,
+  GigType,
+  GigCategory,
+  GigPriceType,
+  GigLocation,
+  GigStatus,
 } from "@/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -425,8 +435,8 @@ class ApiClient {
       return this.get<{ messages: QuestMessage[]; has_more: boolean }>(`/quests/${questId}/chat${query ? `?${query}` : ""}`);
     },
 
-    sendQuestMessage: (questId: string, content: string) =>
-      this.post<QuestMessage>(`/quests/${questId}/chat`, { content }),
+    sendQuestMessage: (questId: string, content: string, replyToId?: string) =>
+      this.post<QuestMessage>(`/quests/${questId}/chat`, { content, reply_to_id: replyToId || null }),
   };
 
   // Legacy alias for backwards compatibility
@@ -470,10 +480,11 @@ class ApiClient {
       return this.get<{ messages: Message[]; has_more: boolean }>(`/messages/conversations/${conversationId}/messages${query ? `?${query}` : ""}`);
     },
 
-    sendMessage: (conversationId: string, content?: string, imageUrl?: string) =>
+    sendMessage: (conversationId: string, content?: string, imageUrl?: string, replyToId?: string) =>
       this.post<Message>(`/messages/conversations/${conversationId}/messages`, {
         content: content || null,
         image_url: imageUrl || null,
+        reply_to_id: replyToId || null,
       }),
 
     getChatImageUploadUrl: (filename: string, contentType: string) =>
@@ -613,10 +624,11 @@ class ApiClient {
       );
     },
 
-    sendMessage: (channelId: string, message?: string, imageUrl?: string) =>
+    sendMessage: (channelId: string, message?: string, imageUrl?: string, replyToId?: string) =>
       this.post<CourseMessage>(`/courses/channels/${channelId}/messages`, {
         message: message || null,
         image_url: imageUrl || null,
+        reply_to_id: replyToId || null,
       }),
 
     getChatImageUploadUrl: (filename: string, contentType: string) =>
@@ -667,6 +679,117 @@ class ApiClient {
         }>;
         total: number;
       }>(`/feedback/my?page=${page}&per_page=${perPage}`),
+  };
+
+  // Quick Gigs endpoints
+  gigs = {
+    getGigs: (params?: {
+      gig_type?: GigType;
+      category?: GigCategory;
+      min_price?: number;
+      max_price?: number;
+      location?: GigLocation;
+      search?: string;
+      sort?: "recent" | "price_low" | "price_high" | "highest_rated";
+      page?: number;
+      per_page?: number;
+    }) => {
+      const searchParams = new URLSearchParams();
+      if (params?.gig_type) searchParams.set("gig_type", params.gig_type);
+      if (params?.category) searchParams.set("category", params.category);
+      if (params?.min_price) searchParams.set("min_price", params.min_price.toString());
+      if (params?.max_price) searchParams.set("max_price", params.max_price.toString());
+      if (params?.location) searchParams.set("location", params.location);
+      if (params?.search) searchParams.set("search", params.search);
+      if (params?.sort) searchParams.set("sort", params.sort);
+      if (params?.page) searchParams.set("page", params.page.toString());
+      if (params?.per_page) searchParams.set("per_page", params.per_page.toString());
+      const query = searchParams.toString();
+      return this.get<{ items: Gig[]; total: number; page: number; per_page: number; has_more: boolean }>(
+        `/gigs${query ? `?${query}` : ""}`
+      );
+    },
+
+    getGig: (id: string) => this.get<Gig>(`/gigs/${id}`),
+
+    createGig: (data: {
+      gig_type: GigType;
+      category: GigCategory;
+      title: string;
+      description: string;
+      price_min?: number;
+      price_max?: number;
+      price_type?: GigPriceType;
+      location?: GigLocation;
+      location_details?: string;
+      deadline?: string;
+    }) => this.post<Gig>("/gigs", data),
+
+    updateGig: (id: string, data: Partial<{
+      title: string;
+      description: string;
+      price_min: number;
+      price_max: number;
+      price_type: GigPriceType;
+      location: GigLocation;
+      location_details: string;
+      deadline: string;
+      status: GigStatus;
+    }>) => this.patch<Gig>(`/gigs/${id}`, data),
+
+    deleteGig: (id: string) => this.delete<void>(`/gigs/${id}`),
+
+    respondToGig: (gigId: string, data: { message?: string; proposed_price?: number }) =>
+      this.post<GigResponse>(`/gigs/${gigId}/respond`, data),
+
+    getResponses: (gigId: string) =>
+      this.get<{ items: GigResponse[]; total: number }>(`/gigs/${gigId}/responses`),
+
+    acceptResponse: (gigId: string, responseId: string) =>
+      this.post<{ success: boolean; message: string; response_id: string; status: string; transaction_id: string }>(
+        `/gigs/${gigId}/responses/${responseId}/accept`
+      ),
+
+    rejectResponse: (gigId: string, responseId: string) =>
+      this.post<{ success: boolean; message: string; response_id: string; status: string }>(
+        `/gigs/${gigId}/responses/${responseId}/reject`
+      ),
+
+    completeGig: (gigId: string) =>
+      this.post<{ success: boolean; message: string; transaction_id: string; both_confirmed: boolean; status: string }>(
+        `/gigs/${gigId}/complete`
+      ),
+
+    rateTransaction: (transactionId: string, data: {
+      rating: number;
+      reliability: number;
+      communication: number;
+      quality: number;
+      review_text?: string;
+    }) => this.post<GigRating>(`/gigs/transactions/${transactionId}/rate`, data),
+
+    getMyGigs: (type?: "posted" | "responded" | "all") => {
+      const query = type ? `?type=${type}` : "";
+      return this.get<{ posted?: Gig[]; responded?: GigResponse[] }>(`/gigs/my-gigs${query}`);
+    },
+
+    getUserGigProfile: (userId: string) =>
+      this.get<GigProfile>(`/gigs/users/${userId}/profile`),
+
+    getTransactions: (params?: {
+      status?: "pending" | "completed" | "disputed";
+      page?: number;
+      per_page?: number;
+    }) => {
+      const searchParams = new URLSearchParams();
+      if (params?.status) searchParams.set("status", params.status);
+      if (params?.page) searchParams.set("page", params.page.toString());
+      if (params?.per_page) searchParams.set("per_page", params.per_page.toString());
+      const query = searchParams.toString();
+      return this.get<{ items: GigTransaction[]; total: number; page: number; per_page: number; has_more: boolean }>(
+        `/gigs/transactions${query ? `?${query}` : ""}`
+      );
+    },
   };
 
 }

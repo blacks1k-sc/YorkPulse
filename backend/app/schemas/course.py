@@ -145,6 +145,18 @@ class MessageAuthor(BaseModel):
     avatar_url: str | None
 
 
+class ReplyInfo(BaseModel):
+    """Minimal info about a replied message."""
+
+    id: str
+    message: str | None
+    image_url: str | None
+    author: MessageAuthor
+
+    class Config:
+        from_attributes = True
+
+
 class MessageResponse(BaseModel):
     """Message in chat."""
 
@@ -153,6 +165,7 @@ class MessageResponse(BaseModel):
     message: str | None
     image_url: str | None
     author: MessageAuthor
+    reply_to: ReplyInfo | None = None
     created_at: datetime
 
     class Config:
@@ -164,6 +177,7 @@ class MessageCreate(BaseModel):
 
     message: Annotated[str | None, Field(default=None, max_length=500)] = None
     image_url: Annotated[str | None, Field(default=None, max_length=500)] = None
+    reply_to_id: str | None = None
 
     def model_post_init(self, __context) -> None:
         """Validate that at least one of message or image_url is provided."""

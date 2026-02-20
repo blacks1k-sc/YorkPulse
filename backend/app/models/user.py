@@ -1,4 +1,6 @@
-from sqlalchemy import String, Boolean, ARRAY, Text, Integer
+from decimal import Decimal
+
+from sqlalchemy import String, Boolean, ARRAY, Text, Integer, Numeric
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -26,6 +28,23 @@ class User(Base, UUIDMixin, TimestampMixin):
     # Trust system
     completed_transactions: Mapped[int] = mapped_column(
         Integer,
+        default=0,
+        nullable=False,
+    )
+
+    # Gig marketplace stats
+    gig_rating_avg: Mapped[Decimal] = mapped_column(
+        Numeric(3, 2),
+        default=0,
+        nullable=False,
+    )
+    gigs_completed: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+        nullable=False,
+    )
+    total_earned: Mapped[Decimal] = mapped_column(
+        Numeric(10, 2),
         default=0,
         nullable=False,
     )
@@ -168,6 +187,41 @@ class User(Base, UUIDMixin, TimestampMixin):
         back_populates="user",
         lazy="dynamic",
     )
+    # Gig relationships
+    gigs: Mapped[list["Gig"]] = relationship(
+        "Gig",
+        back_populates="poster",
+        lazy="dynamic",
+    )
+    gig_responses: Mapped[list["GigResponse"]] = relationship(
+        "GigResponse",
+        back_populates="responder",
+        lazy="dynamic",
+    )
+    gig_transactions_as_provider: Mapped[list["GigTransaction"]] = relationship(
+        "GigTransaction",
+        foreign_keys="GigTransaction.provider_id",
+        back_populates="provider",
+        lazy="dynamic",
+    )
+    gig_transactions_as_client: Mapped[list["GigTransaction"]] = relationship(
+        "GigTransaction",
+        foreign_keys="GigTransaction.client_id",
+        back_populates="client",
+        lazy="dynamic",
+    )
+    gig_ratings_given: Mapped[list["GigRating"]] = relationship(
+        "GigRating",
+        foreign_keys="GigRating.rater_id",
+        back_populates="rater",
+        lazy="dynamic",
+    )
+    gig_ratings_received: Mapped[list["GigRating"]] = relationship(
+        "GigRating",
+        foreign_keys="GigRating.ratee_id",
+        back_populates="ratee",
+        lazy="dynamic",
+    )
 
     def __repr__(self) -> str:
         return f"<User {self.email}>"
@@ -183,3 +237,4 @@ from app.models.marketplace_review import MarketplaceReview  # noqa: E402, F401
 from app.models.report import UserReport  # noqa: E402, F401
 from app.models.course import CourseMember  # noqa: E402, F401
 from app.models.feedback import UserFeedback  # noqa: E402, F401
+from app.models.gig import Gig, GigResponse, GigTransaction, GigRating  # noqa: E402, F401

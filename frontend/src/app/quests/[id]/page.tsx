@@ -29,6 +29,7 @@ import {
   Sparkles,
   MessageCircle,
   Send,
+  Reply,
 } from "lucide-react";
 import { QuestLocationMapWrapper } from "@/components/QuestLocationMapWrapper";
 import { Button } from "@/components/ui/button";
@@ -115,6 +116,7 @@ export default function QuestDetailPage() {
   const { data: messagesData, fetchNextPage, hasNextPage, isFetchingNextPage } = useQuestMessages(questId, isQuestMember);
   const sendMessageMutation = useSendQuestMessage();
   const [messageInput, setMessageInput] = useState("");
+  const [replyTo, setReplyTo] = useState<{ id: string; senderName: string; content: string } | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const [showChat, setShowChat] = useState(false);
 
@@ -136,8 +138,10 @@ export default function QuestDetailPage() {
       await sendMessageMutation.mutateAsync({
         questId,
         content: messageInput.trim(),
+        replyToId: replyTo?.id,
       });
       setMessageInput("");
+      setReplyTo(null);
     } catch (error) {
       toast({
         title: "Error",
@@ -145,6 +149,10 @@ export default function QuestDetailPage() {
         variant: "destructive",
       });
     }
+  };
+
+  const handleReplyToMessage = (messageId: string, senderName: string, content: string) => {
+    setReplyTo({ id: messageId, senderName, content });
   };
 
   // Check join status from multiple sources for reliability
@@ -710,7 +718,7 @@ export default function QuestDetailPage() {
                       <div
                         key={message.id}
                         className={cn(
-                          "flex gap-2",
+                          "flex gap-2 group",
                           isOwnMessage ? "flex-row-reverse" : "flex-row"
                         )}
                       >
@@ -726,7 +734,7 @@ export default function QuestDetailPage() {
                         )}
                         <div
                           className={cn(
-                            "max-w-[70%] rounded-lg px-3 py-2",
+                            "max-w-[70%] rounded-lg px-3 py-2 relative",
                             isOwnMessage
                               ? "bg-green-600 text-white"
                               : "bg-white/10"
@@ -739,6 +747,13 @@ export default function QuestDetailPage() {
                                 <span className="ml-1 text-green-400">(Host)</span>
                               )}
                             </p>
+                          )}
+                          {/* Reply Preview */}
+                          {message.reply_to && !message.is_deleted && (
+                            <div className="mb-1.5 px-2 py-1 rounded border-l-2 border-green-400/50 bg-black/20 text-xs">
+                              <p className="text-green-300 font-medium">{message.reply_to.sender.name}</p>
+                              <p className="text-zinc-400 line-clamp-1">{message.reply_to.content}</p>
+                            </div>
                           )}
                           <p className="text-sm whitespace-pre-wrap break-words">
                             {message.is_deleted ? (
@@ -755,6 +770,16 @@ export default function QuestDetailPage() {
                           >
                             {timeAgo(message.created_at)}
                           </p>
+                          {/* Reply button */}
+                          {!message.is_deleted && (
+                            <button
+                              onClick={() => handleReplyToMessage(message.id, message.sender.name, message.content)}
+                              className="absolute -top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full bg-zinc-800/80 hover:bg-zinc-700 border border-white/10"
+                              title="Reply"
+                            >
+                              <Reply className="w-3 h-3 text-zinc-300" />
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
@@ -765,8 +790,26 @@ export default function QuestDetailPage() {
               {/* Message Input */}
               <form
                 onSubmit={handleSendMessage}
-                className="p-4 border-t border-white/10 flex gap-2"
+                className="p-4 border-t border-white/10"
               >
+                {/* Reply Preview */}
+                {replyTo && (
+                  <div className="mb-2 flex items-center gap-2 px-3 py-2 bg-green-500/10 border border-green-500/20 rounded-lg">
+                    <Reply className="w-4 h-4 text-green-400 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-green-400">Replying to {replyTo.senderName}</p>
+                      <p className="text-xs text-zinc-400 truncate">{replyTo.content}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setReplyTo(null)}
+                      className="p-1 hover:bg-white/10 rounded"
+                    >
+                      <X className="w-4 h-4 text-zinc-400" />
+                    </button>
+                  </div>
+                )}
+                <div className="flex gap-2">
                 <Input
                   value={messageInput}
                   onChange={(e) => setMessageInput(e.target.value)}
@@ -786,6 +829,7 @@ export default function QuestDetailPage() {
                     <Send className="w-4 h-4" />
                   )}
                 </Button>
+                </div>
               </form>
             </div>
           )}

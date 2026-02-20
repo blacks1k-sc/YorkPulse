@@ -232,6 +232,13 @@ class QuestMessage(Base, UUIDMixin, TimestampMixin):
         nullable=False,
         index=True,
     )
+    # Reply to another message
+    reply_to_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("quest_messages.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
 
     # Soft delete
     is_deleted: Mapped[bool] = mapped_column(
@@ -246,6 +253,11 @@ class QuestMessage(Base, UUIDMixin, TimestampMixin):
     )
     sender: Mapped["User"] = relationship(
         "User",
+    )
+    reply_to: Mapped["QuestMessage | None"] = relationship(
+        "QuestMessage",
+        remote_side="QuestMessage.id",
+        foreign_keys=[reply_to_id],
     )
 
     def __repr__(self) -> str:

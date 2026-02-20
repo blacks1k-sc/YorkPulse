@@ -4,10 +4,29 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { Reply } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
+interface ReplyTo {
+  id: string;
+  message?: string | null;
+  content?: string | null;
+  image_url?: string | null;
+  author?: {
+    id: string;
+    name: string;
+    avatar_url?: string | null;
+  };
+  sender?: {
+    id: string;
+    name: string;
+    avatar_url?: string | null;
+  };
+}
+
 interface ChatMessageProps {
+  id?: string;
   message: string | null;
   imageUrl: string | null;
   authorName: string;
@@ -16,9 +35,12 @@ interface ChatMessageProps {
   currentUserId?: string;
   timestamp: string;
   showAvatar?: boolean;
+  replyTo?: ReplyTo | null;
+  onReply?: (messageId: string, authorName: string, content: string | null) => void;
 }
 
 export function ChatMessage({
+  id,
   message,
   imageUrl,
   authorName,
@@ -27,6 +49,8 @@ export function ChatMessage({
   currentUserId,
   timestamp,
   showAvatar = true,
+  replyTo,
+  onReply,
 }: ChatMessageProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -36,6 +60,16 @@ export function ChatMessage({
     hour: "2-digit",
     minute: "2-digit",
   });
+
+  // Get reply author name
+  const replyAuthorName = replyTo?.author?.name || replyTo?.sender?.name || "Unknown";
+  const replyContent = replyTo?.message || replyTo?.content;
+
+  const handleReply = () => {
+    if (id && onReply) {
+      onReply(id, authorName, message);
+    }
+  };
 
   return (
     <div className={cn("flex gap-3 group", isOwn && "flex-row-reverse")}>
@@ -71,7 +105,32 @@ export function ChatMessage({
             {authorName}
           </Link>
           <span className="text-xs text-zinc-600">{formattedTime}</span>
+          {/* Reply button */}
+          {onReply && id && (
+            <button
+              onClick={handleReply}
+              className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-white/10 rounded"
+              title="Reply"
+            >
+              <Reply className="w-3 h-3 text-zinc-400" />
+            </button>
+          )}
         </div>
+
+        {/* Reply Preview */}
+        {replyTo && (
+          <div
+            className={cn(
+              "mb-2 px-2 py-1.5 rounded-lg border-l-2 border-purple-500/50 bg-white/5 text-xs",
+              isOwn ? "text-right" : "text-left"
+            )}
+          >
+            <p className="text-purple-400 font-medium mb-0.5">{replyAuthorName}</p>
+            <p className="text-zinc-400 line-clamp-1">
+              {replyTo.image_url && !replyContent ? "Photo" : replyContent || "Message"}
+            </p>
+          </div>
+        )}
 
         {/* Image */}
         {imageUrl && !imageError && (

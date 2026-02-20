@@ -223,8 +223,8 @@ export function useSendQuestMessage() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ questId, content }: { questId: string; content: string }) =>
-      api.quests.sendQuestMessage(questId, content),
+    mutationFn: ({ questId, content, replyToId }: { questId: string; content: string; replyToId?: string }) =>
+      api.quests.sendQuestMessage(questId, content, replyToId),
     onSuccess: (_, { questId }) => {
       queryClient.invalidateQueries({ queryKey: ["quests", "messages", questId] });
     },

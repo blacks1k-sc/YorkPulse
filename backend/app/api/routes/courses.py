@@ -44,6 +44,7 @@ from app.schemas.course import (
     MyCoursesResponse,
     CourseMembershipResponse,
     ProgramNode,
+    ReplyInfo,
     SeedCoursesResponse,
     VoteCreate,
     VoteResponse,
@@ -114,6 +115,18 @@ def _channel_to_response(channel: CourseChannel, unread_count: int = 0) -> Chann
 
 def _message_to_response(msg: CourseMessage, user: User) -> MessageResponse:
     """Convert message model to response."""
+    reply_info = None
+    if msg.reply_to and msg.reply_to.user:
+        reply_info = ReplyInfo(
+            id=str(msg.reply_to.id),
+            message=msg.reply_to.message,
+            image_url=msg.reply_to.image_url,
+            author=MessageAuthor(
+                id=str(msg.reply_to.user.id),
+                name=msg.reply_to.user.name,
+                avatar_url=msg.reply_to.user.avatar_url,
+            ),
+        )
     return MessageResponse(
         id=str(msg.id),
         channel_id=str(msg.channel_id),
@@ -124,6 +137,7 @@ def _message_to_response(msg: CourseMessage, user: User) -> MessageResponse:
             name=user.name,
             avatar_url=user.avatar_url,
         ),
+        reply_to=reply_info,
         created_at=msg.created_at,
     )
 
@@ -799,10 +813,13 @@ async def get_channel_messages(
     if not membership.scalar_one_or_none():
         raise HTTPException(status_code=403, detail="Join the course first")
 
-    # Build query
+    # Build query with reply_to relationship
     query = (
         select(CourseMessage)
-        .options(selectinload(CourseMessage.user))
+        .options(
+            selectinload(CourseMessage.user),
+            selectinload(CourseMessage.reply_to).selectinload(CourseMessage.user),
+        )
         .where(CourseMessage.channel_id == channel.id)
     )
 
@@ -883,11 +900,21 @@ async def send_channel_message(
         user_id=user.id,
         message=request.message,
         image_url=request.image_url,
+        reply_to_id=uuid.UUID(request.reply_to_id) if request.reply_to_id else None,
     )
     db.add(message)
 
     await db.commit()
     await db.refresh(message)
+
+    # Load reply_to if needed
+    if message.reply_to_id:
+        reply_result = await db.execute(
+            select(CourseMessage)
+            .options(selectinload(CourseMessage.user))
+            .where(CourseMessage.id == message.reply_to_id)
+        )
+        message.reply_to = reply_result.scalar_one_or_none()
 
     return _message_to_response(message, user)
 

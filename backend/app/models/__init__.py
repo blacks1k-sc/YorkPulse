@@ -36,6 +36,19 @@ from app.models.course import (
     ChannelCreationVote,
     ChannelType,
 )
+from app.models.gig import (
+    Gig,
+    GigResponse,
+    GigTransaction,
+    GigRating,
+    GigType,
+    GigCategory,
+    GigPriceType,
+    GigLocation,
+    GigStatus,
+    GigResponseStatus,
+    GigTransactionStatus,
+)
 
 __all__ = [
     # Base
@@ -87,4 +100,16 @@ __all__ = [
     "CourseMessage",
     "ChannelCreationVote",
     "ChannelType",
+    # Gig
+    "Gig",
+    "GigResponse",
+    "GigTransaction",
+    "GigRating",
+    "GigType",
+    "GigCategory",
+    "GigPriceType",
+    "GigLocation",
+    "GigStatus",
+    "GigResponseStatus",
+    "GigTransactionStatus",
 ]

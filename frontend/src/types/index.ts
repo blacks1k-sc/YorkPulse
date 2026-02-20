@@ -109,6 +109,16 @@ export interface QuestParticipant {
   created_at: string;
 }
 
+export interface QuestMessageReply {
+  id: string;
+  content: string;
+  sender: {
+    id: string;
+    name: string;
+    avatar_url: string | null;
+  };
+}
+
 export interface QuestMessage {
   id: string;
   content: string;
@@ -117,6 +127,7 @@ export interface QuestMessage {
     name: string;
     avatar_url: string | null;
   };
+  reply_to: QuestMessageReply | null;
   created_at: string;
   is_deleted: boolean;
 }
@@ -144,12 +155,20 @@ export interface Conversation {
   updated_at: string;
 }
 
+export interface MessageReply {
+  id: string;
+  sender_id: string;
+  content: string | null;
+  image_url: string | null;
+}
+
 export interface Message {
   id: string;
   conversation_id: string;
   sender_id: string;
   content: string | null;
   image_url: string | null;
+  reply_to: MessageReply | null;
   is_deleted: boolean;
   is_read: boolean;
   read_at: string | null;
@@ -214,6 +233,17 @@ export interface CourseChannel {
   unread_count: number;
 }
 
+export interface CourseMessageReply {
+  id: string;
+  message: string | null;
+  image_url: string | null;
+  author: {
+    id: string;
+    name: string;
+    avatar_url: string | null;
+  };
+}
+
 export interface CourseMessage {
   id: string;
   channel_id: string;
@@ -224,6 +254,7 @@ export interface CourseMessage {
     name: string;
     avatar_url: string | null;
   };
+  reply_to: CourseMessageReply | null;
   created_at: string;
 }
 
@@ -259,4 +290,103 @@ export interface CourseMembership {
   joined_at: string;
   channel_count: number;
   unread_count: number;
+}
+
+// Quick Gigs types
+export type GigType = "offering" | "need_help";
+export type GigCategory = "academic" | "moving" | "tech_help" | "errands" | "creative" | "other";
+export type GigPriceType = "fixed" | "hourly" | "negotiable";
+export type GigLocation = "on_campus" | "off_campus" | "online";
+export type GigStatus = "active" | "in_progress" | "completed" | "cancelled" | "expired";
+export type GigResponseStatus = "pending" | "accepted" | "rejected" | "completed";
+export type GigTransactionStatus = "pending" | "completed" | "disputed";
+
+export interface GigUserInfo {
+  id: string;
+  name: string;
+  avatar_url: string | null;
+  email_verified: boolean;
+  name_verified: boolean;
+  gig_rating_avg: number;
+  gigs_completed: number;
+}
+
+export interface GigUserMinimal {
+  id: string;
+  name: string;
+  avatar_url: string | null;
+}
+
+export interface Gig {
+  id: string;
+  poster_id: string;
+  gig_type: GigType;
+  category: GigCategory;
+  title: string;
+  description: string;
+  price_min: number | null;
+  price_max: number | null;
+  price_type: GigPriceType | null;
+  location: GigLocation | null;
+  location_details: string | null;
+  deadline: string | null;
+  status: GigStatus;
+  view_count: number;
+  response_count: number;
+  created_at: string;
+  updated_at: string;
+  poster: GigUserInfo;
+}
+
+export interface GigResponse {
+  id: string;
+  gig_id: string;
+  responder_id: string;
+  message: string | null;
+  proposed_price: number | null;
+  status: GigResponseStatus;
+  created_at: string;
+  responder: GigUserInfo;
+}
+
+export interface GigTransaction {
+  id: string;
+  gig_id: string | null;
+  response_id: string | null;
+  provider_id: string | null;
+  client_id: string | null;
+  amount: number;
+  payment_method: string;
+  status: GigTransactionStatus;
+  provider_confirmed: boolean;
+  client_confirmed: boolean;
+  completed_at: string | null;
+  created_at: string;
+  gig: Gig | null;
+  provider: GigUserMinimal | null;
+  client: GigUserMinimal | null;
+}
+
+export interface GigRating {
+  id: string;
+  transaction_id: string;
+  rater_id: string;
+  ratee_id: string;
+  rating: number;
+  reliability: number;
+  communication: number;
+  quality: number;
+  review_text: string | null;
+  created_at: string;
+  rater: GigUserMinimal;
+}
+
+export interface GigProfile {
+  user_id: string;
+  gig_rating_avg: number;
+  gigs_completed: number;
+  total_earned: number;
+  recent_ratings: GigRating[];
+  active_offerings: number;
+  active_requests: number;
 }

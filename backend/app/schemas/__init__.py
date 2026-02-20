@@ -70,6 +70,27 @@ from app.schemas.vault import (
     VaultPostResponse,
     VaultPostUpdate,
 )
+from app.schemas.gig import (
+    GigCreate,
+    GigUpdate,
+    GigResponse,
+    GigListResponse,
+    GigResponseCreate,
+    GigResponseItem,
+    GigResponsesListResponse,
+    GigResponseActionResult,
+    GigTransactionResponse,
+    GigTransactionListResponse,
+    GigCompleteResult,
+    GigRatingCreate,
+    GigRatingResponse,
+    GigRatingListResponse,
+    GigProfileResponse,
+    MyGigsResponse,
+    GigFilters,
+    GigUserInfo,
+    GigUserMinimal,
+)
 
 __all__ = [
     # Auth
@@ -135,4 +156,24 @@ __all__ = [
     "ReviewResponse",
     "ReviewListResponse",
     "UserRatingSummary",
+    # Gig
+    "GigCreate",
+    "GigUpdate",
+    "GigResponse",
+    "GigListResponse",
+    "GigResponseCreate",
+    "GigResponseItem",
+    "GigResponsesListResponse",
+    "GigResponseActionResult",
+    "GigTransactionResponse",
+    "GigTransactionListResponse",
+    "GigCompleteResult",
+    "GigRatingCreate",
+    "GigRatingResponse",
+    "GigRatingListResponse",
+    "GigProfileResponse",
+    "MyGigsResponse",
+    "GigFilters",
+    "GigUserInfo",
+    "GigUserMinimal",
 ]

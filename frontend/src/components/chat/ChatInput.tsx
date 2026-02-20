@@ -8,10 +8,16 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
+interface ReplyInfo {
+  id: string;
+  authorName: string;
+  content: string | null;
+}
+
 interface ChatInputProps {
   placeholder?: string;
   maxLength?: number;
-  onSend: (message: string | null, imageUrl: string | null) => Promise<void>;
+  onSend: (message: string | null, imageUrl: string | null, replyToId?: string) => Promise<void>;
   getUploadUrl: (filename: string, contentType: string) => Promise<{
     upload_url: string;
     file_url: string;
@@ -19,6 +25,8 @@ interface ChatInputProps {
   }>;
   disabled?: boolean;
   className?: string;
+  replyTo?: ReplyInfo | null;
+  onCancelReply?: () => void;
 }
 
 export function ChatInput({
@@ -28,6 +36,8 @@ export function ChatInput({
   getUploadUrl,
   disabled = false,
   className,
+  replyTo,
+  onCancelReply,
 }: ChatInputProps) {
   const [message, setMessage] = useState("");
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -135,12 +145,13 @@ export function ChatInput({
         setIsUploading(false);
       }
 
-      // Send message
-      await onSend(message.trim() || null, imageUrl);
+      // Send message with reply
+      await onSend(message.trim() || null, imageUrl, replyTo?.id);
 
       // Reset state
       setMessage("");
       removeImage();
+      onCancelReply?.();
     } catch (error) {
       toast({
         title: "Error",
@@ -165,6 +176,32 @@ export function ChatInput({
 
   return (
     <div className={cn("space-y-2", className)}>
+      {/* Reply Preview */}
+      <AnimatePresence>
+        {replyTo && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="flex items-center gap-2 px-3 py-2 bg-purple-500/10 border border-purple-500/20 rounded-lg"
+          >
+            <div className="w-1 h-8 bg-purple-500 rounded-full" />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-purple-400 font-medium">Replying to {replyTo.authorName}</p>
+              <p className="text-xs text-zinc-400 truncate">
+                {replyTo.content || "Photo"}
+              </p>
+            </div>
+            <button
+              onClick={onCancelReply}
+              className="p-1 hover:bg-white/10 rounded transition-colors"
+            >
+              <X className="w-4 h-4 text-zinc-400" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Image Preview */}
       <AnimatePresence>
         {imagePreview && (

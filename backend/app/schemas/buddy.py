@@ -163,6 +163,18 @@ class QuestMessageCreate(BaseModel):
     """Schema for sending a message in quest group chat."""
 
     content: Annotated[str, Field(min_length=1, max_length=2000)]
+    reply_to_id: str | None = None
+
+
+class QuestMessageReplyInfo(BaseModel):
+    """Minimal info about a replied quest message."""
+
+    id: str
+    content: str
+    sender: UserMinimal
+
+    class Config:
+        from_attributes = True
 
 
 class QuestMessageResponse(BaseModel):
@@ -171,6 +183,7 @@ class QuestMessageResponse(BaseModel):
     id: str
     content: str
     sender: UserMinimal
+    reply_to: QuestMessageReplyInfo | None = None
     created_at: datetime
     is_deleted: bool = False
 

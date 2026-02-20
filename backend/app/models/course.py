@@ -272,6 +272,13 @@ class CourseMessage(Base, UUIDMixin):
         String(500),
         nullable=True,
     )
+    # Reply to another message
+    reply_to_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("course_messages.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default="now()",
@@ -283,6 +290,11 @@ class CourseMessage(Base, UUIDMixin):
         "CourseChannel", back_populates="messages"
     )
     user: Mapped["User"] = relationship("User")
+    reply_to: Mapped["CourseMessage | None"] = relationship(
+        "CourseMessage",
+        remote_side="CourseMessage.id",
+        foreign_keys=[reply_to_id],
+    )
 
     __table_args__ = (
         Index("ix_course_messages_channel_created", "channel_id", "created_at"),
