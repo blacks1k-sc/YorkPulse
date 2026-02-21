@@ -237,6 +237,19 @@ export default function CoursesPage() {
     setReplyTo({ id: messageId, authorName, content });
   };
 
+  // Handle scroll to message (when clicking on reply preview)
+  const handleScrollToMessage = (messageId: string) => {
+    const element = document.getElementById(`message-${messageId}`);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
+      // Add highlight effect
+      element.classList.add("bg-purple-500/20");
+      setTimeout(() => {
+        element.classList.remove("bg-purple-500/20");
+      }, 2000);
+    }
+  };
+
   // Toggle faculty expansion
   const toggleFaculty = (faculty: string) => {
     setExpandedFaculties((prev) => {
@@ -555,7 +568,7 @@ export default function CoursesPage() {
         </div>
 
         {/* Messages Area */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
           {/* Vote Status Banner (for general channel) */}
           {selectedChannel?.type === "general" && voteStatus && voteStatus.votes.length > 0 && (
             <div className="p-3 bg-purple-500/10 border-b border-purple-500/20">
@@ -579,7 +592,7 @@ export default function CoursesPage() {
           )}
 
           {/* Messages */}
-          <ScrollArea className="flex-1 p-4">
+          <ScrollArea className="flex-1 min-h-0 p-4">
             {messagesLoading ? (
               <div className="space-y-4">
                 {[...Array(5)].map((_, i) => (
@@ -613,6 +626,7 @@ export default function CoursesPage() {
                     timestamp={msg.created_at}
                     replyTo={msg.reply_to}
                     onReply={handleReply}
+                    onScrollToMessage={handleScrollToMessage}
                   />
                 ))}
                 <div ref={messagesEndRef} />

@@ -640,10 +640,6 @@ async def vote_for_professor(
 ):
     """Vote for creating a professor-specific channel."""
     semester = request.semester or get_current_semester()
-    prof_name_normalized = normalize_prof_name(request.prof_name)
-
-    if len(prof_name_normalized) < 2:
-        raise HTTPException(status_code=400, detail="Professor name too short")
 
     # Verify user is a member
     membership = await db.execute(
@@ -654,16 +650,28 @@ async def vote_for_professor(
     if not membership.scalar_one_or_none():
         raise HTTPException(status_code=403, detail="Join the course first")
 
-    # Check if user already voted for this professor this semester
+    # 1. Check max 7 channels per course
+    channel_count = await db.execute(
+        select(func.count(CourseChannel.id)).where(CourseChannel.course_id == course_id)
+    )
+    if channel_count.scalar() >= 7:
+        raise HTTPException(status_code=400, detail="Maximum channels reached for this course (7)")
+
+    # 2. Check if user already voted for ANY professor in this course this semester
     existing_vote = await db.execute(
         select(ChannelCreationVote)
         .where(ChannelCreationVote.course_id == course_id)
         .where(ChannelCreationVote.voter_user_id == user.id)
-        .where(ChannelCreationVote.prof_name_normalized == prof_name_normalized)
         .where(ChannelCreationVote.semester == semester)
     )
     if existing_vote.scalar_one_or_none():
-        raise HTTPException(status_code=400, detail="Already voted for this professor")
+        raise HTTPException(status_code=409, detail="You already voted for a professor in this course")
+
+    # 3. Normalize professor name
+    prof_name_normalized = normalize_prof_name(request.prof_name)
+
+    if len(prof_name_normalized) < 2:
+        raise HTTPException(status_code=400, detail="Professor name too short")
 
     # Check if channel already exists
     channel_name = f"prof-{prof_name_normalized.replace(' ', '-')}-{semester.lower()}"

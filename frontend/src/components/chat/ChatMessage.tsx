@@ -37,6 +37,7 @@ interface ChatMessageProps {
   showAvatar?: boolean;
   replyTo?: ReplyTo | null;
   onReply?: (messageId: string, authorName: string, content: string | null) => void;
+  onScrollToMessage?: (messageId: string) => void;
 }
 
 export function ChatMessage({
@@ -51,6 +52,7 @@ export function ChatMessage({
   showAvatar = true,
   replyTo,
   onReply,
+  onScrollToMessage,
 }: ChatMessageProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -72,7 +74,7 @@ export function ChatMessage({
   };
 
   return (
-    <div className={cn("flex gap-3 group", isOwn && "flex-row-reverse")}>
+    <div id={id ? `message-${id}` : undefined} className={cn("flex gap-3 group scroll-mt-4 transition-colors duration-500 rounded-lg -mx-2 px-2", isOwn && "flex-row-reverse")}>
       {/* Avatar */}
       {showAvatar && (
         <Link href={`/profile/${authorId}`} className="flex-shrink-0">
@@ -119,9 +121,11 @@ export function ChatMessage({
 
         {/* Reply Preview */}
         {replyTo && (
-          <div
+          <button
+            onClick={() => onScrollToMessage?.(replyTo.id)}
             className={cn(
-              "mb-2 px-2 py-1.5 rounded-lg border-l-2 border-purple-500/50 bg-white/5 text-xs",
+              "mb-2 px-2 py-1.5 rounded-lg border-l-2 border-purple-500/50 bg-white/5 text-xs w-full",
+              "hover:bg-white/10 transition-colors cursor-pointer",
               isOwn ? "text-right" : "text-left"
             )}
           >
@@ -129,7 +133,7 @@ export function ChatMessage({
             <p className="text-zinc-400 line-clamp-1">
               {replyTo.image_url && !replyContent ? "Photo" : replyContent || "Message"}
             </p>
-          </div>
+          </button>
         )}
 
         {/* Image */}
