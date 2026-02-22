@@ -62,3 +62,6 @@ uploads/
 PROJECT_PLAN.md
 PROMPT.md
 REVIEW.md
+
+# Markdown files
+*.md
