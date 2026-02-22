@@ -182,14 +182,20 @@ class ApiClient {
 
   // Auth endpoints
   auth = {
-    signup: (email: string) =>
-      this.post<SignupResponse>("/auth/signup", { email }),
+    signup: (email: string, devMode = false) =>
+      this.post<SignupResponse>("/auth/signup", { email, dev_mode: devMode }),
 
-    login: (email: string) =>
-      this.post<{ message: string }>("/auth/login", { email }),
+    login: (email: string, devMode = false) =>
+      this.post<SignupResponse>("/auth/login", { email, dev_mode: devMode }),
 
     verifyEmail: (token: string) =>
       this.post<VerifyEmailResponse>("/auth/verify-email", { token }),
+
+    verifyOTP: (email: string, code: string, devMode = false) =>
+      this.post<VerifyEmailResponse>("/auth/verify-otp", { email, code, dev_mode: devMode }),
+
+    resendOTP: (email: string, devMode = false) =>
+      this.post<{ success: boolean; message: string }>("/auth/resend-otp", { email, dev_mode: devMode }),
 
     verifyName: (name: string) =>
       this.post<{ name_verified: boolean; requires_id_upload: boolean; message: string }>("/auth/verify-name", { name }),

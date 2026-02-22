@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     # App
     app_name: str = "YorkPulse API"
     debug: bool = False
+    allow_test_emails: bool = False  # Set to True to allow non-York emails for testing
     api_prefix: str = "/api/v1"
 
     # Database
@@ -40,6 +41,9 @@ class Settings(BaseSettings):
 
     # Gemini AI
     gemini_api_key: str = ""
+
+    # Resend (Email)
+    resend_api_key: str = ""
 
     # CORS
     cors_origins: list[str] = ["http://localhost:3000"]

@@ -20,20 +20,24 @@ from app.schemas.auth import (
     LoginRequest,
     NameVerificationRequest,
     NameVerificationResponse,
+    OTPResponse,
     ProfileUpdateRequest,
     PublicUserResponse,
     RefreshTokenRequest,
+    ResendOTPRequest,
     SignupRequest,
     SignupResponse,
     TokenResponse,
     UserResponse,
     VerifyEmailRequest,
     VerifyEmailResponse,
+    VerifyOTPRequest,
 )
 from app.services.email_validation import email_validation_service
 from app.services.gemini import gemini_service
 from app.services.jwt import jwt_service
 from app.services.s3 import s3_service
+from app.services.supabase import supabase_auth_service
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -47,50 +51,32 @@ async def signup(
     Register a new user with York University email.
 
     1. Validates email is @yorku.ca or @my.yorku.ca
-    2. Checks if email already exists
-    3. Creates user with unverified status
-    4. Sends verification email (magic link)
+    2. Checks if email already exists and is verified
+    3. Sends OTP verification email via Supabase (or locally if dev_mode)
     """
-    # Check if user already exists
+    # Check if user already exists and is verified
     result = await db.execute(select(User).where(User.email == request.email))
     existing_user = result.scalar_one_or_none()
 
-    if existing_user:
-        if existing_user.email_verified:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email already registered",
-            )
-        # User exists but not verified - resend verification
-        token = jwt_service.create_email_verification_token(request.email)
-        # TODO: Send email with token
-        return SignupResponse(
-            message=f"Verification email resent. Check your inbox. (Dev token: {token})",
-            email=request.email,
+    if existing_user and existing_user.email_verified:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered. Please login instead.",
         )
 
-    # Suggest a name from email
-    suggested_name = email_validation_service.suggest_name_from_email(request.email)
-
-    # Create new user
-    user = User(
-        id=uuid.uuid4(),
-        email=request.email,
-        name=suggested_name or "New User",  # Temporary name
-        email_verified=False,
-        name_verified=False,
+    # Send OTP via Supabase (or locally if dev_mode)
+    success, message = await supabase_auth_service.send_otp(
+        request.email, force_dev_mode=request.dev_mode
     )
-    db.add(user)
-    await db.commit()
 
-    # Create verification token
-    token = jwt_service.create_email_verification_token(request.email)
-
-    # TODO: Send email with verification link
-    # For now, return token in response (development only)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=message,
+        )
 
     return SignupResponse(
-        message=f"Verification email sent. Check your inbox. (Dev token: {token})",
+        message=message,  # In dev mode, this includes the OTP
         email=request.email,
     )
 
@@ -146,41 +132,124 @@ async def login(
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """
-    Request login magic link.
+    Request login OTP code.
 
-    Sends a magic link to the user's email for passwordless login.
+    Sends a 6-digit OTP code to the user's email for passwordless login.
+    If dev_mode=True, generates a local OTP instead of sending email.
     """
     result = await db.execute(select(User).where(User.email == request.email))
     user = result.scalar_one_or_none()
 
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="No account found with this email. Please sign up first.",
-        )
+    # For login, we check if user exists in our DB
+    # But we still send OTP for both new and existing users
+    # The verify-otp endpoint will handle user creation/login
 
-    if not user.email_verified:
-        # Resend verification email
-        token = jwt_service.create_email_verification_token(request.email)
-        return SignupResponse(
-            message=f"Email not verified. Verification email resent. (Dev token: {token})",
-            email=request.email,
-        )
-
-    if user.is_banned:
+    if user and user.is_banned:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Account is banned",
         )
 
-    # Create login token (same as email verification)
-    token = jwt_service.create_email_verification_token(request.email)
+    # Send OTP via Supabase (or locally if dev_mode)
+    success, message = await supabase_auth_service.send_otp(
+        request.email, force_dev_mode=request.dev_mode
+    )
 
-    # TODO: Send login email
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=message,
+        )
 
     return SignupResponse(
-        message=f"Login link sent to your email. (Dev token: {token})",
+        message=message,  # In dev mode, this includes the OTP
         email=request.email,
+    )
+
+
+@router.post("/verify-otp", response_model=VerifyEmailResponse)
+async def verify_otp(
+    request: VerifyOTPRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """
+    Verify email using 6-digit OTP code.
+
+    Creates user if new, returns JWT tokens on successful verification.
+    If dev_mode=True, verifies against local OTP storage.
+    """
+    # Verify OTP with Supabase (or locally if dev_mode)
+    success, message, session_data = await supabase_auth_service.verify_otp(
+        request.email, request.code, force_dev_mode=request.dev_mode
+    )
+
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=message,
+        )
+
+    # Find or create user in our database
+    result = await db.execute(select(User).where(User.email == request.email))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        # Create new user
+        suggested_name = email_validation_service.suggest_name_from_email(request.email)
+        user = User(
+            id=uuid.uuid4(),
+            email=request.email,
+            name=suggested_name or "New User",
+            email_verified=True,  # Email is now verified via OTP
+            name_verified=False,
+        )
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+    else:
+        # Mark email as verified if not already
+        if not user.email_verified:
+            user.email_verified = True
+            await db.commit()
+
+    # Generate our own JWT tokens (for API auth)
+    access_token, refresh_token, expires_in = jwt_service.create_token_pair(
+        str(user.id), user.email
+    )
+
+    return VerifyEmailResponse(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        expires_in=expires_in,
+        requires_name_verification=not user.name_verified,
+    )
+
+
+@router.post("/resend-otp", response_model=OTPResponse)
+async def resend_otp(
+    request: ResendOTPRequest,
+):
+    """
+    Resend OTP verification code.
+
+    Rate limited to prevent abuse - client should enforce 60s cooldown.
+    If dev_mode=True, generates a local OTP instead of sending email.
+    """
+    success, message = await supabase_auth_service.resend_otp(
+        request.email, force_dev_mode=request.dev_mode
+    )
+
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS
+            if "rate" in message.lower() or "limit" in message.lower()
+            else status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=message,
+        )
+
+    return OTPResponse(
+        success=True,
+        message=message,  # In dev mode, this includes the OTP
     )
 
 

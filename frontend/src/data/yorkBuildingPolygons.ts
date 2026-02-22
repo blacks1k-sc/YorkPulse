@@ -29,6 +29,18 @@ const buildingCategoryMap: Record<string, BuildingCategory> = {
   "gymnasium": "gym",
   "fitness": "gym",
   "recreation": "gym",
+  "soccer": "gym",
+  "football": "gym",
+  "pitch": "gym",
+  "field": "gym",
+  "arena": "gym",
+  "athletics": "gym",
+  "sport": "gym",
+  "tennis": "gym",
+  "pool": "gym",
+  "aquatic": "gym",
+  "canlan": "gym",
+  "ice gardens": "gym",
 
   // Food/Dining
   "student centre": "food",
@@ -95,8 +107,27 @@ const buildingCategoryMap: Record<string, BuildingCategory> = {
   "quad": "residence",
 };
 
-// Determine category from building name
-function getCategoryFromName(name: string): BuildingCategory {
+// Determine category from building name and tags
+function getCategoryFromNameAndTags(name: string, tags?: Record<string, string>): BuildingCategory {
+  // Check OSM tags first for sports/leisure facilities
+  if (tags) {
+    const leisure = tags.leisure;
+    const sport = tags.sport;
+    const amenity = tags.amenity;
+
+    // Sports facilities
+    if (leisure === "pitch" || leisure === "sports_centre" || leisure === "stadium" ||
+        leisure === "track" || leisure === "ice_rink" || leisure === "swimming_pool") {
+      return "gym";
+    }
+    if (sport) {
+      return "gym";
+    }
+    if (amenity === "gym" || amenity === "fitness_centre") {
+      return "gym";
+    }
+  }
+
   const lowerName = name.toLowerCase();
 
   for (const [keyword, category] of Object.entries(buildingCategoryMap)) {
@@ -143,6 +174,13 @@ const OVERPASS_QUERY = `
   // York University campus area - restricted to west of Keele
   way["building"](${CAMPUS_BOUNDS.south},${CAMPUS_BOUNDS.west},${CAMPUS_BOUNDS.north},${CAMPUS_BOUNDS.east});
   relation["building"](${CAMPUS_BOUNDS.south},${CAMPUS_BOUNDS.west},${CAMPUS_BOUNDS.north},${CAMPUS_BOUNDS.east});
+  // Sports facilities (pitches, tracks, etc.)
+  way["leisure"="pitch"](${CAMPUS_BOUNDS.south},${CAMPUS_BOUNDS.west},${CAMPUS_BOUNDS.north},${CAMPUS_BOUNDS.east});
+  way["leisure"="sports_centre"](${CAMPUS_BOUNDS.south},${CAMPUS_BOUNDS.west},${CAMPUS_BOUNDS.north},${CAMPUS_BOUNDS.east});
+  way["leisure"="stadium"](${CAMPUS_BOUNDS.south},${CAMPUS_BOUNDS.west},${CAMPUS_BOUNDS.north},${CAMPUS_BOUNDS.east});
+  way["leisure"="track"](${CAMPUS_BOUNDS.south},${CAMPUS_BOUNDS.west},${CAMPUS_BOUNDS.north},${CAMPUS_BOUNDS.east});
+  way["leisure"="ice_rink"](${CAMPUS_BOUNDS.south},${CAMPUS_BOUNDS.west},${CAMPUS_BOUNDS.north},${CAMPUS_BOUNDS.east});
+  way["leisure"="swimming_pool"](${CAMPUS_BOUNDS.south},${CAMPUS_BOUNDS.west},${CAMPUS_BOUNDS.north},${CAMPUS_BOUNDS.east});
 );
 out body geom;
 `;
@@ -159,6 +197,27 @@ function parseOSMResponse(data: any): BuildingPolygon[] {
 
     let coordinates: [number, number][] = [];
     let name = element.tags?.name || element.tags?.["addr:housename"] || "";
+
+    // Generate name for sports facilities without a name
+    if (!name && element.tags) {
+      const sport = element.tags.sport;
+      const leisure = element.tags.leisure;
+      if (sport) {
+        name = `${sport.charAt(0).toUpperCase() + sport.slice(1)} Field`;
+      } else if (leisure === "pitch") {
+        name = "Sports Field";
+      } else if (leisure === "track") {
+        name = "Running Track";
+      } else if (leisure === "ice_rink") {
+        name = "Ice Rink";
+      } else if (leisure === "swimming_pool") {
+        name = "Swimming Pool";
+      } else if (leisure === "sports_centre") {
+        name = "Sports Centre";
+      } else if (leisure === "stadium") {
+        name = "Stadium";
+      }
+    }
 
     // For ways, extract coordinates directly
     if (element.type === "way" && element.geometry) {
@@ -192,8 +251,8 @@ function parseOSMResponse(data: any): BuildingPolygon[] {
     // Generate ID
     const id = `osm-${element.type}-${element.id}`;
 
-    // Determine category
-    const category = getCategoryFromName(name || `building-${element.id}`);
+    // Determine category from name and tags
+    const category = getCategoryFromNameAndTags(name || `building-${element.id}`, element.tags);
 
     buildings.push({
       id,

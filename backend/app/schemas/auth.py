@@ -10,6 +10,7 @@ class SignupRequest(BaseModel):
     """Request schema for user signup."""
 
     email: EmailStr
+    dev_mode: bool = False  # If True, use local OTP instead of email
 
     @field_validator("email")
     @classmethod
@@ -34,10 +35,51 @@ class VerifyEmailRequest(BaseModel):
     token: str
 
 
-class LoginRequest(BaseModel):
-    """Request schema for login (magic link)."""
+class VerifyOTPRequest(BaseModel):
+    """Request to verify email with OTP code."""
 
     email: EmailStr
+    code: Annotated[str, Field(min_length=6, max_length=6, pattern=r"^\d{6}$")]
+    dev_mode: bool = False  # If True, verify against local OTP
+
+    @field_validator("email")
+    @classmethod
+    def validate_york_email(cls, v: str) -> str:
+        """Ensure email is a York University email."""
+        email_lower = v.lower()
+        if not (email_lower.endswith("@yorku.ca") or email_lower.endswith("@my.yorku.ca")):
+            raise ValueError("Must use a York University email")
+        return email_lower
+
+
+class ResendOTPRequest(BaseModel):
+    """Request to resend OTP code."""
+
+    email: EmailStr
+    dev_mode: bool = False  # If True, generate local OTP
+
+    @field_validator("email")
+    @classmethod
+    def validate_york_email(cls, v: str) -> str:
+        """Ensure email is a York University email."""
+        email_lower = v.lower()
+        if not (email_lower.endswith("@yorku.ca") or email_lower.endswith("@my.yorku.ca")):
+            raise ValueError("Must use a York University email")
+        return email_lower
+
+
+class OTPResponse(BaseModel):
+    """Response for OTP operations."""
+
+    success: bool
+    message: str
+
+
+class LoginRequest(BaseModel):
+    """Request schema for login (OTP)."""
+
+    email: EmailStr
+    dev_mode: bool = False  # If True, use local OTP instead of email
 
     @field_validator("email")
     @classmethod

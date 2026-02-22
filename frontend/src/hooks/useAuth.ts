@@ -24,13 +24,15 @@ export function useUser() {
 
 export function useLogin() {
   return useMutation({
-    mutationFn: (email: string) => api.auth.login(email),
+    mutationFn: ({ email, devMode = false }: { email: string; devMode?: boolean }) =>
+      api.auth.login(email, devMode),
   });
 }
 
 export function useSignup() {
   return useMutation({
-    mutationFn: (email: string) => api.auth.signup(email),
+    mutationFn: ({ email, devMode = false }: { email: string; devMode?: boolean }) =>
+      api.auth.signup(email, devMode),
   });
 }
 
@@ -42,6 +44,25 @@ export function useVerifyEmail() {
     onSuccess: (data) => {
       setTokens(data.access_token, data.refresh_token);
     },
+  });
+}
+
+export function useVerifyOTP() {
+  const { setTokens } = useAuthStore();
+
+  return useMutation({
+    mutationFn: ({ email, code, devMode = false }: { email: string; code: string; devMode?: boolean }) =>
+      api.auth.verifyOTP(email, code, devMode),
+    onSuccess: (data) => {
+      setTokens(data.access_token, data.refresh_token);
+    },
+  });
+}
+
+export function useResendOTP() {
+  return useMutation({
+    mutationFn: ({ email, devMode = false }: { email: string; devMode?: boolean }) =>
+      api.auth.resendOTP(email, devMode),
   });
 }
 

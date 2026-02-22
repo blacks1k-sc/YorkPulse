@@ -10,12 +10,10 @@ import {
   MessageCircle,
   GraduationCap,
   ChevronDown,
-  ChevronRight,
   Sparkles,
   Lock,
   Zap,
   MapPin,
-  Lion,
   ArrowRight,
   CheckCircle2,
   MessageSquarePlus,
@@ -86,90 +84,60 @@ const dashboardFeatures = [
   {
     href: "/vault",
     icon: Shield,
-    emoji: "🔒",
     title: "The Vault",
-    description:
-      "Share thoughts anonymously with the York community. Vent, confess, ask questions, or discuss sensitive topics without judgment. Your identity stays protected.",
-    gradient: "from-purple-500/20 to-purple-600/10",
-    borderColor: "border-purple-500/30",
-    hoverBorder: "hover:border-purple-500/60",
-    iconColor: "text-purple-400",
+    subtitle: "Anonymous Forum",
+    description: "Share thoughts anonymously. Vent, confess, or discuss sensitive topics without judgment.",
+    accentColor: "purple",
     statKey: "vault_posts_today" as const,
     statLabel: "posts today",
   },
   {
     href: "/marketplace",
     icon: ShoppingBag,
-    emoji: "🛍️",
     title: "Marketplace",
-    description:
-      "Buy and sell textbooks, furniture, electronics, and more with fellow students. Find deals on campus essentials and declutter your dorm.",
-    gradient: "from-orange-500/20 to-red-500/10",
-    borderColor: "border-orange-500/30",
-    hoverBorder: "hover:border-orange-500/60",
-    iconColor: "text-orange-400",
+    subtitle: "Buy & Sell",
+    description: "Trade textbooks, furniture, and electronics with verified York students.",
+    accentColor: "orange",
     statKey: "marketplace_listings" as const,
     statLabel: "active listings",
   },
   {
     href: "/quests",
     icon: Users,
-    emoji: "🎯",
     title: "Side Quests",
-    description:
-      "Find activity buddies for gym sessions, study groups, coffee meetups, or campus events. Never do things alone again.",
-    gradient: "from-green-500/20 to-emerald-500/10",
-    borderColor: "border-green-500/30",
-    hoverBorder: "hover:border-green-500/60",
-    iconColor: "text-green-400",
+    subtitle: "Find Partners",
+    description: "Connect for gym sessions, study groups, coffee meetups, or campus events.",
+    accentColor: "emerald",
     statKey: "side_quests_active" as const,
     statLabel: "active quests",
   },
   {
     href: "/courses",
     icon: GraduationCap,
-    emoji: "💬",
     title: "Course Chat",
-    description:
-      "Join course-specific chat rooms to ask questions, share notes, form study groups, and connect with classmates. Organized by faculty and program.",
-    gradient: "from-blue-500/20 to-cyan-500/10",
-    borderColor: "border-blue-500/30",
-    hoverBorder: "hover:border-blue-500/60",
-    iconColor: "text-blue-400",
+    subtitle: "Class Discussions",
+    description: "Join course-specific rooms to ask questions and form study groups.",
+    accentColor: "blue",
     statKey: "total_courses" as const,
-    statLabel: "courses available",
+    statLabel: "courses",
   },
   {
     href: "/messages",
     icon: MessageCircle,
-    emoji: "✉️",
     title: "Messages",
-    description:
-      "Direct message other students securely. Stay connected with your York community through private conversations.",
-    gradient: "from-pink-500/20 to-rose-500/10",
-    borderColor: "border-pink-500/30",
-    hoverBorder: "hover:border-pink-500/60",
-    iconColor: "text-pink-400",
+    subtitle: "Direct Messages",
+    description: "Private conversations with other students in your York community.",
+    accentColor: "pink",
     statKey: "total_users" as const,
-    statLabel: "active users",
+    statLabel: "students",
   },
 ];
 
 const comingSoonFeatures = [
   {
-    emoji: "💰",
-    title: "CashFlow",
-    description: "Group buying & quick gigs",
-  },
-  {
-    emoji: "📍",
-    title: "Vibe Check",
-    description: "Social availability status",
-  },
-  {
-    emoji: "🦁",
-    title: "Lion Signals",
-    description: "Live campus updates",
+    icon: Sparkles,
+    title: "Events",
+    description: "Discover campus happenings",
   },
 ];
 
@@ -177,31 +145,31 @@ const quickStartSteps = [
   {
     step: 1,
     title: "Complete your profile",
-    description: "Add your interests, program, and a bio to connect with like-minded students",
+    description: "Add interests and bio",
     href: "/profile",
   },
   {
     step: 2,
     title: "Join your courses",
-    description: "Find your classes in Course Chat and join the conversation",
+    description: "Find and join class chats",
     href: "/courses",
   },
   {
     step: 3,
-    title: "Browse the Marketplace",
-    description: "Check out textbooks, electronics, and campus essentials for sale",
+    title: "Browse Marketplace",
+    description: "Find deals on textbooks",
     href: "/marketplace",
   },
   {
     step: 4,
     title: "Post in The Vault",
-    description: "Share thoughts, ask questions, or just vent anonymously",
+    description: "Share anonymously",
     href: "/vault",
   },
   {
     step: 5,
-    title: "Find activity buddies",
-    description: "Create or join Side Quests for gym, study, or hangouts",
+    title: "Find activity partners",
+    description: "Join or create quests",
     href: "/quests",
   },
 ];
@@ -227,6 +195,40 @@ const itemVariants = {
   },
 };
 
+// Color mappings for feature cards
+const accentColors = {
+  purple: {
+    bg: "bg-purple-500/15",
+    icon: "text-purple-400",
+    gradient: "bg-gradient-to-br from-purple-900/30 via-purple-800/10 to-transparent",
+    border: "border-purple-500/20",
+  },
+  orange: {
+    bg: "bg-orange-500/15",
+    icon: "text-orange-400",
+    gradient: "bg-gradient-to-br from-orange-900/30 via-orange-800/10 to-transparent",
+    border: "border-orange-500/20",
+  },
+  emerald: {
+    bg: "bg-emerald-500/15",
+    icon: "text-emerald-400",
+    gradient: "bg-gradient-to-br from-emerald-900/30 via-emerald-800/10 to-transparent",
+    border: "border-emerald-500/20",
+  },
+  blue: {
+    bg: "bg-blue-500/15",
+    icon: "text-blue-400",
+    gradient: "bg-gradient-to-br from-blue-900/30 via-blue-800/10 to-transparent",
+    border: "border-blue-500/20",
+  },
+  pink: {
+    bg: "bg-pink-500/15",
+    icon: "text-pink-400",
+    gradient: "bg-gradient-to-br from-pink-900/30 via-pink-800/10 to-transparent",
+    border: "border-pink-500/20",
+  },
+};
+
 // Feature Card Component
 function FeatureCard({
   feature,
@@ -245,71 +247,59 @@ function FeatureCard({
 }) {
   const statValue = stats?.[feature.statKey];
   const isMessagesFeature = feature.href === "/messages";
+  const colors = accentColors[feature.accentColor as keyof typeof accentColors];
+  const Icon = feature.icon;
 
   return (
     <Link href={feature.href}>
       <motion.div
-        whileHover={{ scale: 1.02, y: -4 }}
-        whileTap={{ scale: 0.98 }}
+        whileHover={{ y: -2 }}
+        whileTap={{ scale: 0.995 }}
         className={cn(
-          "group relative overflow-hidden rounded-2xl p-6 cursor-pointer transition-all duration-300",
-          "bg-white/[0.03] backdrop-blur-sm",
-          "border border-white/10",
-          feature.hoverBorder,
-          "hover:shadow-xl hover:shadow-black/20"
+          "group relative h-full rounded-2xl p-5 cursor-pointer transition-all duration-200 overflow-hidden",
+          "bg-zinc-900/90 border",
+          colors.border,
+          "hover:border-zinc-700"
         )}
       >
         {/* Gradient background */}
-        <div
-          className={cn(
-            "absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500",
-            `bg-gradient-to-br ${feature.gradient}`
-          )}
-        />
+        <div className={cn("absolute inset-0", colors.gradient)} />
 
-        {/* Unread badge for messages */}
-        {isMessagesFeature && unreadMessages && unreadMessages > 0 && (
-          <div className="absolute top-4 right-4 min-w-[24px] h-6 flex items-center justify-center px-2 text-xs font-bold text-white bg-red-500 rounded-full z-10">
-            {unreadMessages > 99 ? "99+" : unreadMessages}
-          </div>
-        )}
-
-        {/* Content */}
+        {/* Content wrapper */}
         <div className="relative">
-          {/* Icon + Emoji */}
-          <div className="flex items-center gap-3 mb-4">
-            <div
-              className={cn(
-                "w-12 h-12 rounded-xl flex items-center justify-center relative",
-                "bg-white/5 group-hover:bg-white/10 transition-colors"
-              )}
-            >
-              <span className="text-2xl">{feature.emoji}</span>
+          {/* Header with icon and stats */}
+          <div className="flex items-start justify-between mb-4">
+            <div className={cn("p-2.5 rounded-xl", colors.bg)}>
+              <Icon className={cn("w-5 h-5", colors.icon)} />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-lg font-semibold text-white">{feature.title}</h3>
-                {isMessagesFeature && unreadMessages && unreadMessages > 0 && (
-                  <span className="text-xs text-red-400">({unreadMessages} unread)</span>
-                )}
+            {statValue !== undefined && (
+              <div className="text-right">
+                <p className="text-xl font-bold text-white">{statValue.toLocaleString()}</p>
+                <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">{feature.statLabel}</p>
               </div>
-              {statValue !== undefined && (
-                <p className="text-xs text-zinc-500">
-                  {statValue.toLocaleString()} {feature.statLabel}
-                </p>
-              )}
-            </div>
+            )}
+            {/* Unread badge for messages */}
+            {isMessagesFeature && unreadMessages && unreadMessages > 0 && (
+              <div className="absolute top-0 right-0 min-w-[20px] h-[20px] flex items-center justify-center px-1.5 text-[10px] font-bold text-white bg-red-500 rounded-full">
+                {unreadMessages > 99 ? "99+" : unreadMessages}
+              </div>
+            )}
           </div>
 
-          {/* Description */}
+          {/* Content */}
+          <div className="space-y-1 mb-3">
+            <h3 className="text-base font-semibold text-white">{feature.title}</h3>
+            <p className="text-xs text-zinc-500">{feature.subtitle}</p>
+          </div>
+
           <p className="text-sm text-zinc-400 leading-relaxed mb-4">
             {feature.description}
           </p>
 
-          {/* CTA */}
-          <div className="flex items-center gap-2 text-sm font-medium text-[#00ff88] group-hover:gap-3 transition-all">
-            <span>Explore</span>
-            <ArrowRight className="w-4 h-4" />
+          {/* Open link */}
+          <div className="flex items-center gap-1.5 text-sm text-zinc-500 group-hover:text-zinc-300 transition-colors">
+            <span>Open</span>
+            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
           </div>
         </div>
       </motion.div>
@@ -322,18 +312,20 @@ function QuickStartGuide() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="rounded-2xl bg-white/[0.03] border border-white/10 overflow-hidden">
+    <div className="rounded-xl bg-zinc-900/50 border border-zinc-800/50 overflow-hidden">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-6 py-4 flex items-center justify-between hover:bg-white/5 transition-colors"
+        className="w-full px-4 py-3 flex items-center justify-between hover:bg-zinc-800/30 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <Sparkles className="w-5 h-5 text-yellow-400" />
-          <span className="font-medium">New to YorkPulse? Here's how to get started</span>
+          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          </div>
+          <span className="text-sm font-medium text-zinc-300">Getting Started Guide</span>
         </div>
         <ChevronDown
           className={cn(
-            "w-5 h-5 text-zinc-500 transition-transform duration-200",
+            "w-4 h-4 text-zinc-500 transition-transform duration-200",
             isOpen && "rotate-180"
           )}
         />
@@ -346,27 +338,27 @@ function QuickStartGuide() {
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="border-t border-white/10"
+            className="border-t border-zinc-800/50"
           >
-            <div className="p-6 space-y-4">
+            <div className="p-4 space-y-2">
               {quickStartSteps.map((step, index) => (
                 <Link key={step.step} href={step.href}>
                   <motion.div
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="flex items-start gap-4 p-3 rounded-xl hover:bg-white/5 transition-colors group"
+                    transition={{ delay: index * 0.03 }}
+                    className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-zinc-800/40 transition-colors group"
                   >
-                    <div className="w-8 h-8 rounded-full bg-[#00ff88]/20 flex items-center justify-center flex-shrink-0">
-                      <span className="text-sm font-bold text-[#00ff88]">{step.step}</span>
+                    <div className="w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center flex-shrink-0 text-xs font-medium text-zinc-400 group-hover:bg-emerald-500/20 group-hover:text-emerald-400 transition-colors">
+                      {step.step}
                     </div>
-                    <div className="flex-1">
-                      <h4 className="font-medium text-white group-hover:text-[#00ff88] transition-colors">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-medium text-zinc-300 group-hover:text-white transition-colors truncate">
                         {step.title}
                       </h4>
-                      <p className="text-sm text-zinc-500 mt-0.5">{step.description}</p>
+                      <p className="text-xs text-zinc-600 truncate">{step.description}</p>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-[#00ff88] transition-colors mt-1" />
+                    <ArrowRight className="w-3.5 h-3.5 text-zinc-600 group-hover:text-zinc-400 group-hover:translate-x-0.5 transition-all flex-shrink-0" />
                   </motion.div>
                 </Link>
               ))}
@@ -381,12 +373,12 @@ function QuickStartGuide() {
 // Safety Banner Component
 function SafetyBanner() {
   return (
-    <div className="flex items-center justify-center gap-3 text-sm text-zinc-500 py-8">
-      <Lock className="w-4 h-4" />
+    <div className="flex items-center justify-center gap-2 text-xs text-zinc-600 py-6 border-t border-zinc-800/30">
+      <Lock className="w-3 h-3" />
       <span>
-        Your privacy matters. Anonymous posts stay anonymous.{" "}
-        <Link href="/privacy" className="text-zinc-400 hover:text-white underline-offset-2 hover:underline">
-          Privacy Policy
+        Your privacy is protected.{" "}
+        <Link href="/privacy" className="text-zinc-500 hover:text-zinc-400 underline-offset-2 hover:underline">
+          Learn more
         </Link>
       </span>
     </div>
@@ -433,18 +425,20 @@ function FeedbackForm() {
   const isValid = subject.trim().length >= 5 && message.trim().length >= 20;
 
   return (
-    <div className="rounded-2xl bg-white/[0.03] border border-white/10 overflow-hidden">
+    <div className="rounded-xl bg-zinc-900/50 border border-zinc-800/50 overflow-hidden">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-6 py-4 flex items-center justify-between hover:bg-white/5 transition-colors"
+        className="w-full px-4 py-3 flex items-center justify-between hover:bg-zinc-800/30 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <MessageSquarePlus className="w-5 h-5 text-purple-400" />
-          <span className="font-medium">Submit a Suggestion or Report a Problem</span>
+          <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
+            <MessageSquarePlus className="w-4 h-4 text-purple-400" />
+          </div>
+          <span className="text-sm font-medium text-zinc-300">Send Feedback</span>
         </div>
         <ChevronDown
           className={cn(
-            "w-5 h-5 text-zinc-500 transition-transform duration-200",
+            "w-4 h-4 text-zinc-500 transition-transform duration-200",
             isOpen && "rotate-180"
           )}
         />
@@ -457,75 +451,78 @@ function FeedbackForm() {
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="border-t border-white/10"
+            className="border-t border-zinc-800/50"
           >
-            <div className="p-6 space-y-4">
+            <div className="p-4 space-y-4">
               {/* Feedback Type Selection */}
               <div className="space-y-2">
-                <Label>Type</Label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <Label className="text-xs text-zinc-500">Type</Label>
+                <div className="grid grid-cols-4 gap-2">
                   {feedbackTypes.map((ft) => (
                     <button
                       key={ft.value}
                       onClick={() => setType(ft.value)}
                       className={cn(
-                        "flex items-center gap-2 px-3 py-2 rounded-lg border transition-all text-sm",
+                        "flex flex-col items-center gap-1.5 px-2 py-2.5 rounded-lg border transition-all text-xs",
                         type === ft.value
-                          ? "border-purple-500 bg-purple-500/10 text-white"
-                          : "border-white/10 hover:border-white/20 text-zinc-400"
+                          ? "border-purple-500/50 bg-purple-500/10 text-white"
+                          : "border-zinc-800 hover:border-zinc-700 text-zinc-500"
                       )}
                     >
                       <ft.icon className={cn("w-4 h-4", type === ft.value ? ft.color : "")} />
-                      {ft.label}
+                      <span>{ft.label}</span>
                     </button>
                   ))}
                 </div>
               </div>
 
               {/* Subject */}
-              <div className="space-y-2">
-                <Label htmlFor="feedback-subject">Subject</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="feedback-subject" className="text-xs text-zinc-500">Subject</Label>
                 <Input
                   id="feedback-subject"
-                  placeholder="Brief summary of your feedback"
+                  placeholder="Brief summary..."
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
                   maxLength={200}
-                  className="bg-white/5 border-white/10"
+                  className="h-9 text-sm bg-zinc-800/50 border-zinc-700/50 focus:border-purple-500/50"
                 />
-                <p className="text-xs text-zinc-500">{subject.length}/200 (min 5 characters)</p>
               </div>
 
               {/* Message */}
-              <div className="space-y-2">
-                <Label htmlFor="feedback-message">Message</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="feedback-message" className="text-xs text-zinc-500">Details</Label>
                 <Textarea
                   id="feedback-message"
-                  placeholder="Describe your suggestion, bug, or problem in detail..."
+                  placeholder="Describe in detail..."
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   maxLength={2000}
-                  className="min-h-[120px] bg-white/5 border-white/10"
+                  className="min-h-[100px] text-sm bg-zinc-800/50 border-zinc-700/50 focus:border-purple-500/50 resize-none"
                 />
-                <p className="text-xs text-zinc-500">{message.length}/2000 (min 20 characters)</p>
               </div>
 
               {/* Submit Button */}
-              <div className="flex justify-end">
+              <div className="flex items-center justify-between pt-2">
+                <p className="text-xs text-zinc-600">
+                  {subject.length >= 5 && message.length >= 20 ? (
+                    <span className="text-emerald-500">Ready to submit</span>
+                  ) : (
+                    `Min: 5 char subject, 20 char message`
+                  )}
+                </p>
                 <Button
                   onClick={() => submitMutation.mutate()}
                   disabled={!isValid || submitMutation.isPending}
-                  className="bg-purple-600 hover:bg-purple-700"
+                  size="sm"
+                  className="bg-purple-600 hover:bg-purple-700 h-8 px-3 text-xs"
                 >
                   {submitMutation.isPending ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Submitting...
-                    </>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   ) : (
                     <>
-                      <Send className="w-4 h-4 mr-2" />
-                      Submit Feedback
+                      <Send className="w-3.5 h-3.5 mr-1.5" />
+                      Submit
                     </>
                   )}
                 </Button>
@@ -538,53 +535,51 @@ function FeedbackForm() {
   );
 }
 
+
 // Dashboard View (for authenticated users)
 function DashboardView() {
   const { user } = useAuthStore();
 
-  const { data: stats, isLoading: statsLoading } = useQuery({
+  const { data: stats } = useQuery({
     queryKey: ["dashboard", "stats"],
     queryFn: () => api.dashboard.getStats(),
-    staleTime: 60000, // Cache for 1 minute
+    staleTime: 60000,
   });
 
   const { data: unreadMessages } = useQuery({
     queryKey: ["messages", "unread-count"],
     queryFn: () => api.messaging.getUnreadCount(),
-    staleTime: 30000, // Cache for 30 seconds
-    enabled: !!user, // Only fetch when user is authenticated
+    staleTime: 30000,
+    enabled: !!user,
   });
 
   const firstName = user?.name?.split(" ")[0] || "there";
 
+  // Split features into rows: first 3, then remaining 2
+  const topRowFeatures = dashboardFeatures.slice(0, 3);
+  const bottomRowFeatures = dashboardFeatures.slice(3);
+
   return (
     <main className="min-h-screen bg-[#0a0a0a]">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
-        {/* Hero Section */}
+      <div className="container mx-auto px-4 py-6 max-w-6xl">
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
+          className="mb-8"
         >
-          <h1 className="text-4xl font-bold mb-3">
-            Welcome back,{" "}
-            <span className="bg-gradient-to-r from-purple-400 to-[#00ff88] bg-clip-text text-transparent">
-              {firstName}
-            </span>
-          </h1>
-          <p className="text-zinc-400 text-lg">
-            Your all-in-one York University community platform
-          </p>
+          <h1 className="text-2xl font-semibold text-white">{firstName}</h1>
+          <div className="w-12 h-1 bg-purple-500 rounded-full mt-2" />
         </motion.div>
 
-        {/* Feature Grid */}
+        {/* Top Row - 3 cards */}
         <motion.div
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8"
+          className="grid gap-4 grid-cols-1 md:grid-cols-3 mb-4"
         >
-          {dashboardFeatures.map((feature) => (
+          {topRowFeatures.map((feature) => (
             <motion.div key={feature.href} variants={itemVariants}>
               <FeatureCard
                 feature={feature}
@@ -595,52 +590,67 @@ function DashboardView() {
           ))}
         </motion.div>
 
-        {/* Coming Soon Section */}
+        {/* Bottom Row - 2 cards centered */}
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="grid gap-4 grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto mb-12"
+        >
+          {bottomRowFeatures.map((feature) => (
+            <motion.div key={feature.href} variants={itemVariants}>
+              <FeatureCard
+                feature={feature}
+                stats={stats}
+                unreadMessages={unreadMessages?.unread_count}
+              />
+            </motion.div>
+          ))}
+        </motion.div>
+
+        {/* Coming Soon */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="mb-10"
+        >
+          <div className="flex items-center gap-4 mb-5">
+            <div className="h-px flex-1 bg-zinc-800" />
+            <span className="text-xs font-medium text-zinc-500 uppercase tracking-widest">Coming Soon</span>
+            <div className="h-px flex-1 bg-zinc-800" />
+          </div>
+          <div className="flex justify-center">
+            {comingSoonFeatures.map((feature) => {
+              const Icon = feature.icon;
+              return (
+                <div
+                  key={feature.title}
+                  className="rounded-2xl p-6 text-center bg-zinc-900/50 border border-zinc-800/50 max-w-xs"
+                >
+                  <div className="w-10 h-10 mx-auto mb-3 rounded-xl bg-zinc-800/50 flex items-center justify-center">
+                    <Icon className="w-5 h-5 text-zinc-500" />
+                  </div>
+                  <h3 className="font-semibold text-zinc-300 mb-1">{feature.title}</h3>
+                  <p className="text-sm text-zinc-500">{feature.description}</p>
+                </div>
+              );
+            })}
+          </div>
+        </motion.div>
+
+        {/* Collapsible Sections */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
-          className="mb-8"
-        >
-          <h2 className="text-sm font-medium text-zinc-500 mb-4 flex items-center gap-2">
-            <Zap className="w-4 h-4" />
-            Coming Soon
-          </h2>
-          <div className="grid grid-cols-3 gap-4">
-            {comingSoonFeatures.map((feature) => (
-              <div
-                key={feature.title}
-                className="p-4 rounded-xl bg-white/[0.02] border border-white/5 text-center opacity-60"
-              >
-                <span className="text-2xl">{feature.emoji}</span>
-                <h3 className="font-medium text-sm mt-2">{feature.title}</h3>
-                <p className="text-xs text-zinc-600 mt-1">{feature.description}</p>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Quick Start Guide */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="mb-8"
+          className="space-y-3 mb-8"
         >
           <QuickStartGuide />
-        </motion.div>
-
-        {/* Feedback Form */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          className="mb-8"
-        >
           <FeedbackForm />
         </motion.div>
 
-        {/* Safety Banner */}
+        {/* Footer */}
         <SafetyBanner />
       </div>
     </main>
