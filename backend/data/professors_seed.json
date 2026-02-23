@@ -1,0 +1,13 @@
+{
+  "_comment": "Add professor data here. Format: {name, department, courses: [[code, semester, year], ...]}",
+  "_example": {
+    "name": "Jane Doe",
+    "department": "Computer Science",
+    "email": "jdoe@yorku.ca",
+    "courses": [
+      ["EECS1001", "FW", 2025],
+      ["EECS2030", "W", 2025]
+    ]
+  },
+  "professors": []
+}

@@ -212,12 +212,12 @@ export default function PublicProfilePage() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="p-6 rounded-xl bg-white/5 border border-white/10 mb-6"
+        className="p-6 rounded-xl bg-white/5 border border-white/10"
       >
         <div className="flex items-start gap-4">
-          <Avatar className="w-24 h-24 ring-4 ring-purple-500/20">
+          <Avatar className="w-20 h-20">
             <AvatarImage src={profile.avatar_url || undefined} />
-            <AvatarFallback className="text-3xl bg-gradient-to-br from-purple-500/30 to-pink-500/30 text-purple-300">
+            <AvatarFallback className="text-2xl bg-purple-500/20 text-purple-400">
               {profile.name
                 ?.split(" ")
                 .map((n) => n[0])
@@ -228,8 +228,8 @@ export default function PublicProfilePage() {
           </Avatar>
 
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <h1 className="text-2xl font-bold">{profile.name}</h1>
+            <div className="flex items-center gap-2 mb-1">
+              <h1 className="text-xl font-bold">{profile.name}</h1>
               {profile.name_verified && (
                 <Badge variant="secondary" className="bg-green-500/20 text-green-400">
                   <Shield className="w-3 h-3 mr-1" />
@@ -254,21 +254,17 @@ export default function PublicProfilePage() {
 
         {/* Bio */}
         {profile.bio && (
-          <div className="mt-4 p-4 rounded-lg bg-white/5">
-            <p className="text-zinc-300">{profile.bio}</p>
-          </div>
+          <p className="mt-4 text-zinc-300">{profile.bio}</p>
         )}
 
         {/* Interests */}
         {profile.interests && profile.interests.length > 0 && (
           <div className="mt-4">
-            <p className="text-sm text-zinc-500 mb-2">Interests</p>
             <div className="flex flex-wrap gap-2">
               {profile.interests.map((interest) => (
                 <Badge
                   key={interest}
                   variant="secondary"
-                  className="bg-purple-500/10 text-purple-300 border border-purple-500/20"
                 >
                   {interest}
                 </Badge>
@@ -281,7 +277,7 @@ export default function PublicProfilePage() {
         <div className="mt-6 flex gap-3">
           <Button
             onClick={handleStartConversation}
-            className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500"
+            className="flex-1 bg-purple-600 hover:bg-purple-700"
             disabled={startConversationMutation.isPending}
           >
             {startConversationMutation.isPending ? (
@@ -296,9 +292,8 @@ export default function PublicProfilePage() {
           {isAuthenticated && (
             <Dialog open={showReportDialog} onOpenChange={setShowReportDialog}>
               <DialogTrigger asChild>
-                <Button variant="outline" className="text-red-400 border-red-400/30 hover:bg-red-500/10">
-                  <Flag className="w-4 h-4 mr-2" />
-                  Report
+                <Button variant="ghost" size="icon" className="text-zinc-500 hover:text-red-400 hover:bg-red-500/10">
+                  <Flag className="w-4 h-4" />
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-md">

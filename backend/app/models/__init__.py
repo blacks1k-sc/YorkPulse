@@ -49,6 +49,10 @@ from app.models.gig import (
     GigResponseStatus,
     GigTransactionStatus,
 )
+from app.models.professor import (
+    Professor,
+    ProfessorCourse,
+)
 
 __all__ = [
     # Base
@@ -112,4 +116,7 @@ __all__ = [
     "GigStatus",
     "GigResponseStatus",
     "GigTransactionStatus",
+    # Professor
+    "Professor",
+    "ProfessorCourse",
 ]

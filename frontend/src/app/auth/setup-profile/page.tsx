@@ -49,9 +49,9 @@ export default function SetupProfilePage() {
       const result = await verifyNameMutation.mutateAsync(name);
 
       if (result.name_verified) {
-        // Name matched email pattern - auto verified
+        // Name matched email pattern - auto verified, go to complete profile
         setStep("success");
-        setTimeout(() => router.push("/"), 2000);
+        setTimeout(() => router.push("/auth/complete-profile"), 2000);
       } else if (result.requires_id_upload) {
         // Need to upload ID for verification
         setStep("upload");
@@ -118,7 +118,7 @@ export default function SetupProfilePage() {
 
       if (result.verified) {
         setStep("success");
-        setTimeout(() => router.push("/"), 2000);
+        setTimeout(() => router.push("/auth/complete-profile"), 2000);
       } else {
         setStep("upload");
         toast({
@@ -340,12 +340,12 @@ export default function SetupProfilePage() {
               <CheckCircle className="w-8 h-8 text-green-400" />
             </div>
             <div className="space-y-2">
-              <h1 className="text-2xl font-bold">You're all set!</h1>
+              <h1 className="text-2xl font-bold">Name Verified!</h1>
               <p className="text-zinc-400">
-                Welcome to YorkPulse, <span className="text-white font-medium">{name}</span>
+                Great, <span className="text-white font-medium">{name}</span>! Just one more step...
               </p>
             </div>
-            <p className="text-sm text-zinc-500">Redirecting you to the app...</p>
+            <p className="text-sm text-zinc-500">Setting up your profile...</p>
           </motion.div>
         )}
       </AnimatePresence>
