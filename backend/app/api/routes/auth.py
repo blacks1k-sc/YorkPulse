@@ -11,6 +11,7 @@ from app.core.database import get_db
 from app.core.dependencies import CurrentUser
 from app.models.user import User
 from app.schemas.auth import (
+    ADMIN_EMAILS,
     AvatarUploadRequest,
     AvatarUploadResponse,
     IDUploadRequest,
@@ -196,12 +197,14 @@ async def verify_otp(
     if not user:
         # Create new user
         suggested_name = email_validation_service.suggest_name_from_email(request.email)
+        is_admin = request.email.lower() in ADMIN_EMAILS
         user = User(
             id=uuid.uuid4(),
             email=request.email,
             name=suggested_name or "New User",
             email_verified=True,  # Email is now verified via OTP
-            name_verified=False,
+            name_verified=is_admin,  # Admin accounts are auto-verified
+            is_admin=is_admin,
         )
         db.add(user)
         await db.commit()

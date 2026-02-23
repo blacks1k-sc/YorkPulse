@@ -23,6 +23,7 @@ import {
   HelpCircle,
   Send,
   Loader2,
+  Briefcase,
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -76,6 +77,26 @@ const landingFeatures = [
     iconColor: "text-blue-500",
     hoverBorder: "hover:border-blue-500/50",
     hoverGlow: "hover:shadow-blue-500/20",
+  },
+  {
+    href: "/courses",
+    icon: GraduationCap,
+    title: "Courses",
+    description: "Join course chats and connect with classmates.",
+    iconBg: "bg-cyan-500/10",
+    iconColor: "text-cyan-500",
+    hoverBorder: "hover:border-cyan-500/50",
+    hoverGlow: "hover:shadow-cyan-500/20",
+  },
+  {
+    href: "/gigs",
+    icon: Briefcase,
+    title: "Quick Gigs",
+    description: "Find or offer services within the York community.",
+    iconBg: "bg-amber-500/10",
+    iconColor: "text-amber-500",
+    hoverBorder: "hover:border-amber-500/50",
+    hoverGlow: "hover:shadow-amber-500/20",
   },
 ];
 
@@ -728,14 +749,14 @@ function LandingView() {
             animate="visible"
             className="mx-auto mt-20 max-w-5xl"
           >
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {landingFeatures.map((feature) => (
-                <motion.div key={feature.href} variants={itemVariants}>
-                  <Link href={feature.href}>
+                <motion.div key={feature.href} variants={itemVariants} className="h-full">
+                  <Link href={feature.href} className="h-full block">
                     <motion.div
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      className={`glass-card p-6 cursor-pointer transition-all duration-300 border border-white/10 ${feature.hoverBorder} ${feature.hoverGlow} hover:shadow-lg`}
+                      className={`glass-card p-6 h-full cursor-pointer transition-all duration-300 border border-white/10 ${feature.hoverBorder} ${feature.hoverGlow} hover:shadow-lg`}
                     >
                       <div className={`mb-4 inline-flex rounded-lg ${feature.iconBg} p-3`}>
                         <feature.icon className={`h-6 w-6 ${feature.iconColor}`} />

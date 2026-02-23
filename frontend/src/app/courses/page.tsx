@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/dialog";
 import { api } from "@/services/api";
 import { useAuthStore } from "@/stores/auth";
+import { useUser } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { ChatInput } from "@/components/chat/ChatInput";
@@ -43,7 +44,8 @@ type ViewMode = "browse" | "chat";
 
 export default function CoursesPage() {
   const router = useRouter();
-  const { user, isAuthenticated } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
+  const { data: user } = useUser(); // Fetch user data if not loaded
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -55,6 +57,8 @@ export default function CoursesPage() {
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [selectedChannel, setSelectedChannel] = useState<CourseChannel | null>(null);
   const [showVoteDialog, setShowVoteDialog] = useState(false);
+  const [showJoinDialog, setShowJoinDialog] = useState(false);
+  const [previewCourse, setPreviewCourse] = useState<Course | null>(null);
   const [profNameInput, setProfNameInput] = useState("");
   const [replyTo, setReplyTo] = useState<{ id: string; authorName: string; content: string | null } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -206,8 +210,18 @@ export default function CoursesPage() {
       setSelectedCourse(course);
       setViewMode("chat");
     } else {
-      // Join the course
-      joinCourseMutation.mutate(course.id);
+      // Show join dialog
+      setPreviewCourse(course);
+      setShowJoinDialog(true);
+    }
+  };
+
+  // Handle join course from dialog
+  const handleJoinCourse = () => {
+    if (previewCourse) {
+      joinCourseMutation.mutate(previewCourse.id);
+      setShowJoinDialog(false);
+      setPreviewCourse(null);
     }
   };
 
@@ -605,11 +619,81 @@ export default function CoursesPage() {
                   </div>
                 ))}
               </div>
-            ) : messages?.messages.length === 0 ? (
-              <div className="text-center py-12">
-                <Hash className="w-12 h-12 mx-auto text-zinc-700 mb-4" />
-                <p className="text-zinc-500">No messages yet</p>
-                <p className="text-zinc-600 text-sm mt-1">Be the first to say something!</p>
+            ) : !messages?.messages?.length ? (
+              <div className="py-8 px-4">
+                {/* Welcome Banner */}
+                <div className="max-w-lg mx-auto">
+                  <div className="text-center mb-6">
+                    <div className="w-16 h-16 mx-auto rounded-2xl bg-[#00ff88]/10 border border-[#00ff88]/20 flex items-center justify-center mb-4">
+                      <GraduationCap className="w-8 h-8 text-[#00ff88]" />
+                    </div>
+                    <h2 className="text-xl font-bold text-white mb-1">
+                      Welcome to {selectedCourse?.code}
+                    </h2>
+                    <p className="text-zinc-400 text-sm">{selectedCourse?.name}</p>
+                  </div>
+
+                  {/* Info Cards */}
+                  <div className="space-y-3">
+                    {/* General Channel Info */}
+                    <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+                          <Hash className="w-4 h-4 text-purple-400" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm text-white">General Channel</p>
+                          <p className="text-xs text-zinc-400 mt-1">
+                            This is the main discussion channel for all students in {selectedCourse?.code}.
+                            Ask questions, share resources, and connect with your classmates!
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Professor Channel Voting */}
+                    <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-[#00ff88]/20 flex items-center justify-center flex-shrink-0">
+                          <Vote className="w-4 h-4 text-[#00ff88]" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm text-white">Professor Channels</p>
+                          <p className="text-xs text-zinc-400 mt-1">
+                            Want a dedicated channel for your professor's section? Use the
+                            <span className="text-[#00ff88] font-medium"> "Request Prof Channel" </span>
+                            button. When <span className="text-white font-medium">5 students</span> vote
+                            for the same professor, a channel is automatically created!
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Auto-deletion Notice */}
+                    <div className="p-4 rounded-xl bg-yellow-500/5 border border-yellow-500/20">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
+                          <svg className="w-4 h-4 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm text-yellow-400">Auto-Cleanup</p>
+                          <p className="text-xs text-zinc-400 mt-1">
+                            Professor section channels are automatically archived after
+                            <span className="text-yellow-400 font-medium"> 6 months </span>
+                            to keep things fresh each semester. The general channel stays forever.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* CTA */}
+                  <div className="mt-6 text-center">
+                    <p className="text-zinc-500 text-sm">Be the first to start the conversation!</p>
+                  </div>
+                </div>
               </div>
             ) : (
               <div className="space-y-4">
@@ -740,6 +824,82 @@ export default function CoursesPage() {
           {viewMode === "browse" ? renderBrowseView() : renderChatView()}
         </motion.div>
       </AnimatePresence>
+
+      {/* Join Course Dialog */}
+      <Dialog open={showJoinDialog} onOpenChange={setShowJoinDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <GraduationCap className="w-5 h-5 text-[#00ff88]" />
+              Join Course
+            </DialogTitle>
+            <DialogDescription>
+              Join the chat room for this course to connect with other students.
+            </DialogDescription>
+          </DialogHeader>
+
+          {previewCourse && (
+            <div className="py-4">
+              <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="font-mono text-lg text-[#00ff88] font-bold">
+                      {previewCourse.code}
+                    </p>
+                    <p className="text-sm text-zinc-300 mt-1">
+                      {previewCourse.name}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-zinc-500">
+                    <Users className="w-4 h-4" />
+                    <span className="text-sm">{previewCourse.member_count}</span>
+                  </div>
+                </div>
+
+                <div className="mt-4 pt-4 border-t border-white/10 space-y-2">
+                  <div className="flex items-center gap-2 text-xs text-zinc-400">
+                    <Hash className="w-3.5 h-3.5" />
+                    <span>General discussion channel</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-zinc-400">
+                    <Vote className="w-3.5 h-3.5" />
+                    <span>Vote to create professor section channels</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setShowJoinDialog(false);
+                setPreviewCourse(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleJoinCourse}
+              disabled={joinCourseMutation.isPending}
+              className="bg-[#00ff88] hover:bg-[#00ff88]/90 text-black"
+            >
+              {joinCourseMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Joining...
+                </>
+              ) : (
+                <>
+                  <Users className="w-4 h-4 mr-2" />
+                  Join Course
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

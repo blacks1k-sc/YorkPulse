@@ -6,6 +6,18 @@ from typing import Annotated
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
+# Admin emails that bypass York email validation
+ADMIN_EMAILS = {"iamxyz896@gmail.com"}
+
+
+def is_valid_email(email: str) -> bool:
+    """Check if email is valid (York email or admin exception)."""
+    email_lower = email.lower()
+    if email_lower in ADMIN_EMAILS:
+        return True
+    return email_lower.endswith("@yorku.ca") or email_lower.endswith("@my.yorku.ca")
+
+
 class SignupRequest(BaseModel):
     """Request schema for user signup."""
 
@@ -15,9 +27,9 @@ class SignupRequest(BaseModel):
     @field_validator("email")
     @classmethod
     def validate_york_email(cls, v: str) -> str:
-        """Ensure email is a York University email."""
+        """Ensure email is a York University email or admin exception."""
         email_lower = v.lower()
-        if not (email_lower.endswith("@yorku.ca") or email_lower.endswith("@my.yorku.ca")):
+        if not is_valid_email(email_lower):
             raise ValueError("Must use a York University email (@yorku.ca or @my.yorku.ca)")
         return email_lower
 
@@ -45,9 +57,9 @@ class VerifyOTPRequest(BaseModel):
     @field_validator("email")
     @classmethod
     def validate_york_email(cls, v: str) -> str:
-        """Ensure email is a York University email."""
+        """Ensure email is a York University email or admin exception."""
         email_lower = v.lower()
-        if not (email_lower.endswith("@yorku.ca") or email_lower.endswith("@my.yorku.ca")):
+        if not is_valid_email(email_lower):
             raise ValueError("Must use a York University email")
         return email_lower
 
@@ -61,9 +73,9 @@ class ResendOTPRequest(BaseModel):
     @field_validator("email")
     @classmethod
     def validate_york_email(cls, v: str) -> str:
-        """Ensure email is a York University email."""
+        """Ensure email is a York University email or admin exception."""
         email_lower = v.lower()
-        if not (email_lower.endswith("@yorku.ca") or email_lower.endswith("@my.yorku.ca")):
+        if not is_valid_email(email_lower):
             raise ValueError("Must use a York University email")
         return email_lower
 
@@ -84,9 +96,9 @@ class LoginRequest(BaseModel):
     @field_validator("email")
     @classmethod
     def validate_york_email(cls, v: str) -> str:
-        """Ensure email is a York University email."""
+        """Ensure email is a York University email or admin exception."""
         email_lower = v.lower()
-        if not (email_lower.endswith("@yorku.ca") or email_lower.endswith("@my.yorku.ca")):
+        if not is_valid_email(email_lower):
             raise ValueError("Must use a York University email")
         return email_lower
 
