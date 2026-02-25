@@ -53,6 +53,7 @@ def _request_to_response(request: BuddyRequest) -> BuddyRequestResponse:
         latitude=request.latitude,
         longitude=request.longitude,
         vibe_level=request.vibe_level,
+        custom_vibe_level=request.custom_vibe_level,
         max_participants=request.max_participants,
         current_participants=request.current_participants,
         requires_approval=request.requires_approval,
@@ -174,6 +175,7 @@ async def create_quest(
         latitude=request.latitude,
         longitude=request.longitude,
         vibe_level=request.vibe_level,
+        custom_vibe_level=request.custom_vibe_level,
         max_participants=request.max_participants,
         requires_approval=request.requires_approval,
         current_participants=1,  # Host counts as 1

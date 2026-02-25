@@ -254,7 +254,6 @@ const accentColors = {
 function FeatureCard({
   feature,
   stats,
-  unreadMessages,
 }: {
   feature: (typeof dashboardFeatures)[0];
   stats?: {
@@ -264,10 +263,8 @@ function FeatureCard({
     vault_posts_today: number;
     total_users: number;
   };
-  unreadMessages?: number;
 }) {
   const statValue = stats?.[feature.statKey];
-  const isMessagesFeature = feature.href === "/messages";
   const colors = accentColors[feature.accentColor as keyof typeof accentColors];
   const Icon = feature.icon;
 
@@ -297,12 +294,6 @@ function FeatureCard({
               <div className="text-right">
                 <p className="text-xl font-bold text-white">{statValue.toLocaleString()}</p>
                 <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">{feature.statLabel}</p>
-              </div>
-            )}
-            {/* Unread badge for messages */}
-            {isMessagesFeature && unreadMessages && unreadMessages > 0 && (
-              <div className="absolute top-0 right-0 min-w-[20px] h-[20px] flex items-center justify-center px-1.5 text-[10px] font-bold text-white bg-red-500 rounded-full">
-                {unreadMessages > 99 ? "99+" : unreadMessages}
               </div>
             )}
           </div>
@@ -567,13 +558,6 @@ function DashboardView() {
     staleTime: 60000,
   });
 
-  const { data: unreadMessages } = useQuery({
-    queryKey: ["messages", "unread-count"],
-    queryFn: () => api.messaging.getUnreadCount(),
-    staleTime: 30000,
-    enabled: !!user,
-  });
-
   const firstName = user?.name?.split(" ")[0] || "there";
 
   // Split features into rows: first 3, then remaining 2
@@ -605,7 +589,6 @@ function DashboardView() {
               <FeatureCard
                 feature={feature}
                 stats={stats}
-                unreadMessages={unreadMessages?.unread_count}
               />
             </motion.div>
           ))}
@@ -623,7 +606,6 @@ function DashboardView() {
               <FeatureCard
                 feature={feature}
                 stats={stats}
-                unreadMessages={unreadMessages?.unread_count}
               />
             </motion.div>
           ))}

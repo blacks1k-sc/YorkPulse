@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Users,
@@ -21,11 +22,19 @@ import {
   CheckCircle,
   Map,
   List,
+  FolderOpen,
+  MessageCircle,
+  Crown,
+  ChevronRight,
+  Send,
+  Reply,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -33,7 +42,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useQuests, useMyQuests, useJoinQuest } from "@/hooks/useQuests";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { useQuests, useMyQuests, useJoinQuest, useQuestMessages, useSendQuestMessage } from "@/hooks/useQuests";
 import { useToast } from "@/hooks/use-toast";
 import { useUIStore } from "@/stores/ui";
 import { useAuthStore } from "@/stores/auth";
@@ -287,6 +310,534 @@ function QuestSkeleton() {
   );
 }
 
+// Quest Chat Dialog Component
+function QuestChatDialog({
+  quest,
+  isOpen,
+  onClose
+}: {
+  quest: SideQuest;
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  const { user } = useAuthStore();
+  const { toast } = useToast();
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const [messageInput, setMessageInput] = useState("");
+  const [replyTo, setReplyTo] = useState<{ id: string; senderName: string; content: string } | null>(null);
+
+  const { data: messagesData, fetchNextPage, hasNextPage, isFetchingNextPage } = useQuestMessages(quest.id, isOpen);
+  const sendMessageMutation = useSendQuestMessage();
+
+  // Collect all messages and sort by created_at (oldest first for chat display)
+  const allMessages = (messagesData?.pages?.flatMap((page) => page.messages) || [])
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (chatContainerRef.current && isOpen) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [allMessages.length, isOpen]);
+
+  const timeAgo = (date: string) => {
+    const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
+    if (seconds < 60) return "just now";
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+    return `${Math.floor(seconds / 86400)}d ago`;
+  };
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!messageInput.trim()) return;
+
+    try {
+      await sendMessageMutation.mutateAsync({
+        questId: quest.id,
+        content: messageInput.trim(),
+        replyToId: replyTo?.id,
+      });
+      setMessageInput("");
+      setReplyTo(null);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to send message",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const catConfig = categoryConfig[quest.category];
+  const Icon = catConfig.icon;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-lg md:max-w-xl lg:max-w-2xl h-[80vh] max-h-[600px] flex flex-col p-0 gap-0">
+        {/* Header */}
+        <DialogHeader className="px-4 py-3 border-b border-white/10 shrink-0">
+          <DialogTitle className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
+              <Icon className="w-5 h-5 text-green-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold truncate">{quest.activity}</p>
+              <div className="flex items-center gap-2 text-xs text-zinc-500">
+                <Users className="w-3 h-3" />
+                <span>{quest.current_participants} participants</span>
+                <span className="text-zinc-600">•</span>
+                <Badge variant="secondary" className={cn("text-[10px] px-1.5 py-0", catConfig.color)}>
+                  {quest.category === "custom" && quest.custom_category
+                    ? quest.custom_category
+                    : catConfig.label}
+                </Badge>
+              </div>
+            </div>
+          </DialogTitle>
+        </DialogHeader>
+
+        {/* Messages */}
+        <div
+          ref={chatContainerRef}
+          className="flex-1 overflow-y-auto p-4 space-y-3"
+        >
+          {/* Load more button */}
+          {hasNextPage && (
+            <div className="text-center">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+              >
+                {isFetchingNextPage ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  "Load earlier messages"
+                )}
+              </Button>
+            </div>
+          )}
+
+          {allMessages.length === 0 ? (
+            <div className="h-full flex items-center justify-center">
+              <div className="text-center">
+                <MessageCircle className="w-12 h-12 mx-auto text-zinc-700 mb-3" />
+                <p className="text-zinc-500 text-sm">
+                  No messages yet. Start the conversation!
+                </p>
+              </div>
+            </div>
+          ) : (
+            allMessages.map((message) => {
+              const isOwnMessage = message.sender.id === user?.id;
+              return (
+                <div
+                  key={message.id}
+                  className={cn(
+                    "flex gap-2 group",
+                    isOwnMessage ? "flex-row-reverse" : "flex-row"
+                  )}
+                >
+                  {!isOwnMessage && (
+                    <Link href={`/profile/${message.sender.id}`}>
+                      <Avatar className="w-8 h-8 shrink-0">
+                        <AvatarImage src={message.sender.avatar_url || undefined} />
+                        <AvatarFallback className="text-xs bg-zinc-800">
+                          {message.sender.name.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Link>
+                  )}
+                  <div
+                    className={cn(
+                      "max-w-[70%] rounded-lg px-3 py-2 relative",
+                      isOwnMessage
+                        ? "bg-green-600 text-white"
+                        : "bg-white/10"
+                    )}
+                  >
+                    {!isOwnMessage && (
+                      <p className="text-xs text-zinc-400 mb-0.5">
+                        {message.sender.name}
+                        {message.sender.id === quest.host.id && (
+                          <span className="ml-1 text-green-400">(Host)</span>
+                        )}
+                      </p>
+                    )}
+                    {/* Reply Preview */}
+                    {message.reply_to && !message.is_deleted && (
+                      <div className="mb-1.5 px-2 py-1 rounded border-l-2 border-green-400/50 bg-black/20 text-xs">
+                        <p className="text-green-300 font-medium">{message.reply_to.sender.name}</p>
+                        <p className="text-zinc-400 line-clamp-1">{message.reply_to.content}</p>
+                      </div>
+                    )}
+                    <p className="text-sm whitespace-pre-wrap break-words">
+                      {message.is_deleted ? (
+                        <span className="italic text-zinc-500">Message deleted</span>
+                      ) : (
+                        message.content
+                      )}
+                    </p>
+                    <p
+                      className={cn(
+                        "text-xs mt-1",
+                        isOwnMessage ? "text-green-200" : "text-zinc-500"
+                      )}
+                    >
+                      {timeAgo(message.created_at)}
+                    </p>
+                    {/* Reply button */}
+                    {!message.is_deleted && (
+                      <button
+                        onClick={() => setReplyTo({ id: message.id, senderName: message.sender.name, content: message.content })}
+                        className="absolute -top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full bg-zinc-800/80 hover:bg-zinc-700 border border-white/10"
+                        title="Reply"
+                      >
+                        <Reply className="w-3 h-3 text-zinc-300" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Message Input */}
+        <form
+          onSubmit={handleSendMessage}
+          className="p-4 border-t border-white/10 shrink-0"
+        >
+          {/* Reply Preview */}
+          {replyTo && (
+            <div className="mb-2 flex items-center gap-2 px-3 py-2 bg-green-500/10 border border-green-500/20 rounded-lg">
+              <Reply className="w-4 h-4 text-green-400 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-green-400">Replying to {replyTo.senderName}</p>
+                <p className="text-xs text-zinc-400 truncate">{replyTo.content}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setReplyTo(null)}
+                className="p-1 hover:bg-white/10 rounded"
+              >
+                <X className="w-4 h-4 text-zinc-400" />
+              </button>
+            </div>
+          )}
+          <div className="flex gap-2">
+            <Input
+              value={messageInput}
+              onChange={(e) => setMessageInput(e.target.value)}
+              placeholder="Type a message..."
+              className="flex-1 bg-white/5 border-white/10"
+              disabled={sendMessageMutation.isPending}
+            />
+            <Button
+              type="submit"
+              size="icon"
+              className="bg-green-600 hover:bg-green-700"
+              disabled={!messageInput.trim() || sendMessageMutation.isPending}
+            >
+              {sendMessageMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Quest Item Component for the sheet
+function QuestSheetItem({
+  quest,
+  isHost,
+  isPending,
+  onNavigate,
+  onOpenChat,
+  formatTime,
+}: {
+  quest: SideQuest;
+  isHost?: boolean;
+  isPending?: boolean;
+  onNavigate: () => void;
+  onOpenChat: () => void;
+  formatTime: (date: string) => string;
+}) {
+  const catConfig = categoryConfig[quest.category];
+  const Icon = catConfig.icon;
+
+  return (
+    <div
+      className={cn(
+        "p-3 rounded-lg border transition-all",
+        isPending
+          ? "bg-amber-500/5 border-amber-500/20 hover:border-amber-500/40"
+          : "bg-white/5 border-white/10 hover:border-green-500/30"
+      )}
+    >
+      <div className="flex items-start gap-2">
+        {/* Main clickable area - navigates to quest */}
+        <button
+          onClick={onNavigate}
+          className="flex-1 min-w-0 text-left hover:opacity-80 transition-opacity"
+        >
+          <div className="flex items-center gap-2 mb-1">
+            <Badge variant="secondary" className={cn("text-xs", catConfig.color)}>
+              <Icon className="w-3 h-3 mr-1" />
+              {quest.category === "custom" && quest.custom_category
+                ? quest.custom_category
+                : catConfig.label}
+            </Badge>
+            {isHost && (
+              <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-400 text-xs">
+                Host
+              </Badge>
+            )}
+            {isPending && (
+              <Badge variant="secondary" className="bg-amber-500/20 text-amber-400 text-xs">
+                Pending
+              </Badge>
+            )}
+          </div>
+          <p className="font-medium truncate">{quest.activity}</p>
+          <div className="flex items-center gap-3 text-xs text-zinc-500 mt-1">
+            <span className="flex items-center gap-1">
+              <Calendar className="w-3 h-3" />
+              {formatTime(quest.start_time)}
+            </span>
+            {!isPending && (
+              <span className="flex items-center gap-1">
+                <Users className="w-3 h-3" />
+                {quest.current_participants}/{quest.max_participants}
+              </span>
+            )}
+          </div>
+        </button>
+
+        {/* Action buttons */}
+        <div className="flex items-center gap-1 shrink-0">
+          {/* Chat button - only for hosted/joined quests, not pending */}
+          {!isPending && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenChat();
+              }}
+              className="p-2 rounded-lg bg-green-500/10 hover:bg-green-500/20 text-green-400 transition-colors"
+              title="Open chat"
+            >
+              <MessageCircle className="w-4 h-4" />
+            </button>
+          )}
+          {/* Navigate button */}
+          <button
+            onClick={onNavigate}
+            className={cn(
+              "p-2 rounded-lg transition-colors",
+              isPending
+                ? "hover:bg-amber-500/20 text-zinc-500 hover:text-amber-400"
+                : "hover:bg-white/10 text-zinc-500 hover:text-white"
+            )}
+            title="View details"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MyQuestsSheet() {
+  const router = useRouter();
+  const { isAuthenticated } = useAuthStore();
+  const [isOpen, setIsOpen] = useState(false);
+  const [chatQuest, setChatQuest] = useState<SideQuest | null>(null);
+
+  // Fetch hosted quests
+  const { data: hostedData, isLoading: loadingHosted } = useMyQuests("host");
+  const hostedQuests = hostedData?.pages?.flatMap((page) => page.items) || [];
+
+  // Fetch joined quests (accepted participant)
+  const { data: joinedData, isLoading: loadingJoined } = useMyQuests("participant");
+  const joinedQuests = joinedData?.pages?.flatMap((page) => page.items) || [];
+
+  // Fetch pending requests
+  const { data: pendingData, isLoading: loadingPending } = useMyQuests("pending");
+  const pendingQuests = pendingData?.pages?.flatMap((page) => page.items) || [];
+
+  const isLoading = loadingHosted || loadingJoined || loadingPending;
+  const totalQuests = hostedQuests.length + joinedQuests.length + pendingQuests.length;
+
+  const formatTime = (date: string) => {
+    const d = new Date(date);
+    const now = new Date();
+    const isToday = d.toDateString() === now.toDateString();
+    const isTomorrow = d.toDateString() === new Date(now.getTime() + 86400000).toDateString();
+
+    if (isToday) {
+      return `Today, ${d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
+    }
+    if (isTomorrow) {
+      return `Tomorrow, ${d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
+    }
+    return d.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  };
+
+  const handleQuestNavigate = (questId: string) => {
+    setIsOpen(false);
+    router.push(`/quests/${questId}`);
+  };
+
+  const handleOpenChat = (quest: SideQuest) => {
+    setChatQuest(quest);
+  };
+
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  return (
+    <>
+      <Sheet open={isOpen} onOpenChange={setIsOpen}>
+        <SheetTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-green-500/30 hover:bg-green-500/10"
+          >
+            <FolderOpen className="w-4 h-4 mr-1" />
+            My Quests
+            {totalQuests > 0 && (
+              <Badge variant="secondary" className="ml-1.5 bg-green-500/20 text-green-400 text-xs px-1.5">
+                {totalQuests}
+              </Badge>
+            )}
+          </Button>
+        </SheetTrigger>
+        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader className="mb-4">
+            <SheetTitle className="flex items-center gap-2">
+              <FolderOpen className="w-5 h-5 text-green-400" />
+              My Quests
+            </SheetTitle>
+            <SheetDescription>
+              Click the chat icon to open group chat, or the arrow to view quest details.
+            </SheetDescription>
+          </SheetHeader>
+
+          {isLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="p-3 rounded-lg bg-white/5 border border-white/10">
+                  <Skeleton className="w-3/4 h-5 mb-2" />
+                  <Skeleton className="w-1/2 h-4" />
+                </div>
+              ))}
+            </div>
+          ) : totalQuests === 0 ? (
+            <div className="text-center py-8">
+              <Users className="w-12 h-12 mx-auto text-zinc-700 mb-3" />
+              <p className="text-zinc-500 mb-1">No quests yet</p>
+              <p className="text-sm text-zinc-600">
+                Create or join a quest to get started!
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Hosted Quests */}
+              {hostedQuests.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold text-zinc-400 mb-2 flex items-center gap-2">
+                    <Crown className="w-4 h-4 text-yellow-400" />
+                    Hosting ({hostedQuests.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {hostedQuests.map((quest) => (
+                      <QuestSheetItem
+                        key={quest.id}
+                        quest={quest}
+                        isHost
+                        onNavigate={() => handleQuestNavigate(quest.id)}
+                        onOpenChat={() => handleOpenChat(quest)}
+                        formatTime={formatTime}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Joined Quests */}
+              {joinedQuests.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold text-zinc-400 mb-2 flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-400" />
+                    Joined ({joinedQuests.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {joinedQuests.map((quest) => (
+                      <QuestSheetItem
+                        key={quest.id}
+                        quest={quest}
+                        onNavigate={() => handleQuestNavigate(quest.id)}
+                        onOpenChat={() => handleOpenChat(quest)}
+                        formatTime={formatTime}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Pending Requests */}
+              {pendingQuests.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold text-zinc-400 mb-2 flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-amber-400" />
+                    Pending ({pendingQuests.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {pendingQuests.map((quest) => (
+                      <QuestSheetItem
+                        key={quest.id}
+                        quest={quest}
+                        isPending
+                        onNavigate={() => handleQuestNavigate(quest.id)}
+                        onOpenChat={() => {}}
+                        formatTime={formatTime}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      {/* Chat Dialog */}
+      {chatQuest && (
+        <QuestChatDialog
+          quest={chatQuest}
+          isOpen={!!chatQuest}
+          onClose={() => setChatQuest(null)}
+        />
+      )}
+    </>
+  );
+}
+
 export default function QuestsPage() {
   const [category, setCategory] = useState<QuestCategory | "all">("all");
   const [status, setStatus] = useState<QuestStatus | "all">("open");
@@ -329,14 +880,17 @@ export default function QuestsPage() {
             <p className="text-sm text-zinc-500">Find buddies for any activity</p>
           </div>
         </div>
-        <Button
-          onClick={() => openCreateModal("quest")}
-          size="sm"
-          className="bg-green-600 hover:bg-green-700"
-        >
-          <Plus className="w-4 h-4 mr-1" />
-          Quest
-        </Button>
+        <div className="flex items-center gap-2">
+          <MyQuestsSheet />
+          <Button
+            onClick={() => openCreateModal("quest")}
+            size="sm"
+            className="bg-green-600 hover:bg-green-700"
+          >
+            <Plus className="w-4 h-4 mr-1" />
+            Quest
+          </Button>
+        </div>
       </div>
 
       {/* View Toggle + Filters */}

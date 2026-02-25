@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -10,17 +11,48 @@ import {
   Inbox,
   Clock,
   Sparkles,
+  Users,
+  Dumbbell,
+  BookOpen,
+  Utensils,
+  Car,
+  Gamepad2,
+  MapPin,
+  Calendar,
+  Send,
+  Reply,
+  X,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useConversations, usePendingRequests } from "@/hooks/useMessaging";
 import { useRealtimeConversations } from "@/hooks/useRealtimeMessages";
+import { useMyQuests, useQuest, useQuestMessages, useSendQuestMessage } from "@/hooks/useQuests";
 import { useUser } from "@/hooks/useAuth";
 import { useAuthStore } from "@/stores/auth";
+import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import type { Conversation } from "@/types";
+import type { Conversation, SideQuest, QuestCategory } from "@/types";
+
+// Category config for quest icons
+const categoryConfig: Record<QuestCategory, { label: string; icon: typeof Dumbbell; color: string }> = {
+  gym: { label: "Gym", icon: Dumbbell, color: "bg-red-500/20 text-red-400" },
+  food: { label: "Food", icon: Utensils, color: "bg-orange-500/20 text-orange-400" },
+  study: { label: "Study", icon: BookOpen, color: "bg-blue-500/20 text-blue-400" },
+  game: { label: "Game", icon: Gamepad2, color: "bg-purple-500/20 text-purple-400" },
+  commute: { label: "Commute", icon: Car, color: "bg-green-500/20 text-green-400" },
+  custom: { label: "Custom", icon: Sparkles, color: "bg-zinc-500/20 text-zinc-400" },
+};
 
 function ConversationCard({ conversation, userId }: { conversation: Conversation; userId?: string }) {
   const otherUser = conversation.participants.find((p) => p.id !== userId);
@@ -49,18 +81,23 @@ function ConversationCard({ conversation, userId }: { conversation: Conversation
           className={cn(
             "p-4 rounded-2xl border transition-all duration-200 group",
             isUnread
-              ? "bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-purple-500/30 shadow-lg shadow-purple-500/5"
-              : "bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/[0.07]"
+              ? "bg-gradient-to-r from-red-500/10 to-orange-500/10 border-red-500/30 shadow-lg shadow-red-500/5"
+              : "bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-500/30 hover:border-green-500/50"
           )}
         >
           <div className="flex items-center gap-3">
             <div className="relative">
               <Avatar className={cn(
                 "w-12 h-12 ring-2 transition-all",
-                isUnread ? "ring-purple-500/50" : "ring-white/10 group-hover:ring-white/20"
+                isUnread ? "ring-red-500/50" : "ring-green-500/30 group-hover:ring-green-500/50"
               )}>
                 <AvatarImage src={otherUser?.avatar_url || undefined} />
-                <AvatarFallback className="bg-gradient-to-br from-purple-500/30 to-pink-500/30 text-purple-300 font-semibold">
+                <AvatarFallback className={cn(
+                  "font-semibold",
+                  isUnread
+                    ? "bg-gradient-to-br from-red-500/30 to-orange-500/30 text-red-300"
+                    : "bg-gradient-to-br from-green-500/30 to-emerald-500/30 text-green-300"
+                )}>
                   {otherUser?.name
                     ?.split(" ")
                     .map((n) => n[0])
@@ -73,7 +110,7 @@ function ConversationCard({ conversation, userId }: { conversation: Conversation
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-[10px] font-bold shadow-lg shadow-purple-500/30"
+                  className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 flex items-center justify-center text-[10px] font-bold shadow-lg shadow-red-500/30"
                 >
                   {conversation.unread_count > 9 ? "9+" : conversation.unread_count}
                 </motion.div>
@@ -109,7 +146,7 @@ function ConversationCard({ conversation, userId }: { conversation: Conversation
                     {conversation.last_message.sender_id === userId && (
                       <span className="text-zinc-500 flex-shrink-0">
                         {conversation.last_message.is_read ? (
-                          <CheckCheck className="w-3.5 h-3.5 text-purple-400" />
+                          <CheckCheck className="w-3.5 h-3.5 text-green-400" />
                         ) : (
                           <Check className="w-3.5 h-3.5" />
                         )}
@@ -202,9 +239,417 @@ function ConversationSkeleton() {
   );
 }
 
+// Quest Chat Dialog for Messages page
+function QuestChatDialogInMessages({
+  quest,
+  isOpen,
+  onClose
+}: {
+  quest: SideQuest;
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  const { data: user } = useUser();
+  const { toast } = useToast();
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [messageInput, setMessageInput] = useState("");
+  const [replyTo, setReplyTo] = useState<{ id: string; senderName: string; content: string } | null>(null);
+
+  const { data: messagesData, fetchNextPage, hasNextPage, isFetchingNextPage } = useQuestMessages(quest.id, isOpen);
+  const sendMessageMutation = useSendQuestMessage();
+
+  // Collect all messages and sort by created_at (oldest first for chat display)
+  const allMessages = (messagesData?.pages?.flatMap((page) => page.messages) || [])
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (chatContainerRef.current && isOpen) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [allMessages.length, isOpen]);
+
+  // Auto-focus input when dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [isOpen]);
+
+  const timeAgo = (date: string) => {
+    const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
+    if (seconds < 60) return "just now";
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+    return `${Math.floor(seconds / 86400)}d ago`;
+  };
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!messageInput.trim()) return;
+
+    try {
+      await sendMessageMutation.mutateAsync({
+        questId: quest.id,
+        content: messageInput.trim(),
+        replyToId: replyTo?.id,
+      });
+      setMessageInput("");
+      setReplyTo(null);
+      // Refocus the input after sending
+      inputRef.current?.focus();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to send message",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const catConfig = categoryConfig[quest.category];
+  const Icon = catConfig.icon;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-lg md:max-w-xl lg:max-w-2xl h-[80vh] max-h-[600px] flex flex-col p-0 gap-0">
+        {/* Header */}
+        <DialogHeader className="px-4 py-3 border-b border-white/10 shrink-0">
+          <DialogTitle className="flex items-center gap-3">
+            <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center", catConfig.color)}>
+              <Icon className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold truncate">{quest.activity}</p>
+              <div className="flex items-center gap-2 text-xs text-zinc-500">
+                <Users className="w-3 h-3" />
+                <span>{quest.current_participants} participants</span>
+                <span className="text-zinc-600">•</span>
+                <span>{quest.location}</span>
+              </div>
+            </div>
+          </DialogTitle>
+        </DialogHeader>
+
+        {/* Messages */}
+        <div
+          ref={chatContainerRef}
+          className="flex-1 overflow-y-auto p-4 space-y-3"
+        >
+          {/* Load more button */}
+          {hasNextPage && (
+            <div className="text-center">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+              >
+                {isFetchingNextPage ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  "Load earlier messages"
+                )}
+              </Button>
+            </div>
+          )}
+
+          {allMessages.length === 0 ? (
+            <div className="h-full flex items-center justify-center">
+              <div className="text-center">
+                <MessageCircle className="w-12 h-12 mx-auto text-zinc-700 mb-3" />
+                <p className="text-zinc-500 text-sm">
+                  No messages yet. Start the conversation!
+                </p>
+              </div>
+            </div>
+          ) : (
+            allMessages.map((message) => {
+              const isOwnMessage = message.sender.id === user?.id;
+              return (
+                <div
+                  key={message.id}
+                  className={cn(
+                    "flex gap-2 group",
+                    isOwnMessage ? "flex-row-reverse" : "flex-row"
+                  )}
+                >
+                  {!isOwnMessage && (
+                    <Link href={`/profile/${message.sender.id}`}>
+                      <Avatar className="w-8 h-8 shrink-0">
+                        <AvatarImage src={message.sender.avatar_url || undefined} />
+                        <AvatarFallback className="text-xs bg-zinc-800">
+                          {message.sender.name.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Link>
+                  )}
+                  <div
+                    className={cn(
+                      "max-w-[70%] rounded-lg px-3 py-2 relative",
+                      isOwnMessage
+                        ? "bg-green-600 text-white"
+                        : "bg-white/10"
+                    )}
+                  >
+                    {!isOwnMessage && (
+                      <p className="text-xs text-zinc-400 mb-0.5">
+                        {message.sender.name}
+                        {message.sender.id === quest.host.id && (
+                          <span className="ml-1 text-green-400">(Host)</span>
+                        )}
+                      </p>
+                    )}
+                    {/* Reply Preview */}
+                    {message.reply_to && !message.is_deleted && (
+                      <div className="mb-1.5 px-2 py-1 rounded border-l-2 border-green-400/50 bg-black/20 text-xs">
+                        <p className="text-green-300 font-medium">{message.reply_to.sender.name}</p>
+                        <p className="text-zinc-400 line-clamp-1">{message.reply_to.content}</p>
+                      </div>
+                    )}
+                    <p className="text-sm whitespace-pre-wrap break-words">
+                      {message.is_deleted ? (
+                        <span className="italic text-zinc-500">Message deleted</span>
+                      ) : (
+                        message.content
+                      )}
+                    </p>
+                    <p
+                      className={cn(
+                        "text-xs mt-1",
+                        isOwnMessage ? "text-green-200" : "text-zinc-500"
+                      )}
+                    >
+                      {timeAgo(message.created_at)}
+                    </p>
+                    {/* Reply button */}
+                    {!message.is_deleted && (
+                      <button
+                        onClick={() => setReplyTo({ id: message.id, senderName: message.sender.name, content: message.content })}
+                        className="absolute -top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full bg-zinc-800/80 hover:bg-zinc-700 border border-white/10"
+                        title="Reply"
+                      >
+                        <Reply className="w-3 h-3 text-zinc-300" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Message Input */}
+        <form
+          onSubmit={handleSendMessage}
+          className="p-4 border-t border-white/10 shrink-0"
+        >
+          {/* Reply Preview */}
+          {replyTo && (
+            <div className="mb-2 flex items-center gap-2 px-3 py-2 bg-green-500/10 border border-green-500/20 rounded-lg">
+              <Reply className="w-4 h-4 text-green-400 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-green-400">Replying to {replyTo.senderName}</p>
+                <p className="text-xs text-zinc-400 truncate">{replyTo.content}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setReplyTo(null)}
+                className="p-1 hover:bg-white/10 rounded"
+              >
+                <X className="w-4 h-4 text-zinc-400" />
+              </button>
+            </div>
+          )}
+          <div className="flex gap-2">
+            <Input
+              ref={inputRef}
+              value={messageInput}
+              onChange={(e) => setMessageInput(e.target.value)}
+              placeholder="Type a message..."
+              className="flex-1 bg-white/5 border-white/10"
+              disabled={sendMessageMutation.isPending}
+            />
+            <Button
+              type="submit"
+              size="icon"
+              className="bg-green-600 hover:bg-green-700"
+              disabled={!messageInput.trim() || sendMessageMutation.isPending}
+            >
+              {sendMessageMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Helper to get viewed quest timestamps from localStorage
+const getViewedQuestTimestamps = (): Record<string, number> => {
+  if (typeof window === "undefined") return {};
+  try {
+    const stored = localStorage.getItem("viewedQuestTimestamps");
+    return stored ? JSON.parse(stored) : {};
+  } catch {
+    return {};
+  }
+};
+
+// Helper to mark a quest as viewed
+const markQuestAsViewed = (questId: string) => {
+  if (typeof window === "undefined") return;
+  try {
+    const timestamps = getViewedQuestTimestamps();
+    timestamps[questId] = Date.now();
+    localStorage.setItem("viewedQuestTimestamps", JSON.stringify(timestamps));
+  } catch {
+    // Ignore localStorage errors
+  }
+};
+
+// Quest Chat Card with unread tracking - fetches messages to determine unread status
+function QuestChatCardWithUnread({
+  quest,
+  onOpenChat,
+  viewedTimestamp,
+  onUnreadCountChange,
+}: {
+  quest: SideQuest;
+  onOpenChat: () => void;
+  viewedTimestamp: number | undefined;
+  onUnreadCountChange: (questId: string, count: number) => void;
+}) {
+  const { data: user } = useUser();
+  const catConfig = categoryConfig[quest.category];
+  const Icon = catConfig.icon;
+
+  // Fetch fresh quest data to get updated participant count
+  const { data: freshQuest } = useQuest(quest.id);
+
+  // Use fresh data if available, otherwise fall back to prop
+  const currentParticipants = freshQuest?.current_participants ?? quest.current_participants;
+
+  // Fetch messages to determine unread count
+  const { data: messagesData, fetchNextPage, hasNextPage } = useQuestMessages(quest.id, true);
+
+  // Fetch all pages to ensure we count all messages
+  useEffect(() => {
+    if (hasNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, fetchNextPage]);
+
+  const allMessages = messagesData?.pages?.flatMap((page) => page.messages) || [];
+
+  // Calculate unread messages from OTHER users since last viewed
+  const unreadCount = allMessages.filter((msg) => {
+    // Skip if user data not loaded yet
+    if (!user?.id) return false;
+    // Only count messages from other users
+    if (msg.sender.id === user.id) return false;
+    // If never viewed, all messages from others are unread
+    if (!viewedTimestamp) return true;
+    // Check if message is newer than last viewed time (with small buffer for timing issues)
+    return new Date(msg.created_at).getTime() > (viewedTimestamp - 1000);
+  }).length;
+
+  // Report unread count to parent for badge total
+  useEffect(() => {
+    onUnreadCountChange(quest.id, unreadCount);
+  }, [quest.id, unreadCount, onUnreadCountChange]);
+
+  const isRead = unreadCount === 0;
+
+  const formatTime = (date: string) => {
+    const d = new Date(date);
+    const now = new Date();
+    const isToday = d.toDateString() === now.toDateString();
+
+    if (isToday) {
+      return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+    }
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 5 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ scale: 1.01 }}
+      whileTap={{ scale: 0.99 }}
+    >
+      <button
+        onClick={onOpenChat}
+        className={cn(
+          "w-full p-4 rounded-2xl border transition-all duration-200 text-left group",
+          isRead
+            ? "bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-500/30 hover:border-green-500/50"
+            : "bg-gradient-to-r from-red-500/10 to-orange-500/10 border-red-500/30 hover:border-red-500/50"
+        )}
+      >
+        <div className="flex items-center gap-3">
+          <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center relative", catConfig.color)}>
+            <Icon className="w-6 h-6" />
+            {!isRead && unreadCount > 0 && (
+              <div className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center px-1 text-[10px] font-bold text-white bg-red-500 rounded-full">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </div>
+            )}
+          </div>
+
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between mb-1">
+              <span className={cn(
+                "font-medium truncate",
+                isRead ? "text-zinc-200" : "text-white"
+              )}>
+                {quest.activity}
+              </span>
+              <span className="text-xs text-zinc-500 flex-shrink-0">
+                {formatTime(quest.start_time)}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-zinc-400">
+              <Users className={cn("w-3 h-3", isRead ? "text-green-400" : "text-red-400")} />
+              <span>{currentParticipants} participants</span>
+              <span className="text-zinc-600">•</span>
+              <MapPin className="w-3 h-3" />
+              <span className="truncate">{quest.location}</span>
+            </div>
+          </div>
+
+          <div className={cn(
+            "p-2 rounded-lg transition-colors",
+            isRead
+              ? "bg-green-500/20 group-hover:bg-green-500/30"
+              : "bg-red-500/20 group-hover:bg-red-500/30"
+          )}>
+            <MessageCircle className={cn("w-5 h-5", isRead ? "text-green-400" : "text-red-400")} />
+          </div>
+        </div>
+      </button>
+    </motion.div>
+  );
+}
+
 export default function MessagesPage() {
   const { isAuthenticated } = useAuthStore();
   const { data: user } = useUser();
+  const [selectedQuest, setSelectedQuest] = useState<SideQuest | null>(null);
+  const [viewedTimestamps, setViewedTimestamps] = useState<Record<string, number>>({});
+  const [questUnreadCounts, setQuestUnreadCounts] = useState<Record<string, number>>({});
+  const [activeTab, setActiveTab] = useState("all");
+
+  // Load viewed timestamps on mount
+  useEffect(() => {
+    setViewedTimestamps(getViewedQuestTimestamps());
+  }, []);
 
   // Real-time subscription for conversations
   useRealtimeConversations(user?.id || null);
@@ -219,8 +664,38 @@ export default function MessagesPage() {
 
   const { data: pendingData, isLoading: pendingLoading } = usePendingRequests();
 
+  // Fetch user's quest chats (hosted + joined)
+  const { data: hostedData, isLoading: loadingHosted } = useMyQuests("host");
+  const { data: joinedData, isLoading: loadingJoined } = useMyQuests("participant");
+
+  const hostedQuests = hostedData?.pages?.flatMap((page) => page.items) || [];
+  const joinedQuests = joinedData?.pages?.flatMap((page) => page.items) || [];
+  const allQuestChats = [...hostedQuests, ...joinedQuests];
+  const questsLoading = loadingHosted || loadingJoined;
+
   const conversations = conversationsData?.pages.flatMap((page) => page.items) || [];
   const pendingRequests = pendingData?.requests || [];
+
+  // Calculate total unread (for future notification feature)
+  const totalUnread = conversations.reduce((sum, c) => sum + (c.unread_count || 0), 0);
+
+  // Handle opening a quest chat - marks it as viewed
+  const handleOpenQuestChat = (quest: SideQuest) => {
+    markQuestAsViewed(quest.id);
+    setViewedTimestamps(prev => ({ ...prev, [quest.id]: Date.now() }));
+    setSelectedQuest(quest);
+  };
+
+  // Callback for quest cards to report their unread count
+  const handleUnreadCountChange = useCallback((questId: string, count: number) => {
+    setQuestUnreadCounts(prev => {
+      if (prev[questId] === count) return prev;
+      return { ...prev, [questId]: count };
+    });
+  }, []);
+
+  // Calculate total unread quest messages
+  const totalUnreadQuestMessages = Object.values(questUnreadCounts).reduce((sum, count) => sum + count, 0);
 
   if (!isAuthenticated) {
     return (
@@ -247,13 +722,37 @@ export default function MessagesPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="all" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="w-full mb-4 bg-white/5 border border-white/10 p-1 rounded-xl">
           <TabsTrigger
             value="all"
             className="flex-1 rounded-lg data-[state=active]:bg-white/10 transition-all"
           >
             All
+            {totalUnread > 0 && (
+              <motion.span
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="ml-1.5 px-1.5 py-0.5 text-[10px] rounded-full bg-gradient-to-r from-red-500 to-orange-500 text-white font-bold"
+              >
+                {totalUnread > 99 ? "99+" : totalUnread}
+              </motion.span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger
+            value="quests"
+            className="flex-1 rounded-lg data-[state=active]:bg-white/10 transition-all relative"
+          >
+            Quests
+            {totalUnreadQuestMessages > 0 && (
+              <motion.span
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="ml-1.5 px-1.5 py-0.5 text-[10px] rounded-full font-bold bg-gradient-to-r from-red-500 to-orange-500 text-white"
+              >
+                {totalUnreadQuestMessages > 99 ? "99+" : totalUnreadQuestMessages}
+              </motion.span>
+            )}
           </TabsTrigger>
           <TabsTrigger
             value="requests"
@@ -264,7 +763,7 @@ export default function MessagesPage() {
               <motion.span
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                className="ml-2 px-1.5 py-0.5 text-[10px] rounded-full bg-gradient-to-r from-yellow-500 to-orange-500 text-black font-bold"
+                className="ml-1.5 px-1.5 py-0.5 text-[10px] rounded-full bg-gradient-to-r from-yellow-500 to-orange-500 text-black font-bold"
               >
                 {pendingRequests.length}
               </motion.span>
@@ -325,6 +824,45 @@ export default function MessagesPage() {
           )}
         </TabsContent>
 
+        <TabsContent value="quests" className="space-y-3 mt-0" forceMount hidden={activeTab !== "quests"}>
+          {questsLoading ? (
+            <>
+              <ConversationSkeleton />
+              <ConversationSkeleton />
+            </>
+          ) : allQuestChats.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center py-16"
+            >
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center border border-white/10">
+                <Users className="w-10 h-10 text-zinc-600" />
+              </div>
+              <h3 className="text-lg font-medium mb-2">No quest chats yet</h3>
+              <p className="text-sm text-zinc-500 max-w-xs mx-auto">
+                Join or create a Side Quest to start group chatting with other participants
+              </p>
+            </motion.div>
+          ) : (
+            allQuestChats.map((quest, i) => (
+              <motion.div
+                key={quest.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+              >
+                <QuestChatCardWithUnread
+                  quest={quest}
+                  onOpenChat={() => handleOpenQuestChat(quest)}
+                  viewedTimestamp={viewedTimestamps[quest.id]}
+                  onUnreadCountChange={handleUnreadCountChange}
+                />
+              </motion.div>
+            ))
+          )}
+        </TabsContent>
+
         <TabsContent value="requests" className="space-y-3 mt-0">
           {pendingLoading ? (
             <>
@@ -359,6 +897,15 @@ export default function MessagesPage() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Quest Chat Dialog */}
+      {selectedQuest && (
+        <QuestChatDialogInMessages
+          quest={selectedQuest}
+          isOpen={!!selectedQuest}
+          onClose={() => setSelectedQuest(null)}
+        />
+      )}
     </div>
   );
 }

@@ -326,7 +326,7 @@ export default function ConversationPage() {
     <div className="h-[calc(100vh-4rem)] md:h-[calc(100vh-4rem)] flex flex-col bg-gradient-to-b from-zinc-950 to-zinc-900">
       {/* Header with glassmorphism */}
       <div className="flex items-center gap-3 p-4 border-b border-white/10 bg-white/5 backdrop-blur-xl">
-        <Button variant="ghost" size="icon" asChild className="md:hidden">
+        <Button variant="ghost" size="icon" asChild>
           <Link href="/messages">
             <ArrowLeft className="w-5 h-5" />
           </Link>

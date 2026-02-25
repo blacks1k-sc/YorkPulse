@@ -287,8 +287,50 @@ const OVERPASS_ENDPOINTS = [
   "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
 ];
 
-// Fetch building polygons from Overpass API with retry and fallback
+// Cache key and duration (24 hours)
+const BUILDING_CACHE_KEY = "yorkBuildings_cache";
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in ms
+
+// Get cached buildings from localStorage
+function getCachedBuildings(): BuildingPolygon[] | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const cached = localStorage.getItem(BUILDING_CACHE_KEY);
+    if (!cached) return null;
+
+    const { buildings, timestamp } = JSON.parse(cached);
+    // Check if cache is still valid
+    if (Date.now() - timestamp < CACHE_DURATION && buildings.length > 0) {
+      return buildings;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+// Save buildings to localStorage cache
+function cacheBuildings(buildings: BuildingPolygon[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(BUILDING_CACHE_KEY, JSON.stringify({
+      buildings,
+      timestamp: Date.now(),
+    }));
+  } catch {
+    // Ignore cache errors (e.g., quota exceeded)
+  }
+}
+
+// Fetch building polygons from Overpass API with caching, retry and fallback
 export async function fetchBuildingPolygons(): Promise<BuildingPolygon[]> {
+  // Check cache first
+  const cached = getCachedBuildings();
+  if (cached) {
+    console.info("Using cached building data");
+    return cached;
+  }
+
   // Try each endpoint
   for (const endpoint of OVERPASS_ENDPOINTS) {
     try {
@@ -315,6 +357,8 @@ export async function fetchBuildingPolygons(): Promise<BuildingPolygon[]> {
       const buildings = parseOSMResponse(data);
 
       if (buildings.length > 0) {
+        // Cache the successful result
+        cacheBuildings(buildings);
         return buildings;
       }
     } catch (error) {
