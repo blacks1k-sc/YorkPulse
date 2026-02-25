@@ -1,6 +1,7 @@
 // York University Building Polygons from OpenStreetMap
-// Fetches actual building footprints and matches them to categories
+// Fetches from backend API with Redis caching (shared across all users)
 
+import { api } from "@/services/api";
 import { BuildingCategory, buildingCategoryConfig } from "./yorkBuildings";
 
 export interface BuildingPolygon {
@@ -322,52 +323,66 @@ function cacheBuildings(buildings: BuildingPolygon[]): void {
   }
 }
 
-// Fetch building polygons from Overpass API with caching, retry and fallback
+// Fetch building polygons from backend API (Redis cached) with localStorage fallback
 export async function fetchBuildingPolygons(): Promise<BuildingPolygon[]> {
-  // Check cache first
+  // Check localStorage cache first (instant, works offline)
   const cached = getCachedBuildings();
   if (cached) {
-    console.info("Using cached building data");
+    console.info("Using localStorage cached building data");
     return cached;
   }
 
-  // Try each endpoint
+  // Try backend API (Redis cached - shared across all users)
+  try {
+    const response = await api.map.getBuildings();
+    if (response.buildings && response.buildings.length > 0) {
+      const buildings: BuildingPolygon[] = response.buildings.map((b) => ({
+        id: b.id,
+        name: b.name,
+        category: b.category as BuildingCategory,
+        coordinates: b.coordinates,
+        center: b.center,
+      }));
+
+      // Cache in localStorage for instant loads
+      cacheBuildings(buildings);
+      console.info(`Loaded ${buildings.length} buildings from backend (source: ${response.source}, cached: ${response.cached})`);
+      return buildings;
+    }
+  } catch (error) {
+    console.warn("Backend API failed, trying Overpass directly:", error);
+  }
+
+  // Fallback: Try Overpass API directly (if backend is down)
   for (const endpoint of OVERPASS_ENDPOINTS) {
     try {
       const url = `${endpoint}?data=${encodeURIComponent(OVERPASS_QUERY)}`;
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
 
       const response = await fetch(url, {
-        headers: {
-          "Accept": "application/json",
-        },
+        headers: { "Accept": "application/json" },
         signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
 
-      if (!response.ok) {
-        console.warn(`Overpass API (${endpoint}) returned ${response.status}, trying next...`);
-        continue;
-      }
+      if (!response.ok) continue;
 
       const data = await response.json();
       const buildings = parseOSMResponse(data);
 
       if (buildings.length > 0) {
-        // Cache the successful result
         cacheBuildings(buildings);
         return buildings;
       }
-    } catch (error) {
-      console.warn(`Overpass API (${endpoint}) failed:`, error);
+    } catch {
       continue;
     }
   }
 
-  // All endpoints failed - return fallback buildings
+  // All sources failed - return fallback buildings
   console.info("Using fallback building data");
   return fallbackBuildings;
 }

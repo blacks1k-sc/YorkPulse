@@ -687,6 +687,22 @@ class ApiClient {
       }>(`/feedback/my?page=${page}&per_page=${perPage}`),
   };
 
+  // Map data endpoints
+  map = {
+    getBuildings: () =>
+      this.get<{
+        buildings: Array<{
+          id: string;
+          name: string;
+          category: string;
+          coordinates: [number, number][];
+          center: [number, number];
+        }>;
+        cached: boolean;
+        source: string;
+      }>("/map/buildings"),
+  };
+
   // Quick Gigs endpoints
   gigs = {
     getGigs: (params?: {
