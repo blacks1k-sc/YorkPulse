@@ -1,5 +1,6 @@
 """Supabase Auth service for OTP verification."""
 
+import asyncio
 import random
 import string
 from datetime import datetime, timedelta
@@ -13,6 +14,14 @@ from app.services.email import email_service
 
 # In-memory OTP storage (used for both dev mode and Resend-based OTP)
 _otps: dict[str, tuple[str, datetime]] = {}
+
+
+async def _send_email_background(email: str, otp: str) -> None:
+    """Send email in background - fire and forget."""
+    try:
+        await email_service.send_otp_email(email, otp)
+    except Exception as e:
+        print(f"Background email send failed for {email}: {e}")
 
 
 class SupabaseAuthService:
@@ -75,11 +84,12 @@ class SupabaseAuthService:
             otp = self._generate_otp(email)
             return True, f"[DEV MODE] Your verification code is: {otp}"
 
-        # If Resend is configured, use it to send OTP emails
+        # If SMTP/email is configured, send OTP in background (fire-and-forget)
         if email_service.is_configured():
             otp = self._generate_otp(email)
-            success, message = await email_service.send_otp_email(email, otp)
-            return success, message
+            # Fire and forget - don't wait for email to send
+            asyncio.create_task(_send_email_background(email, otp))
+            return True, "Verification code sent to your email"
 
         # Fallback to Supabase (sends magic link, not ideal)
         try:

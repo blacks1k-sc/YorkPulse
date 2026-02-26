@@ -42,8 +42,15 @@ class Settings(BaseSettings):
     # Gemini AI
     gemini_api_key: str = ""
 
-    # Resend (Email)
+    # Resend (Email) - Legacy, kept for backwards compatibility
     resend_api_key: str = ""
+
+    # SMTP (Gmail)
+    smtp_host: str = "smtp.gmail.com"
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    email_from: str = ""
 
     # CORS
     cors_origins: list[str] = ["http://localhost:3000"]
