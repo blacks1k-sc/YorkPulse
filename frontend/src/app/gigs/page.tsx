@@ -237,6 +237,7 @@ export default function GigsPage() {
           variant={gigType === undefined ? "default" : "outline"}
           size="sm"
           onClick={() => setGigType(undefined)}
+          className={gigType === undefined ? "bg-yellow-500 hover:bg-yellow-600 text-black" : ""}
         >
           All
         </Button>
@@ -258,6 +259,37 @@ export default function GigsPage() {
         </Button>
       </div>
 
+      {/* Category Tabs */}
+      <div className="mb-4 -mx-4 px-4 overflow-x-auto scrollbar-hide">
+        <div className="flex gap-2 pb-2">
+          <button
+            onClick={() => setCategory(undefined)}
+            className={cn(
+              "h-9 px-3 rounded-md text-xs font-medium whitespace-nowrap transition-all",
+              category === undefined
+                ? "bg-yellow-500 text-black"
+                : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white border border-white/10"
+            )}
+          >
+            All
+          </button>
+          {Object.entries(categoryConfig).map(([key, config]) => (
+            <button
+              key={key}
+              onClick={() => setCategory(key as GigCategory)}
+              className={cn(
+                "h-9 px-3 rounded-md text-xs font-medium whitespace-nowrap transition-all",
+                category === key
+                  ? "bg-yellow-500 text-black"
+                  : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white border border-white/10"
+              )}
+            >
+              {config.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Search and Filters */}
       <div className="flex gap-2 mb-6">
         <div className="relative flex-1">
@@ -269,25 +301,6 @@ export default function GigsPage() {
             className="pl-10 bg-white/5 border-white/10"
           />
         </div>
-
-        {/* Category Filter */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon">
-              {category ? categoryConfig[category].emoji : <Filter className="w-4 h-4" />}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setCategory(undefined)}>
-              All Categories
-            </DropdownMenuItem>
-            {Object.entries(categoryConfig).map(([key, config]) => (
-              <DropdownMenuItem key={key} onClick={() => setCategory(key as GigCategory)}>
-                {config.emoji} {config.label}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
 
         {/* Location Filter */}
         <DropdownMenu>
@@ -334,25 +347,15 @@ export default function GigsPage() {
       </div>
 
       {/* Active Filters */}
-      {(category || location) && (
+      {location && (
         <div className="flex gap-2 mb-4 flex-wrap">
-          {category && (
-            <Badge variant="secondary" className="gap-1">
-              {categoryConfig[category].emoji} {categoryConfig[category].label}
-              <button onClick={() => setCategory(undefined)} className="ml-1 hover:text-white">
-                ×
-              </button>
-            </Badge>
-          )}
-          {location && (
-            <Badge variant="secondary" className="gap-1">
-              <MapPin className="w-3 h-3" />
-              {locationLabels[location]}
-              <button onClick={() => setLocation(undefined)} className="ml-1 hover:text-white">
-                ×
-              </button>
-            </Badge>
-          )}
+          <Badge variant="secondary" className="gap-1 bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+            <MapPin className="w-3 h-3" />
+            {locationLabels[location]}
+            <button onClick={() => setLocation(undefined)} className="ml-1 hover:text-white">
+              ×
+            </button>
+          </Badge>
         </div>
       )}
 

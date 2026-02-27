@@ -82,7 +82,7 @@ export default function CreateGigPage() {
   const [priceType, setPriceType] = useState<GigPriceType>("fixed");
   const [priceMin, setPriceMin] = useState("");
   const [priceMax, setPriceMax] = useState("");
-  const [location, setLocation] = useState<GigLocation>("on_campus");
+  const [locations, setLocations] = useState<GigLocation[]>(["on_campus"]);
   const [locationDetails, setLocationDetails] = useState("");
   const [deadline, setDeadline] = useState("");
 
@@ -97,6 +97,10 @@ export default function CreateGigPage() {
       toast({ title: "Description must be at least 20 characters", variant: "destructive" });
       return;
     }
+    if (locations.length === 0) {
+      toast({ title: "Please select at least one location", variant: "destructive" });
+      return;
+    }
 
     try {
       const gig = await createMutation.mutateAsync({
@@ -107,7 +111,8 @@ export default function CreateGigPage() {
         price_type: priceType,
         price_min: priceMin ? parseFloat(priceMin) : undefined,
         price_max: priceMax ? parseFloat(priceMax) : undefined,
-        location,
+        location: locations[0],
+        locations,
         location_details: locationDetails || undefined,
         deadline: deadline ? new Date(deadline).toISOString() : undefined,
       });
@@ -185,7 +190,10 @@ export default function CreateGigPage() {
                   type="button"
                   variant={category === key ? "default" : "outline"}
                   onClick={() => setCategory(key as GigCategory)}
-                  className="flex flex-col h-auto py-3"
+                  className={cn(
+                    "flex flex-col h-auto py-3",
+                    category === key && "bg-yellow-500 hover:bg-yellow-600 text-black"
+                  )}
                 >
                   <span className="text-xl mb-1">{config.emoji}</span>
                   <span className="text-xs">{config.label}</span>
@@ -203,7 +211,7 @@ export default function CreateGigPage() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               maxLength={100}
-              className="bg-white/5 border-white/10"
+              className="bg-white/5 border-white/10 focus-visible:ring-yellow-500 focus-visible:border-yellow-500"
             />
             <p className="text-xs text-zinc-500">{title.length}/100</p>
           </div>
@@ -218,7 +226,7 @@ export default function CreateGigPage() {
               onChange={(e) => setDescription(e.target.value)}
               maxLength={1000}
               rows={4}
-              className="bg-white/5 border-white/10 resize-none"
+              className="bg-white/5 border-white/10 resize-none focus-visible:ring-yellow-500 focus-visible:border-yellow-500"
             />
             <p className="text-xs text-zinc-500">{description.length}/1000</p>
           </div>
@@ -232,6 +240,7 @@ export default function CreateGigPage() {
                 size="sm"
                 variant={priceType === "fixed" ? "default" : "outline"}
                 onClick={() => setPriceType("fixed")}
+                className={priceType === "fixed" ? "bg-yellow-500 hover:bg-yellow-600 text-black" : ""}
               >
                 Fixed
               </Button>
@@ -240,6 +249,7 @@ export default function CreateGigPage() {
                 size="sm"
                 variant={priceType === "hourly" ? "default" : "outline"}
                 onClick={() => setPriceType("hourly")}
+                className={priceType === "hourly" ? "bg-yellow-500 hover:bg-yellow-600 text-black" : ""}
               >
                 Hourly
               </Button>
@@ -248,6 +258,7 @@ export default function CreateGigPage() {
                 size="sm"
                 variant={priceType === "negotiable" ? "default" : "outline"}
                 onClick={() => setPriceType("negotiable")}
+                className={priceType === "negotiable" ? "bg-yellow-500 hover:bg-yellow-600 text-black" : ""}
               >
                 Negotiable
               </Button>
@@ -263,7 +274,7 @@ export default function CreateGigPage() {
                     onChange={(e) => setPriceMin(e.target.value)}
                     min="0"
                     step="0.01"
-                    className="pl-8 bg-white/5 border-white/10"
+                    className="pl-8 bg-white/5 border-white/10 focus-visible:ring-yellow-500 focus-visible:border-yellow-500"
                   />
                 </div>
                 <div className="relative flex-1">
@@ -275,7 +286,7 @@ export default function CreateGigPage() {
                     onChange={(e) => setPriceMax(e.target.value)}
                     min="0"
                     step="0.01"
-                    className="pl-8 bg-white/5 border-white/10"
+                    className="pl-8 bg-white/5 border-white/10 focus-visible:ring-yellow-500 focus-visible:border-yellow-500"
                   />
                 </div>
               </div>
@@ -284,13 +295,18 @@ export default function CreateGigPage() {
 
           {/* Location */}
           <div className="space-y-2">
-            <Label>Location</Label>
+            <Label>Location (select all that apply)</Label>
             <div className="flex gap-2 mb-2">
               <Button
                 type="button"
                 size="sm"
-                variant={location === "on_campus" ? "default" : "outline"}
-                onClick={() => setLocation("on_campus")}
+                variant={locations.includes("on_campus") ? "default" : "outline"}
+                onClick={() => setLocations(prev =>
+                  prev.includes("on_campus")
+                    ? prev.filter(l => l !== "on_campus")
+                    : [...prev, "on_campus"]
+                )}
+                className={locations.includes("on_campus") ? "bg-yellow-500 hover:bg-yellow-600 text-black" : ""}
               >
                 <MapPin className="w-4 h-4 mr-1" />
                 On Campus
@@ -298,16 +314,26 @@ export default function CreateGigPage() {
               <Button
                 type="button"
                 size="sm"
-                variant={location === "off_campus" ? "default" : "outline"}
-                onClick={() => setLocation("off_campus")}
+                variant={locations.includes("off_campus") ? "default" : "outline"}
+                onClick={() => setLocations(prev =>
+                  prev.includes("off_campus")
+                    ? prev.filter(l => l !== "off_campus")
+                    : [...prev, "off_campus"]
+                )}
+                className={locations.includes("off_campus") ? "bg-yellow-500 hover:bg-yellow-600 text-black" : ""}
               >
                 Off Campus
               </Button>
               <Button
                 type="button"
                 size="sm"
-                variant={location === "online" ? "default" : "outline"}
-                onClick={() => setLocation("online")}
+                variant={locations.includes("online") ? "default" : "outline"}
+                onClick={() => setLocations(prev =>
+                  prev.includes("online")
+                    ? prev.filter(l => l !== "online")
+                    : [...prev, "online"]
+                )}
+                className={locations.includes("online") ? "bg-yellow-500 hover:bg-yellow-600 text-black" : ""}
               >
                 Online
               </Button>
@@ -317,7 +343,7 @@ export default function CreateGigPage() {
               value={locationDetails}
               onChange={(e) => setLocationDetails(e.target.value)}
               maxLength={200}
-              className="bg-white/5 border-white/10"
+              className="bg-white/5 border-white/10 focus-visible:ring-yellow-500 focus-visible:border-yellow-500"
             />
           </div>
 
@@ -332,7 +358,7 @@ export default function CreateGigPage() {
                   type="datetime-local"
                   value={deadline}
                   onChange={(e) => setDeadline(e.target.value)}
-                  className="pl-10 bg-white/5 border-white/10"
+                  className="pl-10 bg-white/5 border-white/10 focus-visible:ring-yellow-500 focus-visible:border-yellow-500"
                 />
               </div>
             </div>
