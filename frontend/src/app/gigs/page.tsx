@@ -184,22 +184,51 @@ export default function GigsPage() {
 
   const allGigs = data?.pages?.flatMap((page) => page.items) || [];
 
+  // Auth guard
+  if (!isAuthenticated) {
+    return (
+      <div className="container mx-auto px-4 py-6 max-w-4xl">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold">Quick Gigs</h1>
+          <p className="text-zinc-400 text-sm">Find help or offer your services</p>
+        </div>
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="w-20 h-20 rounded-full bg-yellow-500/10 flex items-center justify-center mb-6">
+            <GraduationCap className="w-10 h-10 text-yellow-400" />
+          </div>
+          <h2 className="text-xl font-semibold mb-2">Sign in to access Quick Gigs</h2>
+          <p className="text-zinc-500 mb-6 max-w-md">
+            Find help or offer your services to verified York University students.
+          </p>
+          <Link href="/auth/login">
+            <Button className="bg-yellow-500 hover:bg-yellow-600 text-black">
+              Sign In to Continue
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-6 max-w-4xl">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Quick Gigs</h1>
-          <p className="text-zinc-400 text-sm">Find help or offer your services</p>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-yellow-500/20 flex items-center justify-center">
+            <GraduationCap className="w-5 h-5 text-yellow-400" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">Quick Gigs</h1>
+            <p className="text-zinc-400 text-sm">Find help or offer your services</p>
+          </div>
         </div>
-        {isAuthenticated && (
-          <Button asChild className="bg-green-600 hover:bg-green-700">
-            <Link href="/gigs/create">
-              <Plus className="w-4 h-4 mr-2" />
-              Post Gig
-            </Link>
-          </Button>
-        )}
+        <Button asChild className="bg-yellow-500 hover:bg-yellow-600 text-black">
+          <Link href="/gigs/create">
+            <Plus className="w-4 h-4 mr-2" />
+            Post Gig
+          </Link>
+        </Button>
       </div>
 
       {/* Type Toggle */}
@@ -215,7 +244,7 @@ export default function GigsPage() {
           variant={gigType === "offering" ? "default" : "outline"}
           size="sm"
           onClick={() => setGigType("offering")}
-          className={gigType === "offering" ? "bg-green-600 hover:bg-green-700" : ""}
+          className={gigType === "offering" ? "bg-yellow-500 hover:bg-yellow-600 text-black" : ""}
         >
           Offering
         </Button>
@@ -223,7 +252,7 @@ export default function GigsPage() {
           variant={gigType === "need_help" ? "default" : "outline"}
           size="sm"
           onClick={() => setGigType("need_help")}
-          className={gigType === "need_help" ? "bg-orange-600 hover:bg-orange-700" : ""}
+          className={gigType === "need_help" ? "bg-orange-500 hover:bg-orange-600" : ""}
         >
           Need Help
         </Button>

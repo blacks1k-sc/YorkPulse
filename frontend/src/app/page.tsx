@@ -118,7 +118,7 @@ const dashboardFeatures = [
     title: "Marketplace",
     subtitle: "Buy & Sell",
     description: "Trade textbooks, furniture, and electronics with verified York students.",
-    accentColor: "orange",
+    accentColor: "red",
     statKey: "marketplace_listings" as const,
     statLabel: "active listings",
   },
@@ -148,9 +148,19 @@ const dashboardFeatures = [
     title: "Messages",
     subtitle: "Direct Messages",
     description: "Private conversations with other students in your York community.",
-    accentColor: "pink",
+    accentColor: "cyan",
     statKey: "total_users" as const,
     statLabel: "students",
+  },
+  {
+    href: "/gigs",
+    icon: Briefcase,
+    title: "Quick Gigs",
+    subtitle: "Find or Offer Help",
+    description: "Find help or offer your services to verified York University students.",
+    accentColor: "yellow",
+    statKey: "active_gigs" as const,
+    statLabel: "active gigs",
   },
 ];
 
@@ -230,6 +240,12 @@ const accentColors = {
     gradient: "bg-gradient-to-br from-orange-900/30 via-orange-800/10 to-transparent",
     border: "border-orange-500/20",
   },
+  red: {
+    bg: "bg-red-500/15",
+    icon: "text-red-400",
+    gradient: "bg-gradient-to-br from-red-900/30 via-red-800/10 to-transparent",
+    border: "border-red-500/20",
+  },
   emerald: {
     bg: "bg-emerald-500/15",
     icon: "text-emerald-400",
@@ -248,6 +264,18 @@ const accentColors = {
     gradient: "bg-gradient-to-br from-pink-900/30 via-pink-800/10 to-transparent",
     border: "border-pink-500/20",
   },
+  cyan: {
+    bg: "bg-cyan-500/15",
+    icon: "text-cyan-400",
+    gradient: "bg-gradient-to-br from-cyan-900/30 via-cyan-800/10 to-transparent",
+    border: "border-cyan-500/20",
+  },
+  yellow: {
+    bg: "bg-yellow-500/15",
+    icon: "text-yellow-400",
+    gradient: "bg-gradient-to-br from-yellow-900/30 via-yellow-800/10 to-transparent",
+    border: "border-yellow-500/20",
+  },
 };
 
 // Feature Card Component
@@ -262,6 +290,7 @@ function FeatureCard({
     total_courses: number;
     vault_posts_today: number;
     total_users: number;
+    active_gigs: number;
   };
 }) {
   const statValue = stats?.[feature.statKey];
@@ -594,12 +623,12 @@ function DashboardView() {
           ))}
         </motion.div>
 
-        {/* Bottom Row - 2 cards centered */}
+        {/* Bottom Row - 3 cards */}
         <motion.div
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="grid gap-4 grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto mb-12"
+          className="grid gap-4 grid-cols-1 md:grid-cols-3 mb-12"
         >
           {bottomRowFeatures.map((feature) => (
             <motion.div key={feature.href} variants={itemVariants}>

@@ -23,6 +23,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMyGigs } from "@/hooks/useGigs";
+import { useAuthStore } from "@/stores/auth";
 import { cn } from "@/lib/utils";
 import type { GigCategory, GigLocation, Gig, GigResponse } from "@/types";
 
@@ -182,10 +183,37 @@ function ResponseCard({ response }: { response: GigResponse }) {
 
 export default function MyGigsPage() {
   const [tab, setTab] = useState("posted");
+  const { isAuthenticated } = useAuthStore();
   const { data, isLoading } = useMyGigs("all");
 
   const postedGigs = data?.posted || [];
   const respondedGigs = data?.responded || [];
+
+  // Auth guard
+  if (!isAuthenticated) {
+    return (
+      <div className="container mx-auto px-4 py-6 max-w-2xl">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold">My Gigs</h1>
+          <p className="text-zinc-400 text-sm">Manage your gigs and responses</p>
+        </div>
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="w-20 h-20 rounded-full bg-yellow-500/10 flex items-center justify-center mb-6">
+            <GraduationCap className="w-10 h-10 text-yellow-400" />
+          </div>
+          <h2 className="text-xl font-semibold mb-2">Sign in to view your gigs</h2>
+          <p className="text-zinc-500 mb-6 max-w-md">
+            Manage your gig postings and responses.
+          </p>
+          <Link href="/auth/login">
+            <Button className="bg-yellow-500 hover:bg-yellow-600 text-black">
+              Sign In to Continue
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-2xl">

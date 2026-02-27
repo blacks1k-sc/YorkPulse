@@ -60,14 +60,41 @@ const conditions = [
   { value: "poor", label: "Poor" },
 ];
 
+// Muted dark gradient palette for premium feel
+const cardGradients = [
+  "from-purple-900/20 via-transparent to-transparent", // Deep purple
+  "from-teal-900/20 via-transparent to-transparent",   // Dark teal
+  "from-blue-900/20 via-transparent to-transparent",   // Muted blue
+  "from-indigo-900/20 via-transparent to-transparent", // Deep indigo
+  "from-slate-700/25 via-transparent to-transparent",  // Warm charcoal
+  "from-emerald-900/15 via-transparent to-transparent", // Dark emerald
+  "from-rose-900/15 via-transparent to-transparent",   // Muted rose
+  "from-amber-900/15 via-transparent to-transparent",  // Warm amber
+];
+
+// Matching shadow colors for the 3D floating effect (rgba format for box-shadow)
+// Rest state is ~40% intensity of hover for always-visible color identity
+const cardShadowColors = [
+  { rest: "rgba(147, 51, 234, 0.25)", hover: "rgba(147, 51, 234, 0.5)" },  // Purple
+  { rest: "rgba(20, 184, 166, 0.25)", hover: "rgba(20, 184, 166, 0.5)" },  // Teal
+  { rest: "rgba(59, 130, 246, 0.25)", hover: "rgba(59, 130, 246, 0.5)" },  // Blue
+  { rest: "rgba(99, 102, 241, 0.25)", hover: "rgba(99, 102, 241, 0.5)" },  // Indigo
+  { rest: "rgba(100, 116, 139, 0.25)", hover: "rgba(100, 116, 139, 0.5)" }, // Slate
+  { rest: "rgba(16, 185, 129, 0.22)", hover: "rgba(16, 185, 129, 0.45)" },  // Emerald
+  { rest: "rgba(244, 63, 94, 0.22)", hover: "rgba(244, 63, 94, 0.45)" },    // Rose
+  { rest: "rgba(245, 158, 11, 0.22)", hover: "rgba(245, 158, 11, 0.45)" },  // Amber
+];
+
 function ListingCard({
   listing,
   showDelete,
   onDelete,
+  index = 0,
 }: {
   listing: MarketplaceListing;
   showDelete?: boolean;
   onDelete?: (id: string) => void;
+  index?: number;
 }) {
   const timeAgo = (date: string) => {
     const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
@@ -77,15 +104,32 @@ function ListingCard({
     return `${Math.floor(seconds / 86400)}d ago`;
   };
 
+  // Get gradient and shadow based on index, ensuring adjacent cards differ
+  const colorIndex = index % cardGradients.length;
+  const gradient = cardGradients[colorIndex];
+  const shadowColor = cardShadowColors[colorIndex];
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.02 }}
+      whileHover={{ scale: 1.02, y: -2 }}
       transition={{ duration: 0.2 }}
+      style={{
+        boxShadow: `0 4px 24px -2px ${shadowColor.rest}, 0 0 0 1px rgba(255,255,255,0.05)`,
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = `0 8px 35px 0px ${shadowColor.hover}, 0 0 0 1px rgba(255,255,255,0.1)`;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = `0 4px 24px -2px ${shadowColor.rest}, 0 0 0 1px rgba(255,255,255,0.05)`;
+      }}
+      className="rounded-xl"
     >
       <Link href={`/marketplace/${listing.id}`}>
-        <div className="rounded-xl bg-white/5 border border-white/10 hover:border-coral-500/30 transition-colors overflow-hidden">
+        <div className="rounded-xl bg-white/5 border border-white/10 transition-colors overflow-hidden relative">
+          {/* Subtle gradient accent overlay */}
+          <div className={`absolute inset-0 bg-gradient-to-b ${gradient} pointer-events-none z-10`} />
           {/* Image */}
           <div className="aspect-square bg-zinc-900 relative">
             {listing.images && listing.images.length > 0 ? (
@@ -218,59 +262,89 @@ export default function MarketplacePage() {
     }
   };
 
-  return (
-    <div className="container mx-auto px-4 py-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-coral-500/20 flex items-center justify-center">
-            <ShoppingBag className="w-5 h-5 text-coral-400" />
+  // Show login prompt for unauthenticated users
+  if (!isAuthenticated) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-8">
+          <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
+            <ShoppingBag className="w-5 h-5 text-red-400" />
           </div>
           <div>
             <h1 className="text-xl font-bold">Marketplace</h1>
             <p className="text-sm text-zinc-500">Buy & sell with verified students</p>
           </div>
         </div>
-        {isAuthenticated && (
-          <Button
-            onClick={() => openCreateModal("marketplace")}
-            size="sm"
-            className="bg-coral-500 hover:bg-coral-600"
-          >
-            <Plus className="w-4 h-4 mr-1" />
-            Sell
-          </Button>
-        )}
+
+        {/* Login prompt */}
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="w-20 h-20 rounded-full bg-red-500/10 flex items-center justify-center mb-6">
+            <ShoppingBag className="w-10 h-10 text-red-400" />
+          </div>
+          <h2 className="text-xl font-semibold mb-2">Sign in to access Marketplace</h2>
+          <p className="text-zinc-500 mb-6 max-w-md">
+            Browse listings, buy items, and sell to verified York University students.
+          </p>
+          <Link href="/auth/login">
+            <Button className="bg-red-500 hover:bg-red-600">
+              Sign In to Continue
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-6">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
+            <ShoppingBag className="w-5 h-5 text-red-400" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold">Marketplace</h1>
+            <p className="text-sm text-zinc-500">Buy & sell with verified students</p>
+          </div>
+        </div>
+        <Button
+          onClick={() => openCreateModal("marketplace")}
+          size="sm"
+          className="bg-red-500 hover:bg-red-600"
+        >
+          <Plus className="w-4 h-4 mr-1" />
+          Sell
+        </Button>
       </div>
 
       {/* Tabs */}
-      {isAuthenticated && (
-        <div className="flex gap-2 mb-4">
-          <button
-            onClick={() => setActiveTab("browse")}
-            className={cn(
-              "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
-              activeTab === "browse"
-                ? "bg-coral-500 text-white"
-                : "bg-white/5 text-zinc-400 hover:bg-white/10"
-            )}
-          >
-            Browse All
-          </button>
-          <button
-            onClick={() => setActiveTab("my-listings")}
-            className={cn(
-              "px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2",
-              activeTab === "my-listings"
-                ? "bg-coral-500 text-white"
-                : "bg-white/5 text-zinc-400 hover:bg-white/10"
-            )}
-          >
-            <Package className="w-4 h-4" />
-            My Listings
-          </button>
-        </div>
-      )}
+      <div className="flex gap-2 mb-4">
+        <button
+          onClick={() => setActiveTab("browse")}
+          className={cn(
+            "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+            activeTab === "browse"
+              ? "bg-coral-500 text-white"
+              : "bg-white/5 text-zinc-400 hover:bg-white/10"
+          )}
+        >
+          Browse All
+        </button>
+        <button
+          onClick={() => setActiveTab("my-listings")}
+          className={cn(
+            "px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2",
+            activeTab === "my-listings"
+              ? "bg-coral-500 text-white"
+              : "bg-white/5 text-zinc-400 hover:bg-white/10"
+          )}
+        >
+          <Package className="w-4 h-4" />
+          My Listings
+        </button>
+      </div>
 
       {/* Search - only show when browsing */}
       {activeTab === "browse" && (
@@ -332,21 +406,19 @@ export default function MarketplacePage() {
           <div className="text-center py-12">
             <ShoppingBag className="w-12 h-12 mx-auto text-zinc-700 mb-4" />
             <p className="text-zinc-500">No listings found</p>
-            {isAuthenticated && (
-              <Button
-                onClick={() => openCreateModal("marketplace")}
-                variant="link"
-                className="text-coral-400"
-              >
-                Create the first listing
-              </Button>
-            )}
+            <Button
+              onClick={() => openCreateModal("marketplace")}
+              variant="link"
+              className="text-coral-400"
+            >
+              Create the first listing
+            </Button>
           </div>
         ) : (
           <>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {listings.map((listing) => (
-                <ListingCard key={listing.id} listing={listing} />
+              {listings.map((listing, index) => (
+                <ListingCard key={listing.id} listing={listing} index={index} />
               ))}
             </div>
 
@@ -394,10 +466,11 @@ export default function MarketplacePage() {
         ) : (
           <>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {myListings.map((listing) => (
+              {myListings.map((listing, index) => (
                 <ListingCard
                   key={listing.id}
                   listing={listing}
+                  index={index}
                   showDelete
                   onDelete={(id) => setDeleteId(id)}
                 />

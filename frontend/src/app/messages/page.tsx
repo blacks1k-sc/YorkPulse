@@ -22,6 +22,9 @@ import {
   Send,
   Reply,
   X,
+  ChevronRight,
+  Pencil,
+  ExternalLink,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -37,7 +40,7 @@ import {
 } from "@/components/ui/dialog";
 import { useConversations, usePendingRequests } from "@/hooks/useMessaging";
 import { useRealtimeConversations } from "@/hooks/useRealtimeMessages";
-import { useMyQuests, useQuest, useQuestMessages, useSendQuestMessage } from "@/hooks/useQuests";
+import { useMyQuests, useQuest, useQuestMessages, useSendQuestMessage, useQuestParticipants } from "@/hooks/useQuests";
 import { useUser } from "@/hooks/useAuth";
 import { useAuthStore } from "@/stores/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -255,6 +258,15 @@ function QuestChatDialogInMessages({
   const inputRef = useRef<HTMLInputElement>(null);
   const [messageInput, setMessageInput] = useState("");
   const [replyTo, setReplyTo] = useState<{ id: string; senderName: string; content: string } | null>(null);
+  const [showQuestInfo, setShowQuestInfo] = useState(false);
+
+  // Fetch fresh quest data
+  const { data: freshQuest } = useQuest(quest.id);
+  const currentQuest = freshQuest || quest;
+
+  // Fetch participants separately
+  const { data: participantsData } = useQuestParticipants(quest.id);
+  const participants = participantsData?.items || [];
 
   const { data: messagesData, fetchNextPage, hasNextPage, isFetchingNextPage } = useQuestMessages(quest.id, isOpen);
   const sendMessageMutation = useSendQuestMessage();
@@ -265,17 +277,17 @@ function QuestChatDialogInMessages({
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    if (chatContainerRef.current && isOpen) {
+    if (chatContainerRef.current && isOpen && !showQuestInfo) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
-  }, [allMessages.length, isOpen]);
+  }, [allMessages.length, isOpen, showQuestInfo]);
 
   // Auto-focus input when dialog opens
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !showQuestInfo) {
       setTimeout(() => inputRef.current?.focus(), 100);
     }
-  }, [isOpen]);
+  }, [isOpen, showQuestInfo]);
 
   const timeAgo = (date: string) => {
     const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
@@ -283,6 +295,16 @@ function QuestChatDialogInMessages({
     if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
     if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
     return `${Math.floor(seconds / 86400)}d ago`;
+  };
+
+  const formatDateTime = (date: string) => {
+    return new Date(date).toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
   };
 
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -310,27 +332,173 @@ function QuestChatDialogInMessages({
 
   const catConfig = categoryConfig[quest.category];
   const Icon = catConfig.icon;
+  const isHost = user?.id === currentQuest.host.id;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-lg md:max-w-xl lg:max-w-2xl h-[80vh] max-h-[600px] flex flex-col p-0 gap-0">
-        {/* Header */}
+        {/* Header - Clickable */}
         <DialogHeader className="px-4 py-3 border-b border-white/10 shrink-0">
-          <DialogTitle className="flex items-center gap-3">
-            <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center", catConfig.color)}>
-              <Icon className="w-5 h-5" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold truncate">{quest.activity}</p>
-              <div className="flex items-center gap-2 text-xs text-zinc-500">
-                <Users className="w-3 h-3" />
-                <span>{quest.current_participants} participants</span>
-                <span className="text-zinc-600">•</span>
-                <span>{quest.location}</span>
+          <DialogTitle asChild>
+            <button
+              onClick={() => setShowQuestInfo(!showQuestInfo)}
+              className="flex items-center gap-3 w-full text-left hover:bg-white/5 -mx-2 px-2 py-1 rounded-lg transition-colors"
+            >
+              <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center", catConfig.color)}>
+                <Icon className="w-5 h-5" />
               </div>
-            </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold truncate">{currentQuest.activity}</p>
+                <div className="flex items-center gap-2 text-xs text-zinc-500 font-normal">
+                  <Users className="w-3 h-3" />
+                  <span>{currentQuest.current_participants} participants</span>
+                  <span className="text-zinc-600">•</span>
+                  <span className="truncate">{currentQuest.location}</span>
+                </div>
+              </div>
+              <div className={cn(
+                "p-1.5 rounded-lg transition-colors",
+                showQuestInfo ? "bg-white/10 text-white" : "text-zinc-500 hover:text-zinc-300"
+              )}>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </button>
           </DialogTitle>
         </DialogHeader>
+
+        {/* Quest Info Panel */}
+        {showQuestInfo ? (
+          <div className="flex-1 overflow-y-auto p-4 space-y-5">
+            {/* Quest Details */}
+            <div className="space-y-2">
+              <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Quest Details</h3>
+
+              <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-3">
+                <div className="flex items-start gap-3">
+                  <Calendar className="w-5 h-5 text-purple-400 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-zinc-400">When</p>
+                    <p className="text-white">{formatDateTime(currentQuest.start_time)}</p>
+                    {currentQuest.end_time && (
+                      <p className="text-xs text-zinc-500">Until {formatDateTime(currentQuest.end_time)}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <MapPin className="w-5 h-5 text-green-400 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-zinc-400">Where</p>
+                    <p className="text-white">{currentQuest.location}</p>
+                  </div>
+                </div>
+
+                {currentQuest.description && (
+                  <div className="pt-2 border-t border-white/10">
+                    <p className="text-sm text-zinc-400 mb-1">Description</p>
+                    <p className="text-zinc-300 text-sm">{currentQuest.description}</p>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2 pt-2">
+                  <Badge variant="secondary" className={cn("text-xs", catConfig.color)}>
+                    {catConfig.label}
+                  </Badge>
+                  <Badge variant="secondary" className="text-xs bg-zinc-700 text-zinc-300">
+                    {currentQuest.vibe_level.replace("_", " ")}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+
+            {/* Participants */}
+            <div className="space-y-2">
+              <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                Participants ({currentQuest.current_participants}/{currentQuest.max_participants})
+              </h3>
+
+              <div className="space-y-2">
+                {/* Host */}
+                <Link
+                  href={`/profile/${currentQuest.host.id}`}
+                  className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors group"
+                  onClick={() => onClose()}
+                >
+                  <Avatar className="w-10 h-10 ring-2 ring-purple-500/30">
+                    <AvatarImage src={currentQuest.host.avatar_url || undefined} />
+                    <AvatarFallback className="bg-purple-500/30 text-purple-300">
+                      {currentQuest.host.name.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium truncate">{currentQuest.host.name}</span>
+                      <Badge className="text-[10px] px-1.5 py-0 bg-purple-500/20 text-purple-400 border-purple-500/30">
+                        Host
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-zinc-500">Quest organizer</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 transition-colors" />
+                </Link>
+
+                {/* Other Participants from API */}
+                {participants
+                  .filter((p) => p.user.id !== currentQuest.host.id && p.status === "accepted")
+                  .map((participant) => (
+                    <Link
+                      key={participant.user.id}
+                      href={`/profile/${participant.user.id}`}
+                      className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors group"
+                      onClick={() => onClose()}
+                    >
+                      <Avatar className="w-10 h-10">
+                        <AvatarImage src={participant.user.avatar_url || undefined} />
+                        <AvatarFallback className="bg-zinc-700">
+                          {participant.user.name.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <span className="font-medium truncate">{participant.user.name}</span>
+                        <p className="text-xs text-zinc-500">Participant</p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 transition-colors" />
+                    </Link>
+                  ))}
+
+                {/* Empty state for no other participants */}
+                {participants.filter((p) => p.user.id !== currentQuest.host.id && p.status === "accepted").length === 0 && (
+                  <p className="text-sm text-zinc-500 text-center py-2">No other participants yet</p>
+                )}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="space-y-2 pt-1">
+              {/* Edit Button for Host */}
+              {isHost && (
+                <Link href={`/quests/${quest.id}/edit`} onClick={() => onClose()}>
+                  <Button variant="outline" className="w-full border-zinc-700 hover:bg-zinc-800 hover:border-zinc-600">
+                    <Pencil className="w-4 h-4 mr-2" />
+                    Edit Quest
+                  </Button>
+                </Link>
+              )}
+
+              {/* View Full Quest Page */}
+              <Link href={`/quests/${quest.id}`} onClick={() => onClose()}>
+                <Button variant="ghost" className="w-full text-zinc-400 hover:text-white hover:bg-white/5">
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  View Full Quest Page
+                </Button>
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Messages */}
 
         {/* Messages */}
         <div
@@ -485,6 +653,8 @@ function QuestChatDialogInMessages({
             </Button>
           </div>
         </form>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );
@@ -651,6 +821,37 @@ export default function MessagesPage() {
     setViewedTimestamps(getViewedQuestTimestamps());
   }, []);
 
+  // Auth guard
+  if (!isAuthenticated) {
+    return (
+      <div className="container mx-auto px-4 py-6 max-w-2xl">
+        <div className="flex items-center gap-3 mb-8">
+          <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
+            <MessageCircle className="w-5 h-5 text-blue-400" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold">Messages</h1>
+            <p className="text-sm text-zinc-500">Your conversations</p>
+          </div>
+        </div>
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="w-20 h-20 rounded-full bg-blue-500/10 flex items-center justify-center mb-6">
+            <MessageCircle className="w-10 h-10 text-blue-400" />
+          </div>
+          <h2 className="text-xl font-semibold mb-2">Sign in to access Messages</h2>
+          <p className="text-zinc-500 mb-6 max-w-md">
+            Chat with verified York University students and manage your conversations.
+          </p>
+          <Link href="/auth/login">
+            <Button className="bg-blue-600 hover:bg-blue-700">
+              Sign In to Continue
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   // Real-time subscription for conversations
   useRealtimeConversations(user?.id || null);
 
@@ -697,24 +898,12 @@ export default function MessagesPage() {
   // Calculate total unread quest messages
   const totalUnreadQuestMessages = Object.values(questUnreadCounts).reduce((sum, count) => sum + count, 0);
 
-  if (!isAuthenticated) {
-    return (
-      <div className="container mx-auto px-4 py-12 max-w-2xl text-center">
-        <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
-          <MessageCircle className="w-10 h-10 text-purple-400" />
-        </div>
-        <h2 className="text-xl font-semibold mb-2">Sign in to view messages</h2>
-        <p className="text-zinc-500">Connect with other York students through direct messaging</p>
-      </div>
-    );
-  }
-
   return (
     <div className="container mx-auto px-4 py-6 max-w-2xl">
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
-          <MessageCircle className="w-6 h-6 text-purple-400" />
+        <div className="w-12 h-12 rounded-2xl bg-blue-500/20 flex items-center justify-center">
+          <MessageCircle className="w-6 h-6 text-blue-400" />
         </div>
         <div>
           <h1 className="text-2xl font-bold">Messages</h1>

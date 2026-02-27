@@ -58,6 +58,37 @@ export default function ListingDetailPage() {
   const [selectedImage, setSelectedImage] = useState(0);
 
   const { data: listing, isLoading } = useMarketplaceListing(listingId);
+
+  // Auth guard
+  if (!isAuthenticated) {
+    return (
+      <div className="container mx-auto px-4 py-6 max-w-2xl">
+        <div className="flex items-center gap-3 mb-8">
+          <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
+            <ShoppingBag className="w-5 h-5 text-red-400" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold">Marketplace</h1>
+            <p className="text-sm text-zinc-500">Buy & sell with verified students</p>
+          </div>
+        </div>
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="w-20 h-20 rounded-full bg-red-500/10 flex items-center justify-center mb-6">
+            <ShoppingBag className="w-10 h-10 text-red-400" />
+          </div>
+          <h2 className="text-xl font-semibold mb-2">Sign in to view this listing</h2>
+          <p className="text-zinc-500 mb-6 max-w-md">
+            Browse and buy from verified York University students.
+          </p>
+          <Link href="/auth/login">
+            <Button className="bg-red-500 hover:bg-red-600">
+              Sign In to Continue
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
   const { data: sellerRating } = useUserRatingSummary(listing?.seller.id || "");
   const deleteListingMutation = useDeleteListing();
   const updateListingMutation = useUpdateListing();

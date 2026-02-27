@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
@@ -796,20 +797,51 @@ export default function CoursesPage() {
     </div>
   );
 
+  // Auth guard
+  if (!isAuthenticated) {
+    return (
+      <div className="container mx-auto px-4 py-6 max-w-4xl">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold mb-1">Course Chat</h1>
+          <p className="text-sm text-zinc-500">Browse and join course chat rooms</p>
+        </div>
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="w-20 h-20 rounded-full bg-cyan-500/10 flex items-center justify-center mb-6">
+            <GraduationCap className="w-10 h-10 text-cyan-400" />
+          </div>
+          <h2 className="text-xl font-semibold mb-2">Sign in to access Course Chat</h2>
+          <p className="text-zinc-500 mb-6 max-w-md">
+            Join course chat rooms and connect with classmates at York University.
+          </p>
+          <Link href="/auth/login">
+            <Button className="bg-cyan-500 hover:bg-cyan-600 text-black">
+              Sign In to Continue
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-6 max-w-4xl">
       {/* Page Header */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-6"
+        className="mb-6 flex items-center gap-3"
       >
-        <h1 className="text-2xl font-bold mb-1">Course Chat</h1>
-        <p className="text-sm text-zinc-500">
-          {viewMode === "browse"
-            ? "Browse and join course chat rooms"
-            : `Chatting in ${selectedCourse?.code}`}
-        </p>
+        <div className="w-10 h-10 rounded-xl bg-cyan-500/20 flex items-center justify-center">
+          <GraduationCap className="w-5 h-5 text-cyan-400" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold mb-1">Course Chat</h1>
+          <p className="text-sm text-zinc-500">
+            {viewMode === "browse"
+              ? "Browse and join course chat rooms"
+              : `Chatting in ${selectedCourse?.code}`}
+          </p>
+        </div>
       </motion.div>
 
       {/* Main Content */}

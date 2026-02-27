@@ -17,7 +17,6 @@ import {
   Check,
   X,
   Loader2,
-  Star,
   Zap,
   Edit,
   CheckCircle2,
@@ -57,7 +56,6 @@ import {
   useQuestMessages,
   useSendQuestMessage,
 } from "@/hooks/useQuests";
-import { useUserRatingSummary } from "@/hooks/useReviews";
 import { useStartConversation } from "@/hooks/useMessaging";
 import { useAuthStore } from "@/stores/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -90,11 +88,41 @@ export default function QuestDetailPage() {
 
   const { data: quest, isLoading } = useQuest(questId);
   const { data: participantsData } = useQuestParticipants(questId);
-  const { data: hostRating } = useUserRatingSummary(quest?.host.id || "");
 
   // Also check my-quests to reliably determine if user has joined
   const { data: myParticipantQuests } = useMyQuests("participant");
   const { data: myPendingQuests } = useMyQuests("pending");
+
+  // Auth guard
+  if (!isAuthenticated) {
+    return (
+      <div className="container mx-auto px-4 py-6 max-w-2xl">
+        <div className="flex items-center gap-3 mb-8">
+          <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center">
+            <Users className="w-5 h-5 text-green-400" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold">Side Quests</h1>
+            <p className="text-sm text-zinc-500">Find buddies for any activity</p>
+          </div>
+        </div>
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="w-20 h-20 rounded-full bg-green-500/10 flex items-center justify-center mb-6">
+            <Users className="w-10 h-10 text-green-400" />
+          </div>
+          <h2 className="text-xl font-semibold mb-2">Sign in to view this quest</h2>
+          <p className="text-zinc-500 mb-6 max-w-md">
+            Find gym partners, study buddies, and more with verified York students.
+          </p>
+          <Link href="/auth/login">
+            <Button className="bg-green-600 hover:bg-green-700">
+              Sign In to Continue
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const joinMutation = useJoinQuest();
   const leaveMutation = useLeaveQuest();
@@ -512,13 +540,6 @@ export default function QuestDetailPage() {
             </Avatar>
             <div className="flex-1">
               <p className="font-medium hover:text-purple-400 transition-colors">{quest.host.name}</p>
-            {hostRating?.buddy_rating && (
-              <div className="flex items-center gap-1 text-sm text-zinc-400">
-                <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" />
-                {hostRating.buddy_rating.toFixed(1)}
-                <span className="text-zinc-600">({hostRating.buddy_count} reviews)</span>
-              </div>
-            )}
             </div>
           </Link>
           {isAuthenticated && !isHost && (

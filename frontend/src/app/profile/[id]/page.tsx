@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
@@ -69,6 +69,13 @@ export default function PublicProfilePage() {
   // Check if viewing own profile
   const isOwnProfile = currentUser?.id === userId;
 
+  // Redirect to own profile page if viewing self
+  useEffect(() => {
+    if (isOwnProfile) {
+      router.replace("/profile");
+    }
+  }, [isOwnProfile, router]);
+
   // Fetch public profile
   const { data: profile, isLoading, error } = useQuery({
     queryKey: ["user", "public", userId],
@@ -76,9 +83,8 @@ export default function PublicProfilePage() {
     enabled: !!userId && !isOwnProfile,
   });
 
-  // Redirect to own profile page if viewing self
+  // Show nothing while redirecting to own profile
   if (isOwnProfile) {
-    router.replace("/profile");
     return null;
   }
 

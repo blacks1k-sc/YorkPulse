@@ -38,6 +38,7 @@ import {
 } from "@/hooks/useMessaging";
 import { useRealtimeMessages } from "@/hooks/useRealtimeMessages";
 import { useUser } from "@/hooks/useAuth";
+import { useAuthStore } from "@/stores/auth";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { api } from "@/services/api";
@@ -47,9 +48,41 @@ export default function ConversationPage() {
   const router = useRouter();
   const conversationId = params.id as string;
   const { data: user } = useUser();
+  const { isAuthenticated } = useAuthStore();
   const { toast } = useToast();
 
   const [message, setMessage] = useState("");
+
+  // Auth guard
+  if (!isAuthenticated) {
+    return (
+      <div className="container mx-auto px-4 py-6 max-w-2xl">
+        <div className="flex items-center gap-3 mb-8">
+          <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
+            <Send className="w-5 h-5 text-blue-400" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold">Messages</h1>
+            <p className="text-sm text-zinc-500">Your conversations</p>
+          </div>
+        </div>
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="w-20 h-20 rounded-full bg-blue-500/10 flex items-center justify-center mb-6">
+            <Send className="w-10 h-10 text-blue-400" />
+          </div>
+          <h2 className="text-xl font-semibold mb-2">Sign in to view messages</h2>
+          <p className="text-zinc-500 mb-6 max-w-md">
+            Chat with verified York University students.
+          </p>
+          <Link href="/auth/login">
+            <Button className="bg-blue-600 hover:bg-blue-700">
+              Sign In to Continue
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);

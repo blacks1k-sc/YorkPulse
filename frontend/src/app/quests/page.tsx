@@ -867,6 +867,37 @@ export default function QuestsPage() {
 
   const quests = data?.pages.flatMap((page) => page.items) || [];
 
+  // Auth guard
+  if (!isAuthenticated) {
+    return (
+      <div className="container mx-auto px-4 py-6 max-w-2xl">
+        <div className="flex items-center gap-3 mb-8">
+          <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center">
+            <Users className="w-5 h-5 text-green-400" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold">Side Quests</h1>
+            <p className="text-sm text-zinc-500">Find buddies for any activity</p>
+          </div>
+        </div>
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="w-20 h-20 rounded-full bg-green-500/10 flex items-center justify-center mb-6">
+            <Users className="w-10 h-10 text-green-400" />
+          </div>
+          <h2 className="text-xl font-semibold mb-2">Sign in to access Side Quests</h2>
+          <p className="text-zinc-500 mb-6 max-w-md">
+            Find gym partners, study buddies, and more with verified York students.
+          </p>
+          <Link href="/auth/login">
+            <Button className="bg-green-600 hover:bg-green-700">
+              Sign In to Continue
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-6 max-w-2xl">
       {/* Header */}

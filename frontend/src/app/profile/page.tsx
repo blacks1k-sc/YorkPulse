@@ -102,6 +102,37 @@ export default function ProfilePage() {
   const [interests, setInterests] = useState(user?.interests?.join(", ") || "");
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
+  // Auth guard
+  if (!isAuthenticated) {
+    return (
+      <div className="container mx-auto px-4 py-6 max-w-2xl">
+        <div className="flex items-center gap-3 mb-8">
+          <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
+            <User className="w-5 h-5 text-purple-400" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold">Profile</h1>
+            <p className="text-sm text-zinc-500">Your account</p>
+          </div>
+        </div>
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="w-20 h-20 rounded-full bg-purple-500/10 flex items-center justify-center mb-6">
+            <User className="w-10 h-10 text-purple-400" />
+          </div>
+          <h2 className="text-xl font-semibold mb-2">Sign in to view your profile</h2>
+          <p className="text-zinc-500 mb-6 max-w-md">
+            Manage your account and view your activity on YorkPulse.
+          </p>
+          <Link href="/auth/login">
+            <Button className="bg-purple-600 hover:bg-purple-700">
+              Sign In to Continue
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   // Validation constants
   const MIN_PROGRAM_LENGTH = 3;
   const MIN_BIO_LENGTH = 20;

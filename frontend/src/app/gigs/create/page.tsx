@@ -29,6 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCreateGig } from "@/hooks/useGigs";
+import { useAuthStore } from "@/stores/auth";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import type { GigType, GigCategory, GigPriceType, GigLocation } from "@/types";
@@ -45,7 +46,34 @@ const categoryConfig: Record<GigCategory, { label: string; icon: typeof Graduati
 export default function CreateGigPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { isAuthenticated } = useAuthStore();
   const createMutation = useCreateGig();
+
+  // Auth guard - redirect to login if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="container mx-auto px-4 py-6 max-w-2xl">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold">Post a Gig</h1>
+          <p className="text-zinc-400 text-sm">Offer your services or request help</p>
+        </div>
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="w-20 h-20 rounded-full bg-yellow-500/10 flex items-center justify-center mb-6">
+            <GraduationCap className="w-10 h-10 text-yellow-400" />
+          </div>
+          <h2 className="text-xl font-semibold mb-2">Sign in to post a gig</h2>
+          <p className="text-zinc-500 mb-6 max-w-md">
+            You need to be signed in to create a gig posting.
+          </p>
+          <Link href="/auth/login">
+            <Button className="bg-yellow-500 hover:bg-yellow-600 text-black">
+              Sign In to Continue
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const [gigType, setGigType] = useState<GigType>("offering");
   const [category, setCategory] = useState<GigCategory>("academic");
