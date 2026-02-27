@@ -162,7 +162,7 @@ function ListingCard({
               <h3 className="font-medium line-clamp-1">{listing.title}</h3>
             </div>
 
-            <p className="text-lg font-bold text-coral-400 mb-2">
+            <p className="text-lg font-bold text-red-400 mb-2">
               ${Number(listing.price).toFixed(2)}
             </p>
 
@@ -326,7 +326,7 @@ export default function MarketplacePage() {
           className={cn(
             "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
             activeTab === "browse"
-              ? "bg-coral-500 text-white"
+              ? "bg-red-500 text-white"
               : "bg-white/5 text-zinc-400 hover:bg-white/10"
           )}
         >
@@ -337,7 +337,7 @@ export default function MarketplacePage() {
           className={cn(
             "px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2",
             activeTab === "my-listings"
-              ? "bg-coral-500 text-white"
+              ? "bg-red-500 text-white"
               : "bg-white/5 text-zinc-400 hover:bg-white/10"
           )}
         >
@@ -409,7 +409,7 @@ export default function MarketplacePage() {
             <Button
               onClick={() => openCreateModal("marketplace")}
               variant="link"
-              className="text-coral-400"
+              className="text-red-400"
             >
               Create the first listing
             </Button>
@@ -457,7 +457,7 @@ export default function MarketplacePage() {
             <p className="text-zinc-500 mb-4">You haven't created any listings yet</p>
             <Button
               onClick={() => openCreateModal("marketplace")}
-              className="bg-coral-500 hover:bg-coral-600"
+              className="bg-red-500 hover:bg-red-600"
             >
               <Plus className="w-4 h-4 mr-2" />
               Create Your First Listing

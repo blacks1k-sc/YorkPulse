@@ -217,7 +217,7 @@ export default function ListingDetailPage() {
                   onClick={() => setSelectedImage(i)}
                   className={cn(
                     "w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-colors",
-                    selectedImage === i ? "border-coral-500" : "border-transparent"
+                    selectedImage === i ? "border-red-500" : "border-transparent"
                   )}
                 >
                   <img src={img} alt="" className="w-full h-full object-cover" />
@@ -239,7 +239,7 @@ export default function ListingDetailPage() {
           {/* Title & Price */}
           <div>
             <h1 className="text-2xl font-bold mb-2">{listing.title}</h1>
-            <p className="text-3xl font-bold text-coral-400">
+            <p className="text-3xl font-bold text-red-400">
               ${Number(listing.price).toFixed(2)}
             </p>
           </div>
@@ -294,7 +294,7 @@ export default function ListingDetailPage() {
             isAuthenticated && (
               <Button
                 onClick={handleContact}
-                className="w-full bg-coral-500 hover:bg-coral-600"
+                className="w-full bg-red-500 hover:bg-red-600"
                 disabled={startConversationMutation.isPending}
               >
                 <MessageCircle className="w-4 h-4 mr-2" />
@@ -308,7 +308,7 @@ export default function ListingDetailPage() {
             <div className="flex items-center gap-3">
               <Avatar className="w-12 h-12">
                 <AvatarImage src={listing.seller.avatar_url || undefined} />
-                <AvatarFallback className="bg-coral-500/20 text-coral-400">
+                <AvatarFallback className="bg-red-500/20 text-red-400">
                   {listing.seller.name
                     .split(" ")
                     .map((n) => n[0])

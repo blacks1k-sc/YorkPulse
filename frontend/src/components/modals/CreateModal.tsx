@@ -207,7 +207,7 @@ export function CreateModal() {
       case "vault":
         return <Shield className="w-5 h-5 text-purple-400" />;
       case "marketplace":
-        return <ShoppingBag className="w-5 h-5 text-coral-400" />;
+        return <ShoppingBag className="w-5 h-5 text-red-400" />;
       default:
         return null;
     }
@@ -250,6 +250,7 @@ export function CreateModal() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
+              className={createModalType === "marketplace" ? "focus-visible:ring-red-500 focus-visible:border-red-500" : ""}
             />
           </div>
 
@@ -267,7 +268,7 @@ export function CreateModal() {
               }
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="min-h-[120px]"
+              className={createModalType === "marketplace" ? "min-h-[120px] focus-visible:ring-red-500 focus-visible:border-red-500" : "min-h-[120px]"}
               required
             />
           </div>
@@ -276,7 +277,7 @@ export function CreateModal() {
           <div className="space-y-2">
             <Label>Category</Label>
             <Select value={category} onValueChange={setCategory} required>
-              <SelectTrigger>
+              <SelectTrigger className={createModalType === "marketplace" ? "focus:ring-red-500" : ""}>
                 <SelectValue placeholder="Select..." />
               </SelectTrigger>
               <SelectContent>
@@ -318,12 +319,13 @@ export function CreateModal() {
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
                     required
+                    className="focus-visible:ring-red-500 focus-visible:border-red-500"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>Condition</Label>
                   <Select value={condition} onValueChange={setCondition} required>
-                    <SelectTrigger>
+                    <SelectTrigger className="focus:ring-red-500 focus:border-red-500">
                       <SelectValue placeholder="Select..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -373,7 +375,7 @@ export function CreateModal() {
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={isUploadingImage}
-                      className="w-20 h-20 rounded-lg border-2 border-dashed border-white/20 hover:border-coral-500/50 transition-colors flex flex-col items-center justify-center gap-1 text-zinc-500 hover:text-coral-400"
+                      className="w-20 h-20 rounded-lg border-2 border-dashed border-white/20 hover:border-red-500/50 transition-colors flex flex-col items-center justify-center gap-1 text-zinc-500 hover:text-red-400"
                     >
                       {isUploadingImage ? (
                         <Loader2 className="w-5 h-5 animate-spin" />
@@ -397,7 +399,7 @@ export function CreateModal() {
             </Button>
             <Button
               type="submit"
-              className="bg-purple-600 hover:bg-purple-700"
+              className={createModalType === "marketplace" ? "bg-red-600 hover:bg-red-700" : "bg-purple-600 hover:bg-purple-700"}
               disabled={isLoading}
             >
               {isLoading ? (

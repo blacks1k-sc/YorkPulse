@@ -594,7 +594,7 @@ function DashboardView() {
   const bottomRowFeatures = dashboardFeatures.slice(3);
 
   return (
-    <main className="min-h-screen bg-[#0a0a0a]">
+    <main className="min-h-screen bg-[#0a0a0a] pt-16">
       <div className="container mx-auto px-4 py-6 max-w-6xl">
         {/* Header */}
         <motion.div
