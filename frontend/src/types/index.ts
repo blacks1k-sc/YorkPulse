@@ -8,7 +8,7 @@ export interface User {
   program?: string;
   bio?: string;
   interests?: string[];
-  avatar_url?: string;
+  avatar_url?: string | null;
   campus_days?: string[];
   created_at?: string;
 }

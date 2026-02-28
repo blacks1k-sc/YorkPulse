@@ -321,6 +321,7 @@ class ApiClient {
       category: string;
       condition: string;
       status: string;
+      images: string[];
     }>) => this.patch<MarketplaceListing>(`/marketplace/${id}`, data),
 
     deleteListing: (id: string) => this.delete<void>(`/marketplace/${id}`),

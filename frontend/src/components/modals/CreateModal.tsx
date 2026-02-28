@@ -8,6 +8,8 @@ import {
   Loader2,
   ImagePlus,
   X,
+  Camera,
+  Upload,
 } from "lucide-react";
 import { api } from "@/services/api";
 import {
@@ -76,7 +78,9 @@ export function CreateModal() {
   const [condition, setCondition] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [showPhotoMenu, setShowPhotoMenu] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const createVaultPost = useCreateVaultPost();
   const createListing = useCreateListing();
@@ -97,6 +101,7 @@ export function CreateModal() {
     setPrice("");
     setCondition("");
     setImages([]);
+    setShowPhotoMenu(false);
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -350,6 +355,14 @@ export function CreateModal() {
                   className="hidden"
                   onChange={handleImageUpload}
                 />
+                <input
+                  ref={cameraInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={handleImageUpload}
+                />
                 <div className="flex flex-wrap gap-2">
                   {images.map((url, index) => (
                     <div
@@ -371,21 +384,43 @@ export function CreateModal() {
                     </div>
                   ))}
                   {images.length < 5 && (
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={isUploadingImage}
-                      className="w-20 h-20 rounded-lg border-2 border-dashed border-white/20 hover:border-red-500/50 transition-colors flex flex-col items-center justify-center gap-1 text-zinc-500 hover:text-red-400"
-                    >
-                      {isUploadingImage ? (
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                      ) : (
-                        <>
-                          <ImagePlus className="w-5 h-5" />
-                          <span className="text-[10px]">Add</span>
-                        </>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setShowPhotoMenu((v) => !v)}
+                        disabled={isUploadingImage}
+                        className="w-20 h-20 rounded-lg border-2 border-dashed border-white/20 hover:border-red-500/50 transition-colors flex flex-col items-center justify-center gap-1 text-zinc-500 hover:text-red-400"
+                      >
+                        {isUploadingImage ? (
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                          <>
+                            <ImagePlus className="w-5 h-5" />
+                            <span className="text-[10px]">Add</span>
+                          </>
+                        )}
+                      </button>
+                      {showPhotoMenu && (
+                        <div className="absolute bottom-full left-0 mb-2 w-40 rounded-xl bg-zinc-900 border border-white/10 shadow-xl overflow-hidden z-50">
+                          <button
+                            type="button"
+                            onClick={() => { setShowPhotoMenu(false); cameraInputRef.current?.click(); }}
+                            className="flex items-center gap-2 w-full px-4 py-3 text-sm text-white hover:bg-white/10 transition-colors"
+                          >
+                            <Camera className="w-4 h-4" />
+                            Take Photo
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { setShowPhotoMenu(false); fileInputRef.current?.click(); }}
+                            className="flex items-center gap-2 w-full px-4 py-3 text-sm text-white hover:bg-white/10 transition-colors"
+                          >
+                            <Upload className="w-4 h-4" />
+                            Upload Photo
+                          </button>
+                        </div>
                       )}
-                    </button>
+                    </div>
                   )}
                 </div>
               </div>

@@ -81,6 +81,7 @@ export function useUpdateListing() {
         category: string;
         condition: string;
         status: string;
+        images: string[];
       }>;
     }) => api.marketplace.updateListing(id, data),
     onSuccess: (_, { id }) => {

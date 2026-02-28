@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -12,7 +12,25 @@ import {
   MoreHorizontal,
   Trash2,
   Check,
+  Pencil,
+  X,
+  Save,
+  Loader2,
+  ImagePlus,
+  Camera,
+  Upload,
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { api } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -56,6 +74,17 @@ export default function ListingDetailPage() {
   const { toast } = useToast();
 
   const [selectedImage, setSelectedImage] = useState(0);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editPrice, setEditPrice] = useState("");
+  const [editCategory, setEditCategory] = useState("");
+  const [editCondition, setEditCondition] = useState("");
+  const [editImages, setEditImages] = useState<string[]>([]);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [showPhotoMenu, setShowPhotoMenu] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const { data: listing, isLoading } = useMarketplaceListing(listingId);
 
@@ -100,6 +129,72 @@ export default function ListingDetailPage() {
     if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
     if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
     return `${Math.floor(seconds / 86400)}d ago`;
+  };
+
+  const handleEditOpen = () => {
+    if (!listing) return;
+    setEditTitle(listing.title);
+    setEditDescription(listing.description);
+    setEditPrice(String(listing.price));
+    setEditCategory(listing.category);
+    setEditCondition(listing.condition);
+    setEditImages(listing.images || []);
+    setIsEditing(true);
+  };
+
+  const handleEditSave = async () => {
+    try {
+      await updateListingMutation.mutateAsync({
+        id: listingId,
+        data: {
+          title: editTitle,
+          description: editDescription,
+          price: parseFloat(editPrice),
+          category: editCategory,
+          condition: editCondition,
+          images: editImages,
+        },
+      });
+      toast({ title: "Listing updated" });
+      setIsEditing(false);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update listing",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    if (editImages.length >= 5) {
+      toast({ title: "Maximum 5 images", variant: "destructive" });
+      return;
+    }
+    setIsUploadingImage(true);
+    try {
+      for (const file of Array.from(files)) {
+        if (editImages.length >= 5) break;
+        if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+          toast({ title: "Invalid file type", description: "Only JPEG, PNG, WebP allowed", variant: "destructive" });
+          continue;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+          toast({ title: "File too large", description: "Max 5MB", variant: "destructive" });
+          continue;
+        }
+        const { public_url } = await api.marketplace.uploadImageDirect(file);
+        setEditImages((prev) => [...prev, public_url]);
+      }
+    } catch (error) {
+      toast({ title: "Upload failed", description: error instanceof Error ? error.message : "Failed to upload", variant: "destructive" });
+    } finally {
+      setIsUploadingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      if (cameraInputRef.current) cameraInputRef.current.value = "";
+    }
   };
 
   const handleDelete = async () => {
@@ -229,6 +324,101 @@ export default function ListingDetailPage() {
 
         {/* Details */}
         <div className="space-y-4">
+          {isEditing ? (
+            <>
+              {/* Hidden file inputs */}
+              <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={handleImageUpload} />
+              <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleImageUpload} />
+
+              <div className="space-y-2">
+                <Label>Title</Label>
+                <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} className="focus-visible:ring-red-500" />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Description</Label>
+                <Textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} className="min-h-[100px] focus-visible:ring-red-500" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Price ($)</Label>
+                  <Input type="number" min="0" step="0.01" value={editPrice} onChange={(e) => setEditPrice(e.target.value)} className="focus-visible:ring-red-500" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Condition</Label>
+                  <Select value={editCondition} onValueChange={setEditCondition}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {conditions.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Category</Label>
+                <Select value={editCategory} onValueChange={setEditCategory}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {categories.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Image management */}
+              <div className="space-y-2">
+                <Label>Photos (up to 5)</Label>
+                <div className="flex flex-wrap gap-2">
+                  {editImages.map((url, i) => (
+                    <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-white/10">
+                      <img src={url} alt="" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => setEditImages((prev) => prev.filter((_, idx) => idx !== i))}
+                        className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/70 flex items-center justify-center hover:bg-red-600 transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                  {editImages.length < 5 && (
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setShowPhotoMenu((v) => !v)}
+                        disabled={isUploadingImage}
+                        className="w-20 h-20 rounded-lg border-2 border-dashed border-white/20 hover:border-red-500/50 transition-colors flex flex-col items-center justify-center gap-1 text-zinc-500 hover:text-red-400"
+                      >
+                        {isUploadingImage ? <Loader2 className="w-5 h-5 animate-spin" /> : <><ImagePlus className="w-5 h-5" /><span className="text-[10px]">Add</span></>}
+                      </button>
+                      {showPhotoMenu && (
+                        <div className="absolute bottom-full left-0 mb-2 w-40 rounded-xl bg-zinc-900 border border-white/10 shadow-xl overflow-hidden z-50">
+                          <button type="button" onClick={() => { setShowPhotoMenu(false); cameraInputRef.current?.click(); }} className="flex items-center gap-2 w-full px-4 py-3 text-sm text-white hover:bg-white/10">
+                            <Camera className="w-4 h-4" /> Take Photo
+                          </button>
+                          <button type="button" onClick={() => { setShowPhotoMenu(false); fileInputRef.current?.click(); }} className="flex items-center gap-2 w-full px-4 py-3 text-sm text-white hover:bg-white/10">
+                            <Upload className="w-4 h-4" /> Upload Photo
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" onClick={() => setIsEditing(false)}>
+                  <X className="w-4 h-4 mr-2" /> Cancel
+                </Button>
+                <Button onClick={handleEditSave} disabled={updateListingMutation.isPending} className="flex-1 bg-red-600 hover:bg-red-700">
+                  {updateListingMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                  Save
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
           {/* Status Badge */}
           {listing.status !== "active" && (
             <Badge variant="secondary" className="bg-zinc-800">
@@ -264,9 +454,11 @@ export default function ListingDetailPage() {
             <Clock className="w-4 h-4" />
             Posted {timeAgo(listing.created_at)}
           </div>
+          </>
+          )}
 
           {/* Actions */}
-          {isOwner ? (
+          {!isEditing && (isOwner ? (
             <div className="flex gap-2">
               <Button
                 onClick={handleMarkSold}
@@ -283,6 +475,10 @@ export default function ListingDetailPage() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={handleEditOpen}>
+                    <Pencil className="w-4 h-4 mr-2" />
+                    Edit listing
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleDelete} className="text-red-400">
                     <Trash2 className="w-4 h-4 mr-2" />
                     Delete listing
@@ -301,7 +497,7 @@ export default function ListingDetailPage() {
                 Contact Seller
               </Button>
             )
-          )}
+          ))}
 
           {/* Seller Card */}
           <div className="p-4 rounded-xl bg-white/5 border border-white/10">

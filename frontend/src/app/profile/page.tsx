@@ -16,6 +16,7 @@ import {
   Camera,
   Upload,
   ImagePlus,
+  Trash2,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -103,6 +104,7 @@ export default function ProfilePage() {
   const [interests, setInterests] = useState(user?.interests?.join(", ") || "");
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [isRemovingAvatar, setIsRemovingAvatar] = useState(false);
 
   // All hooks must be called before conditional returns (Rules of Hooks)
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -289,6 +291,23 @@ export default function ProfilePage() {
     }
   };
 
+  const handleRemoveAvatar = async () => {
+    setIsRemovingAvatar(true);
+    try {
+      await updateProfileMutation.mutateAsync({ avatar_url: null });
+      await refetch();
+      toast({ title: "Profile picture removed" });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to remove profile picture",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRemovingAvatar(false);
+    }
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="container mx-auto px-4 py-6 text-center">
@@ -358,6 +377,20 @@ export default function ProfilePage() {
                   <Upload className="w-4 h-4 mr-2" />
                   Upload Photo
                 </DropdownMenuItem>
+                {user?.avatar_url && (
+                  <DropdownMenuItem
+                    onClick={handleRemoveAvatar}
+                    disabled={isRemovingAvatar}
+                    className="text-red-400 focus:text-red-400"
+                  >
+                    {isRemovingAvatar ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4 mr-2" />
+                    )}
+                    Remove Photo
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
             {/* File upload input */}
