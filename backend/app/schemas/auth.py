@@ -7,7 +7,7 @@ from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 # Admin emails that bypass York email validation
-ADMIN_EMAILS = {"iamxyz896@gmail.com"}
+ADMIN_EMAILS = {"yorkpulse.app@gmail.com"}
 
 
 def is_valid_email(email: str) -> bool:
