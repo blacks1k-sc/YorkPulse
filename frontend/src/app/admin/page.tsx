@@ -478,17 +478,23 @@ function ReportsTab() {
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
+const ADMIN_EMAIL = "yorkpulse.app@gmail.com";
+
+function isAdmin(user: { is_admin?: boolean; email?: string } | null) {
+  return user?.is_admin === true || user?.email?.toLowerCase() === ADMIN_EMAIL;
+}
+
 export default function AdminPage() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuthStore();
 
   useEffect(() => {
-    if (!isAuthenticated || !user?.is_admin) {
+    if (!isAuthenticated || !isAdmin(user)) {
       router.replace("/");
     }
   }, [isAuthenticated, user, router]);
 
-  if (!isAuthenticated || !user?.is_admin) {
+  if (!isAuthenticated || !isAdmin(user)) {
     return null;
   }
 
