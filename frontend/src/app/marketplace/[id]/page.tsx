@@ -212,7 +212,7 @@ export default function ListingDetailPage() {
 
   const handleDelete = async () => {
     try {
-      if (isAdminUser && user?.id !== listing.seller.id) {
+      if (isAdminUser && user?.id !== listing?.seller.id) {
         await api.admin.deleteListing(listingId);
       } else {
         await deleteListingMutation.mutateAsync(listingId);
