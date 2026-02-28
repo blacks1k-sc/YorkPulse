@@ -43,3 +43,4 @@ python-dotenv>=1.0.1
 ruff>=0.8.0
 pytest>=8.3.0
 pytest-asyncio>=0.24.0
+resend>=2.0.0
