@@ -31,6 +31,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CameraModal } from "@/components/ui/camera-modal";
 import { useUser, useUpdateProfile } from "@/hooks/useAuth";
 import { useMyListings } from "@/hooks/useMarketplace";
 import { useMyBuddyRequests, useMyParticipation } from "@/hooks/useBuddy";
@@ -101,8 +102,27 @@ export default function ProfilePage() {
   const [bio, setBio] = useState(user?.bio || "");
   const [interests, setInterests] = useState(user?.interests?.join(", ") || "");
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
 
-  // Auth guard
+  // All hooks must be called before conditional returns (Rules of Hooks)
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { data: listingsData } = useMyListings(isAuthenticated);
+  const { data: questsData } = useMyBuddyRequests(undefined, isAuthenticated);
+
+  // Validation constants
+  const MIN_PROGRAM_LENGTH = 3;
+  const MIN_BIO_LENGTH = 20;
+
+  // Validation state
+  const programError = program.trim().length > 0 && program.trim().length < MIN_PROGRAM_LENGTH
+    ? `Program must be at least ${MIN_PROGRAM_LENGTH} characters`
+    : !program.trim() ? "Program is required" : "";
+  const bioError = bio.trim().length > 0 && bio.trim().length < MIN_BIO_LENGTH
+    ? `Bio must be at least ${MIN_BIO_LENGTH} characters`
+    : !bio.trim() ? "Bio is required" : "";
+  const isFormValid = program.trim().length >= MIN_PROGRAM_LENGTH && bio.trim().length >= MIN_BIO_LENGTH;
+
+  // Auth guard - MUST be after all hooks
   if (!isAuthenticated) {
     return (
       <div className="container mx-auto px-4 py-6 max-w-2xl">
@@ -132,24 +152,6 @@ export default function ProfilePage() {
       </div>
     );
   }
-
-  // Validation constants
-  const MIN_PROGRAM_LENGTH = 3;
-  const MIN_BIO_LENGTH = 20;
-
-  // Validation state
-  const programError = program.trim().length > 0 && program.trim().length < MIN_PROGRAM_LENGTH
-    ? `Program must be at least ${MIN_PROGRAM_LENGTH} characters`
-    : !program.trim() ? "Program is required" : "";
-  const bioError = bio.trim().length > 0 && bio.trim().length < MIN_BIO_LENGTH
-    ? `Bio must be at least ${MIN_BIO_LENGTH} characters`
-    : !bio.trim() ? "Bio is required" : "";
-  const isFormValid = program.trim().length >= MIN_PROGRAM_LENGTH && bio.trim().length >= MIN_BIO_LENGTH;
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
-
-  const { data: listingsData } = useMyListings();
-  const { data: questsData } = useMyBuddyRequests();
 
   const listings = listingsData?.pages.flatMap((p) => p.items) || [];
   const quests = questsData?.pages.flatMap((p) => p.items) || [];
@@ -241,9 +243,49 @@ export default function ProfilePage() {
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
-      if (cameraInputRef.current) {
-        cameraInputRef.current.value = "";
+    }
+  };
+
+  // Handle camera capture (receives File directly from camera modal)
+  const handleCameraCapture = async (file: File) => {
+    setIsUploadingAvatar(true);
+    try {
+      // Get presigned URL
+      const { upload_url, file_url } = await api.auth.getAvatarUploadUrl(
+        file.name,
+        file.type
+      );
+
+      // Upload to storage
+      const uploadResponse = await fetch(upload_url, {
+        method: "PUT",
+        body: file,
+        headers: {
+          "Content-Type": file.type,
+        },
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error("Failed to upload image");
       }
+
+      // Update profile with new avatar URL
+      await updateProfileMutation.mutateAsync({
+        avatar_url: file_url,
+      });
+
+      // Refresh user data
+      await refetch();
+
+      toast({ title: "Profile picture updated" });
+    } catch (error) {
+      toast({
+        title: "Upload failed",
+        description: error instanceof Error ? error.message : "Failed to upload profile picture",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingAvatar(false);
     }
   };
 
@@ -308,7 +350,7 @@ export default function ProfilePage() {
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48">
-                <DropdownMenuItem onClick={() => cameraInputRef.current?.click()}>
+                <DropdownMenuItem onClick={() => setIsCameraOpen(true)}>
                   <Camera className="w-4 h-4 mr-2" />
                   Take Photo
                 </DropdownMenuItem>
@@ -318,15 +360,6 @@ export default function ProfilePage() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            {/* Camera capture input */}
-            <input
-              ref={cameraInputRef}
-              type="file"
-              accept="image/*"
-              capture="user"
-              onChange={handleAvatarUpload}
-              className="hidden"
-            />
             {/* File upload input */}
             <input
               ref={fileInputRef}
@@ -334,6 +367,12 @@ export default function ProfilePage() {
               accept="image/jpeg,image/png,image/webp,image/gif"
               onChange={handleAvatarUpload}
               className="hidden"
+            />
+            {/* Camera modal */}
+            <CameraModal
+              open={isCameraOpen}
+              onClose={() => setIsCameraOpen(false)}
+              onCapture={handleCameraCapture}
             />
           </div>
 

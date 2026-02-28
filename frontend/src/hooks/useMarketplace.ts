@@ -33,7 +33,7 @@ export function useMarketplaceListing(id: string) {
   });
 }
 
-export function useMyListings() {
+export function useMyListings(enabled = true) {
   return useInfiniteQuery({
     queryKey: ["marketplace", "my-listings"],
     queryFn: ({ pageParam = 1 }) => api.marketplace.getMyListings(pageParam),
@@ -42,6 +42,7 @@ export function useMyListings() {
       return totalFetched < lastPage.total ? allPages.length + 1 : undefined;
     },
     initialPageParam: 1,
+    enabled,
   });
 }
 
