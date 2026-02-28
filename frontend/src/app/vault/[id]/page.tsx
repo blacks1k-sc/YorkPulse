@@ -37,6 +37,7 @@ import {
 } from "@/hooks/useVault";
 import { useAuthStore } from "@/stores/auth";
 import { useToast } from "@/hooks/use-toast";
+import { api } from "@/services/api";
 import { cn } from "@/lib/utils";
 
 const categories = [
@@ -128,7 +129,11 @@ export default function VaultPostPage() {
 
   const handleDeletePost = async () => {
     try {
-      await deletePostMutation.mutateAsync(postId);
+      if (isAdminUser && user?.id !== post.author?.id) {
+        await api.admin.deleteVaultPost(postId);
+      } else {
+        await deletePostMutation.mutateAsync(postId);
+      }
       toast({ title: "Post deleted" });
       router.push("/vault");
     } catch (error) {
@@ -174,7 +179,8 @@ export default function VaultPostPage() {
     );
   }
 
-  const isAuthor = user?.id === post.author?.id;
+  const isAdminUser = user?.is_admin === true || user?.email?.toLowerCase() === "yorkpulse.app@gmail.com";
+  const isAuthor = user?.id === post.author?.id || isAdminUser;
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-2xl">

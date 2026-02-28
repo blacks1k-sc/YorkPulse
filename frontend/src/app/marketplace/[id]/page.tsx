@@ -212,7 +212,11 @@ export default function ListingDetailPage() {
 
   const handleDelete = async () => {
     try {
-      await deleteListingMutation.mutateAsync(listingId);
+      if (isAdminUser && user?.id !== listing.seller.id) {
+        await api.admin.deleteListing(listingId);
+      } else {
+        await deleteListingMutation.mutateAsync(listingId);
+      }
       toast({ title: "Listing deleted" });
       router.push("/marketplace");
     } catch (error) {
@@ -287,7 +291,8 @@ export default function ListingDetailPage() {
     );
   }
 
-  const isOwner = user?.id === listing.seller.id;
+  const isAdminUser = user?.is_admin === true || user?.email?.toLowerCase() === "yorkpulse.app@gmail.com";
+  const isOwner = user?.id === listing.seller.id || isAdminUser;
   const images = listing.images?.length ? listing.images : [];
 
   return (
