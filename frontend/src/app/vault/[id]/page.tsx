@@ -129,7 +129,7 @@ export default function VaultPostPage() {
 
   const handleDeletePost = async () => {
     try {
-      if (isAdminUser && user?.id !== post.author?.id) {
+      if (isAdminUser && user?.id !== post?.author?.id) {
         await api.admin.deleteVaultPost(postId);
       } else {
         await deletePostMutation.mutateAsync(postId);
