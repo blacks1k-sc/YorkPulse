@@ -12,6 +12,7 @@ import {
   Upload,
 } from "lucide-react";
 import { api } from "@/services/api";
+import { CameraModal } from "@/components/ui/camera-modal";
 import {
   Dialog,
   DialogContent,
@@ -79,8 +80,8 @@ export function CreateModal() {
   const [images, setImages] = useState<string[]>([]);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [showPhotoMenu, setShowPhotoMenu] = useState(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const createVaultPost = useCreateVaultPost();
   const createListing = useCreateListing();
@@ -102,6 +103,7 @@ export function CreateModal() {
     setCondition("");
     setImages([]);
     setShowPhotoMenu(false);
+    setIsCameraOpen(false);
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -164,6 +166,23 @@ export function CreateModal() {
 
   const removeImage = (index: number) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleCameraCapture = async (file: File) => {
+    if (images.length >= 5) return;
+    setIsUploadingImage(true);
+    try {
+      const { public_url } = await api.marketplace.uploadImageDirect(file);
+      setImages((prev) => [...prev, public_url]);
+    } catch (error) {
+      toast({
+        title: "Upload failed",
+        description: error instanceof Error ? error.message : "Failed to upload image",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingImage(false);
+    }
   };
 
   const handleClose = () => {
@@ -355,13 +374,10 @@ export function CreateModal() {
                   className="hidden"
                   onChange={handleImageUpload}
                 />
-                <input
-                  ref={cameraInputRef}
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  className="hidden"
-                  onChange={handleImageUpload}
+                <CameraModal
+                  open={isCameraOpen}
+                  onClose={() => setIsCameraOpen(false)}
+                  onCapture={handleCameraCapture}
                 />
                 <div className="flex flex-wrap gap-2">
                   {images.map((url, index) => (
@@ -404,7 +420,7 @@ export function CreateModal() {
                         <div className="absolute bottom-full left-0 mb-2 w-40 rounded-xl bg-zinc-900 border border-white/10 shadow-xl overflow-hidden z-50">
                           <button
                             type="button"
-                            onClick={() => { setShowPhotoMenu(false); cameraInputRef.current?.click(); }}
+                            onClick={() => { setShowPhotoMenu(false); setIsCameraOpen(true); }}
                             className="flex items-center gap-2 w-full px-4 py-3 text-sm text-white hover:bg-white/10 transition-colors"
                           >
                             <Camera className="w-4 h-4" />

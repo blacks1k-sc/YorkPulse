@@ -31,6 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/services/api";
+import { CameraModal } from "@/components/ui/camera-modal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -83,8 +84,8 @@ export default function ListingDetailPage() {
   const [editImages, setEditImages] = useState<string[]>([]);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [showPhotoMenu, setShowPhotoMenu] = useState(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const { data: listing, isLoading } = useMarketplaceListing(listingId);
 
@@ -166,6 +167,19 @@ export default function ListingDetailPage() {
     }
   };
 
+  const handleCameraCapture = async (file: File) => {
+    if (editImages.length >= 5) return;
+    setIsUploadingImage(true);
+    try {
+      const { public_url } = await api.marketplace.uploadImageDirect(file);
+      setEditImages((prev) => [...prev, public_url]);
+    } catch (error) {
+      toast({ title: "Upload failed", description: error instanceof Error ? error.message : "Failed to upload", variant: "destructive" });
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -193,7 +207,6 @@ export default function ListingDetailPage() {
     } finally {
       setIsUploadingImage(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
-      if (cameraInputRef.current) cameraInputRef.current.value = "";
     }
   };
 
@@ -326,9 +339,9 @@ export default function ListingDetailPage() {
         <div className="space-y-4">
           {isEditing ? (
             <>
-              {/* Hidden file inputs */}
+              {/* Hidden file input */}
               <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={handleImageUpload} />
-              <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleImageUpload} />
+              <CameraModal open={isCameraOpen} onClose={() => setIsCameraOpen(false)} onCapture={handleCameraCapture} />
 
               <div className="space-y-2">
                 <Label>Title</Label>
@@ -394,7 +407,7 @@ export default function ListingDetailPage() {
                       </button>
                       {showPhotoMenu && (
                         <div className="absolute bottom-full left-0 mb-2 w-40 rounded-xl bg-zinc-900 border border-white/10 shadow-xl overflow-hidden z-50">
-                          <button type="button" onClick={() => { setShowPhotoMenu(false); cameraInputRef.current?.click(); }} className="flex items-center gap-2 w-full px-4 py-3 text-sm text-white hover:bg-white/10">
+                          <button type="button" onClick={() => { setShowPhotoMenu(false); setIsCameraOpen(true); }} className="flex items-center gap-2 w-full px-4 py-3 text-sm text-white hover:bg-white/10">
                             <Camera className="w-4 h-4" /> Take Photo
                           </button>
                           <button type="button" onClick={() => { setShowPhotoMenu(false); fileInputRef.current?.click(); }} className="flex items-center gap-2 w-full px-4 py-3 text-sm text-white hover:bg-white/10">
