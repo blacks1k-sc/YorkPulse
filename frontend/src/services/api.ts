@@ -817,6 +817,102 @@ class ApiClient {
     },
   };
 
+  // Admin endpoints
+  admin = {
+    getUsers: (page = 1, perPage = 50) =>
+      this.get<{
+        items: Array<{
+          id: string;
+          name: string;
+          email: string;
+          is_admin: boolean;
+          is_banned: boolean;
+          created_at: string | null;
+        }>;
+        total: number;
+        page: number;
+        per_page: number;
+        has_more: boolean;
+      }>(`/auth/admin/users?page=${page}&per_page=${perPage}`),
+
+    deleteUser: (userId: string) =>
+      this.delete<void>(`/auth/admin/users/${userId}`),
+
+    getVaultPosts: (page = 1, perPage = 50) =>
+      this.get<{
+        items: Array<{
+          id: string;
+          title: string;
+          category: string;
+          status: string;
+          is_anonymous: boolean;
+          flag_count: number;
+          author: { id: string; name: string } | null;
+          created_at: string | null;
+        }>;
+        total: number;
+        page: number;
+        per_page: number;
+        has_more: boolean;
+      }>(`/vault/admin/posts?page=${page}&per_page=${perPage}`),
+
+    deleteVaultPost: (postId: string) =>
+      this.delete<void>(`/vault/admin/posts/${postId}`),
+
+    getListings: (page = 1, perPage = 50) =>
+      this.get<{
+        items: Array<{
+          id: string;
+          title: string;
+          price: number;
+          category: string;
+          status: string;
+          seller: { id: string; name: string } | null;
+          created_at: string | null;
+        }>;
+        total: number;
+        page: number;
+        per_page: number;
+        has_more: boolean;
+      }>(`/marketplace/admin/listings?page=${page}&per_page=${perPage}`),
+
+    deleteListing: (listingId: string) =>
+      this.delete<void>(`/marketplace/admin/listings/${listingId}`),
+
+    getFeedback: (page = 1, perPage = 50) =>
+      this.get<{
+        items: Array<{
+          id: string;
+          type: string;
+          subject: string;
+          message: string;
+          status: string;
+          admin_response: string | null;
+          responded_at: string | null;
+          created_at: string;
+          user: { id: string; name: string; email: string };
+        }>;
+        total: number;
+      }>(`/feedback/admin?page=${page}&per_page=${perPage}`),
+
+    getReports: (page = 1, perPage = 50) =>
+      this.get<{
+        items: Array<{
+          id: string;
+          reporter: { id: string; name: string; avatar_url: string | null };
+          reported_user: { id: string; name: string; avatar_url: string | null };
+          reason: string;
+          explanation: string;
+          status: string;
+          admin_notes: string | null;
+          created_at: string;
+        }>;
+        total: number;
+        page: number;
+        per_page: number;
+        has_more: boolean;
+      }>(`/admin/reports?page=${page}&per_page=${perPage}`),
+  };
 }
 
 export const api = new ApiClient(API_URL);

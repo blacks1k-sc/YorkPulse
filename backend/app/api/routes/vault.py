@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
-from app.core.dependencies import CurrentUser, CurrentUserOptional, VerifiedUser
+from app.core.dependencies import AdminUser, CurrentUser, CurrentUserOptional, VerifiedUser
 from app.models.vault import VaultPost, VaultComment, VaultPostStatus, VaultCategory
 from app.models.user import User
 from app.schemas.vault import (
@@ -386,4 +386,70 @@ async def delete_comment(
     if post:
         post.comment_count = max(0, post.comment_count - 1)
 
+    await db.commit()
+
+
+# --- Admin endpoints ---
+
+
+@router.get("/admin/posts")
+async def admin_list_posts(
+    admin: AdminUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    page: Annotated[int, Query(ge=1)] = 1,
+    per_page: Annotated[int, Query(ge=1, le=100)] = 50,
+):
+    """List all vault posts including deleted (admin only)."""
+    query = (
+        select(VaultPost)
+        .options(selectinload(VaultPost.author))
+        .order_by(VaultPost.created_at.desc())
+    )
+
+    count_query = select(func.count()).select_from(query.subquery())
+    total = (await db.execute(count_query)).scalar() or 0
+
+    query = query.offset((page - 1) * per_page).limit(per_page)
+    result = await db.execute(query)
+    posts = result.scalars().all()
+
+    return {
+        "items": [
+            {
+                "id": str(p.id),
+                "title": p.title,
+                "category": p.category,
+                "status": p.status,
+                "is_anonymous": p.is_anonymous,
+                "flag_count": p.flag_count,
+                "author": (
+                    {"id": str(p.author.id), "name": p.author.name}
+                    if p.author
+                    else None
+                ),
+                "created_at": p.created_at.isoformat() if p.created_at else None,
+            }
+            for p in posts
+        ],
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+        "has_more": (page * per_page) < total,
+    }
+
+
+@router.delete("/admin/posts/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def admin_delete_post(
+    post_id: str,
+    admin: AdminUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Force-delete any vault post (admin only)."""
+    result = await db.execute(select(VaultPost).where(VaultPost.id == post_id))
+    post = result.scalar_one_or_none()
+
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    post.status = VaultPostStatus.DELETED
     await db.commit()

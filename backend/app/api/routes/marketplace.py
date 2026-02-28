@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
-from app.core.dependencies import CurrentUser, CurrentUserOptional, VerifiedUser
+from app.core.dependencies import AdminUser, CurrentUser, CurrentUserOptional, VerifiedUser
 from app.models.marketplace import (
     ListingCondition,
     ListingStatus,
@@ -688,3 +688,75 @@ async def get_user_marketplace_reputation(
         reviews_visible=reviews_visible,
         reviews=review_list,
     )
+
+
+# --- Admin endpoints ---
+
+
+@router.get("/admin/listings")
+async def admin_list_listings(
+    admin: AdminUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    page: Annotated[int, Query(ge=1)] = 1,
+    per_page: Annotated[int, Query(ge=1, le=100)] = 50,
+):
+    """List all marketplace listings (admin only)."""
+    query = (
+        select(MarketplaceListing)
+        .options(selectinload(MarketplaceListing.seller))
+        .order_by(MarketplaceListing.created_at.desc())
+    )
+
+    count_query = select(func.count()).select_from(query.subquery())
+    total = (await db.execute(count_query)).scalar() or 0
+
+    query = query.offset((page - 1) * per_page).limit(per_page)
+    result = await db.execute(query)
+    listings = result.scalars().all()
+
+    return {
+        "items": [
+            {
+                "id": str(l.id),
+                "title": l.title,
+                "price": l.price,
+                "category": l.category,
+                "status": l.status,
+                "seller": (
+                    {"id": str(l.seller.id), "name": l.seller.name}
+                    if l.seller
+                    else None
+                ),
+                "created_at": l.created_at.isoformat() if l.created_at else None,
+            }
+            for l in listings
+        ],
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+        "has_more": (page * per_page) < total,
+    }
+
+
+@router.delete("/admin/listings/{listing_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def admin_delete_listing(
+    listing_id: str,
+    admin: AdminUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Force-delete any marketplace listing (admin only)."""
+    try:
+        listing_uuid = uuid.UUID(listing_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid listing ID format")
+
+    result = await db.execute(
+        select(MarketplaceListing).where(MarketplaceListing.id == listing_uuid)
+    )
+    listing = result.scalar_one_or_none()
+
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+
+    listing.status = ListingStatus.DELETED
+    await db.commit()

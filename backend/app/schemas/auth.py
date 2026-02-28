@@ -190,6 +190,7 @@ class UserResponse(BaseModel):
     name: str
     name_verified: bool
     email_verified: bool
+    is_admin: bool = False
     program: str | None = None
     bio: str | None = None
     avatar_url: str | None = None

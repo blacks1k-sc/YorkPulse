@@ -3,12 +3,12 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException, Query, status, UploadFile, File
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.dependencies import CurrentUser
+from app.core.dependencies import AdminUser, CurrentUser
 from app.models.user import User
 from app.schemas.auth import (
     ADMIN_EMAILS,
@@ -437,6 +437,7 @@ async def get_current_user_profile(user: CurrentUser):
         name=user.name,
         name_verified=user.name_verified,
         email_verified=user.email_verified,
+        is_admin=user.is_admin,
         program=user.program,
         bio=user.bio,
         avatar_url=user.avatar_url,
@@ -472,6 +473,7 @@ async def update_profile(
         name=user.name,
         name_verified=user.name_verified,
         email_verified=user.email_verified,
+        is_admin=user.is_admin,
         program=user.program,
         bio=user.bio,
         avatar_url=user.avatar_url,
@@ -570,3 +572,67 @@ async def get_public_profile(
         interests=user.interests,
         created_at=user.created_at.isoformat() if user.created_at else None,
     )
+
+
+# --- Admin endpoints ---
+
+
+@router.get("/admin/users")
+async def admin_list_users(
+    admin: AdminUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    page: Annotated[int, Query(ge=1)] = 1,
+    per_page: Annotated[int, Query(ge=1, le=100)] = 50,
+):
+    """List all users (admin only)."""
+    query = select(User).order_by(User.created_at.desc())
+
+    count_query = select(func.count()).select_from(query.subquery())
+    total = (await db.execute(count_query)).scalar() or 0
+
+    query = query.offset((page - 1) * per_page).limit(per_page)
+    result = await db.execute(query)
+    users = result.scalars().all()
+
+    return {
+        "items": [
+            {
+                "id": str(u.id),
+                "name": u.name,
+                "email": u.email,
+                "is_admin": u.is_admin,
+                "is_banned": u.is_banned,
+                "created_at": u.created_at.isoformat() if u.created_at else None,
+            }
+            for u in users
+        ],
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+        "has_more": (page * per_page) < total,
+    }
+
+
+@router.delete("/admin/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def admin_delete_user(
+    user_id: str,
+    admin: AdminUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Hard delete a user (admin only)."""
+    try:
+        target_uuid = uuid.UUID(user_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid user ID format")
+
+    if target_uuid == admin.id:
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+
+    result = await db.execute(select(User).where(User.id == target_uuid))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    await db.delete(user)
+    await db.commit()
