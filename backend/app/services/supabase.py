@@ -4,7 +4,6 @@ import asyncio
 import logging
 import random
 import string
-from datetime import datetime, timedelta
 
 from supabase import create_client, Client
 from supabase_auth.errors import AuthApiError
@@ -14,8 +13,7 @@ from app.services.email import email_service
 
 logger = logging.getLogger(__name__)
 
-# In-memory OTP storage (used for both dev mode and Resend-based OTP)
-_otps: dict[str, tuple[str, datetime]] = {}
+OTP_TTL_SECONDS = 600  # 10 minutes
 
 
 async def _send_email_background(email: str, otp: str) -> None:
@@ -24,6 +22,10 @@ async def _send_email_background(email: str, otp: str) -> None:
         await email_service.send_otp_email(email, otp)
     except Exception as e:
         logger.error("Background email send failed for %s: %s", email, e)
+
+
+def _make_otp_key(email: str) -> str:
+    return f"otp:{email.lower()}"
 
 
 class SupabaseAuthService:
@@ -45,63 +47,76 @@ class SupabaseAuthService:
         """Check if Supabase is properly configured."""
         return bool(settings.supabase_url and settings.supabase_key)
 
-    def _generate_otp(self, email: str) -> str:
-        """Generate a 6-digit OTP and store it."""
-        otp = ''.join(random.choices(string.digits, k=6))
-        _otps[email.lower()] = (otp, datetime.utcnow() + timedelta(minutes=10))
-        return otp
+    def _make_otp(self) -> str:
+        """Generate a random 6-digit OTP code."""
+        return ''.join(random.choices(string.digits, k=6))
 
-    def _verify_stored_otp(self, email: str, code: str) -> bool:
-        """Verify OTP against stored value."""
+    async def _store_otp(self, email: str, otp: str) -> None:
+        """Persist OTP in Redis with a 10-minute TTL.
+
+        Falls back to in-memory storage if Redis is unavailable.
+        """
+        from app.services.redis import redis_service
+        try:
+            await redis_service.set(_make_otp_key(email), otp, expire_seconds=OTP_TTL_SECONDS)
+        except Exception as e:
+            logger.warning("Redis OTP store failed, using in-memory fallback: %s", e)
+            _otps_fallback[email.lower()] = otp
+
+    async def _verify_and_consume_otp(self, email: str, code: str) -> bool:
+        """Check the submitted code against the stored OTP and delete it on match.
+
+        Tries Redis first, then in-memory fallback.
+        """
+        from app.services.redis import redis_service
+        key = _make_otp_key(email)
+
+        try:
+            stored = await redis_service.get(key)
+            if stored is not None:
+                if stored == code:
+                    await redis_service.delete(key)
+                    return True
+                return False
+        except Exception as e:
+            logger.warning("Redis OTP verify failed, checking in-memory fallback: %s", e)
+
+        # In-memory fallback
         email_lower = email.lower()
-        if email_lower not in _otps:
-            return False
-        stored_otp, expiry = _otps[email_lower]
-        if datetime.utcnow() > expiry:
-            del _otps[email_lower]
-            return False
-        if stored_otp == code:
-            del _otps[email_lower]
-            return True
+        if email_lower in _otps_fallback:
+            stored = _otps_fallback[email_lower]
+            if stored == code:
+                del _otps_fallback[email_lower]
+                return True
+
         return False
 
     async def send_otp(self, email: str, force_dev_mode: bool = False) -> tuple[bool, str]:
-        """
-        Send OTP code to email.
+        """Send OTP code to email.
 
         Priority:
-        1. Dev mode (only when settings.debug is True): Returns OTP directly for testing
-        2. SMTP configured: Sends OTP via SMTP email
-        3. Fallback: Uses Supabase magic link
-
-        Args:
-            email: The user's email
-            force_dev_mode: If True AND settings.debug is True, use local OTP for testing
-
-        Returns:
-            tuple: (success, message)
+        1. Dev mode (only when settings.debug is True): returns OTP in response
+        2. SMTP configured: sends OTP via email (stored in Redis for verification)
+        3. Fallback: Supabase magic link
         """
-        # Development mode: generate OTP locally and return it in the response.
-        # force_dev_mode is only honoured when the server itself is in debug mode,
-        # preventing clients from bypassing email verification in production.
+        # Dev mode — only active when the server itself has DEBUG=true.
         if settings.debug and force_dev_mode:
-            otp = self._generate_otp(email)
+            otp = self._make_otp()
+            await self._store_otp(email, otp)
             return True, f"[DEV MODE] Your verification code is: {otp}"
 
-        # If SMTP/email is configured, send OTP in background (fire-and-forget)
         if email_service.is_configured():
-            otp = self._generate_otp(email)
-            # Fire and forget - don't wait for email to send
+            otp = self._make_otp()
+            await self._store_otp(email, otp)
+            # Send email in the background so the API responds immediately.
             asyncio.create_task(_send_email_background(email, otp))
             return True, "Verification code sent to your email"
 
-        # Fallback to Supabase (sends magic link, not ideal)
+        # Fallback to Supabase magic link
         try:
-            response = self.client.auth.sign_in_with_otp({
+            self.client.auth.sign_in_with_otp({
                 "email": email,
-                "options": {
-                    "should_create_user": True,
-                }
+                "options": {"should_create_user": True},
             })
             return True, "Verification code sent to your email"
         except AuthApiError as e:
@@ -110,71 +125,56 @@ class SupabaseAuthService:
             return False, f"Failed to send verification code: {str(e)}"
 
     async def verify_otp(self, email: str, token: str, force_dev_mode: bool = False) -> tuple[bool, str, dict | None]:
-        """
-        Verify OTP code.
+        """Verify the submitted OTP code.
 
-        Args:
-            email: The user's email
-            token: The 6-digit OTP code
-            force_dev_mode: If True AND settings.debug is True, verify against local OTP storage
-
-        Returns:
-            tuple: (success, message, session_data)
+        For SMTP-based and dev-mode flows, checks Redis (or in-memory fallback).
+        Falls through to Supabase verification for the magic-link fallback path.
         """
-        # Development mode: verify against local OTP storage.
-        # Only when settings.debug is True to prevent production bypass.
+        # Dev mode — only when DEBUG=true on the server.
         if settings.debug and force_dev_mode:
-            if self._verify_stored_otp(email, token):
-                return True, "Email verified successfully", {
-                    "dev_mode": True,
-                }
-            else:
-                return False, "Invalid or expired verification code.", None
+            if await self._verify_and_consume_otp(email, token):
+                return True, "Email verified successfully", {"dev_mode": True}
+            return False, "Invalid or expired verification code.", None
 
-        # If Resend is configured, verify against our stored OTPs
+        # SMTP path — OTP was stored in Redis when the email was sent.
         if email_service.is_configured():
-            if self._verify_stored_otp(email, token):
-                return True, "Email verified successfully", {
-                    "verified_via": "resend",
-                }
-            else:
-                return False, "Invalid or expired verification code.", None
+            if await self._verify_and_consume_otp(email, token):
+                return True, "Email verified successfully", {"verified_via": "smtp"}
+            return False, "Invalid or expired verification code.", None
 
-        # Fallback to Supabase verification
+        # Supabase magic-link fallback verification
         try:
             response = self.client.auth.verify_otp({
                 "email": email,
                 "token": token,
-                "type": "email"
+                "type": "email",
             })
-
             if response.session:
                 return True, "Email verified successfully", {
                     "access_token": response.session.access_token,
                     "refresh_token": response.session.refresh_token,
                     "expires_in": response.session.expires_in,
                 }
-            else:
-                return False, "Verification failed", None
+            return False, "Verification failed", None
 
         except AuthApiError as e:
             error_msg = str(e.message)
             if "expired" in error_msg.lower():
                 return False, "Verification code has expired. Please request a new one.", None
-            elif "invalid" in error_msg.lower():
+            if "invalid" in error_msg.lower():
                 return False, "Invalid verification code. Please check and try again.", None
             return False, error_msg, None
         except Exception as e:
             return False, f"Verification failed: {str(e)}", None
 
     async def resend_otp(self, email: str, force_dev_mode: bool = False) -> tuple[bool, str]:
-        """
-        Resend OTP code.
-
-        This is the same as send_otp but with a clearer name for the resend flow.
-        """
+        """Resend OTP — overwrites any previously stored code."""
         return await self.send_otp(email, force_dev_mode)
 
+
+# In-memory fallback used only when Redis is unavailable.
+# Not shared across workers; Redis is the authoritative store.
+_otps_fallback: dict[str, str] = {}
 
 # Singleton instance
 supabase_auth_service = SupabaseAuthService()

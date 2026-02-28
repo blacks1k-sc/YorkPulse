@@ -20,9 +20,6 @@ passlib[bcrypt]>=1.7.4
 # Redis
 redis>=5.2.0
 
-# AWS
-boto3>=1.35.0
-
 # AI
 google-generativeai>=0.8.0
 
@@ -34,6 +31,10 @@ tqdm>=4.66.0
 
 # HTTP Client
 httpx>=0.28.0
+
+# Email
+aiosmtplib>=3.0.0
+certifi>=2024.0.0
 
 # Utils
 python-dotenv>=1.0.1

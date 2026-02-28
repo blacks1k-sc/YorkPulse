@@ -1,6 +1,8 @@
 """Email service using Gmail SMTP for sending OTP codes."""
 
 import logging
+import ssl
+import certifi
 import aiosmtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -73,7 +75,10 @@ If you didn't request this code, you can safely ignore this email.
             msg.attach(MIMEText(text_content, "plain"))
             msg.attach(MIMEText(html_content, "html"))
 
-            # Send via async SMTP with STARTTLS and verified certificates
+            # Use certifi's CA bundle — required on macOS where Python's default
+            # SSL context doesn't include system root certificates.
+            tls_context = ssl.create_default_context(cafile=certifi.where())
+
             await aiosmtplib.send(
                 msg,
                 hostname=settings.smtp_host,
@@ -81,6 +86,7 @@ If you didn't request this code, you can safely ignore this email.
                 username=settings.smtp_user,
                 password=settings.smtp_password,
                 start_tls=True,
+                tls_context=tls_context,
             )
 
             logger.info("OTP email sent to %s", to_email)
