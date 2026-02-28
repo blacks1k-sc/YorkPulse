@@ -1,7 +1,6 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { CreateModal } from "@/components/modals/CreateModal";
@@ -48,7 +47,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <CreateModal />
       <FloatingActionButton />
       <Toaster />
-      <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   );
 }

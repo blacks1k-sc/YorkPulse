@@ -14,7 +14,6 @@ import {
   Shield,
   ShoppingBag,
   Users,
-  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,7 +48,6 @@ export default function SignupPage() {
   const [otp, setOtp] = useState("");
   const [emailError, setEmailError] = useState("");
   const [cooldown, setCooldown] = useState(0);
-  const [devMode, setDevMode] = useState(false);
 
   const router = useRouter();
   const { toast } = useToast();
@@ -65,16 +63,12 @@ export default function SignupPage() {
     }
   }, [cooldown]);
 
-  // Admin emails that bypass York email validation
-  const ADMIN_EMAILS = ["iamxyz896@gmail.com"];
-
-  // Validate York email (with admin exception)
+  // Validate York email
   const validateEmail = useCallback((value: string): boolean => {
     const emailLower = value.toLowerCase();
-    const isAdminEmail = ADMIN_EMAILS.includes(emailLower);
     const isYorkEmail = emailLower.endsWith("@yorku.ca") || emailLower.endsWith("@my.yorku.ca");
 
-    if (!isAdminEmail && !isYorkEmail) {
+    if (!isYorkEmail) {
       setEmailError("YorkPulse is exclusively for York University. Please use your @yorku.ca or @my.yorku.ca email.");
       return false;
     }
@@ -91,24 +85,13 @@ export default function SignupPage() {
     }
 
     try {
-      const response = await signupMutation.mutateAsync({ email, devMode });
+      await signupMutation.mutateAsync({ email });
       setStep("otp");
       setCooldown(60);
-
-      // Check if dev mode OTP is in the response
-      const devOtpMatch = response.message.match(/\[DEV MODE\] Your verification code is: (\d{6})/);
-      if (devOtpMatch) {
-        toast({
-          title: "Dev Mode",
-          description: `Your OTP code is: ${devOtpMatch[1]}`,
-          duration: 30000, // Show for 30 seconds
-        });
-      } else {
-        toast({
-          title: "Code sent",
-          description: "Please check your email for the verification code.",
-        });
-      }
+      toast({
+        title: "Code sent",
+        description: "Please check your email for the verification code.",
+      });
     } catch (error) {
       toast({
         title: "Error",
@@ -132,7 +115,7 @@ export default function SignupPage() {
     }
 
     try {
-      const response = await verifyOTPMutation.mutateAsync({ email, code: otp, devMode });
+      await verifyOTPMutation.mutateAsync({ email, code: otp });
 
       toast({
         title: "Welcome to YorkPulse!",
@@ -156,24 +139,13 @@ export default function SignupPage() {
     if (cooldown > 0) return;
 
     try {
-      const response = await resendOTPMutation.mutateAsync({ email, devMode });
+      await resendOTPMutation.mutateAsync({ email });
       setCooldown(60);
       setOtp("");
-
-      // Check if dev mode OTP is in the response
-      const devOtpMatch = response.message.match(/\[DEV MODE\] Your verification code is: (\d{6})/);
-      if (devOtpMatch) {
-        toast({
-          title: "Dev Mode",
-          description: `Your new OTP code is: ${devOtpMatch[1]}`,
-          duration: 30000,
-        });
-      } else {
-        toast({
-          title: "Code resent",
-          description: "A new verification code has been sent to your email.",
-        });
-      }
+      toast({
+        title: "Code resent",
+        description: "A new verification code has been sent to your email.",
+      });
     } catch (error) {
       toast({
         title: "Error",
@@ -257,32 +229,6 @@ export default function SignupPage() {
                   We&apos;ll send you a 6-digit verification code
                 </p>
               )}
-            </div>
-
-            {/* Dev Mode Toggle */}
-            <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10">
-              <div className="flex items-center gap-2">
-                <Zap className={`w-4 h-4 ${devMode ? "text-yellow-400" : "text-zinc-500"}`} />
-                <div>
-                  <p className="text-sm font-medium">Dev Mode</p>
-                  <p className="text-xs text-zinc-500">
-                    {devMode ? "OTP shown in toast (no email)" : "OTP sent via email"}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setDevMode(!devMode)}
-                className={`relative w-11 h-6 rounded-full transition-colors ${
-                  devMode ? "bg-yellow-500" : "bg-zinc-700"
-                }`}
-              >
-                <span
-                  className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${
-                    devMode ? "translate-x-5" : "translate-x-0"
-                  }`}
-                />
-              </button>
             </div>
 
             <Button

@@ -328,7 +328,6 @@ export async function fetchBuildingPolygons(): Promise<BuildingPolygon[]> {
   // Check localStorage cache first (instant, works offline)
   const cached = getCachedBuildings();
   if (cached) {
-    console.info("Using localStorage cached building data");
     return cached;
   }
 
@@ -346,11 +345,10 @@ export async function fetchBuildingPolygons(): Promise<BuildingPolygon[]> {
 
       // Cache in localStorage for instant loads
       cacheBuildings(buildings);
-      console.info(`Loaded ${buildings.length} buildings from backend (source: ${response.source}, cached: ${response.cached})`);
       return buildings;
     }
-  } catch (error) {
-    console.warn("Backend API failed, trying Overpass directly:", error);
+  } catch {
+    // Backend unavailable — fall through to direct Overpass fetch
   }
 
   // Fallback: Try Overpass API directly (if backend is down)
@@ -383,7 +381,6 @@ export async function fetchBuildingPolygons(): Promise<BuildingPolygon[]> {
   }
 
   // All sources failed - return fallback buildings
-  console.info("Using fallback building data");
   return fallbackBuildings;
 }
 

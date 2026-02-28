@@ -1,6 +1,7 @@
 """Supabase Auth service for OTP verification."""
 
 import asyncio
+import logging
 import random
 import string
 from datetime import datetime, timedelta
@@ -11,6 +12,7 @@ from supabase_auth.errors import AuthApiError
 from app.core.config import settings
 from app.services.email import email_service
 
+logger = logging.getLogger(__name__)
 
 # In-memory OTP storage (used for both dev mode and Resend-based OTP)
 _otps: dict[str, tuple[str, datetime]] = {}
@@ -21,7 +23,7 @@ async def _send_email_background(email: str, otp: str) -> None:
     try:
         await email_service.send_otp_email(email, otp)
     except Exception as e:
-        print(f"Background email send failed for {email}: {e}")
+        logger.error("Background email send failed for %s: %s", email, e)
 
 
 class SupabaseAuthService:
@@ -68,19 +70,21 @@ class SupabaseAuthService:
         Send OTP code to email.
 
         Priority:
-        1. Dev mode (debug or force_dev_mode): Returns OTP directly for testing
-        2. Resend configured: Sends OTP via Resend email
+        1. Dev mode (only when settings.debug is True): Returns OTP directly for testing
+        2. SMTP configured: Sends OTP via SMTP email
         3. Fallback: Uses Supabase magic link
 
         Args:
             email: The user's email
-            force_dev_mode: If True, use local OTP even if DEBUG=false
+            force_dev_mode: If True AND settings.debug is True, use local OTP for testing
 
         Returns:
             tuple: (success, message)
         """
-        # Development mode or forced dev mode: generate OTP locally and return it
-        if settings.debug or force_dev_mode:
+        # Development mode: generate OTP locally and return it in the response.
+        # force_dev_mode is only honoured when the server itself is in debug mode,
+        # preventing clients from bypassing email verification in production.
+        if settings.debug and force_dev_mode:
             otp = self._generate_otp(email)
             return True, f"[DEV MODE] Your verification code is: {otp}"
 
@@ -112,13 +116,14 @@ class SupabaseAuthService:
         Args:
             email: The user's email
             token: The 6-digit OTP code
-            force_dev_mode: If True, verify against local OTP even if DEBUG=false
+            force_dev_mode: If True AND settings.debug is True, verify against local OTP storage
 
         Returns:
             tuple: (success, message, session_data)
         """
-        # Development mode or forced dev mode: verify against local OTP storage
-        if settings.debug or force_dev_mode:
+        # Development mode: verify against local OTP storage.
+        # Only when settings.debug is True to prevent production bypass.
+        if settings.debug and force_dev_mode:
             if self._verify_stored_otp(email, token):
                 return True, "Email verified successfully", {
                     "dev_mode": True,

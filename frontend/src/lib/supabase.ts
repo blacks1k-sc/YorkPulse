@@ -13,8 +13,7 @@ export function getSupabase(): SupabaseClient | null {
   }
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    // Missing configuration: return null
-    console.warn("Supabase URL or key not configured. Real-time features will be disabled.");
+    // Missing configuration: return null silently
     return null;
   }
 

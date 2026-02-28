@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from contextlib import asynccontextmanager
 from collections.abc import AsyncIterator
 
@@ -6,6 +7,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 from app.core.middleware import RateLimitMiddleware, TimingMiddleware
 from app.api.routes import auth, buddy, courses, dashboard, feedback, gigs, health, map, marketplace, messaging, reports, reviews, transactions, vault
 from app.services.redis import redis_service
@@ -23,11 +26,11 @@ async def run_quest_cleanup_task():
 
             async with async_session_maker() as db:
                 result = await cleanup_quests(db)
-                print(f"Quest cleanup completed: {result}")
+                logger.info("Quest cleanup completed: %s", result)
         except asyncio.CancelledError:
             break
         except Exception as e:
-            print(f"Quest cleanup error: {e}")
+            logger.error("Quest cleanup error: %s", e)
             # Wait a bit before retrying on error
             await asyncio.sleep(60)
 
@@ -41,7 +44,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     global cleanup_task
 
     # Startup
-    print(f"Starting {settings.app_name}...")
+    logger.info("Starting %s...", settings.app_name)
 
     # Run initial cleanup on startup (disabled for faster startup)
     # try:
@@ -58,7 +61,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     yield
 
     # Shutdown
-    print(f"Shutting down {settings.app_name}...")
+    logger.info("Shutting down %s...", settings.app_name)
 
     # Cancel background task
     if cleanup_task:

@@ -1,6 +1,7 @@
 """Map data API routes with Redis caching."""
 
 import json
+import logging
 import httpx
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
@@ -8,6 +9,8 @@ from pydantic import BaseModel
 from app.core.dependencies import get_current_user
 from app.models.user import User
 from app.services.redis import redis_service
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/map", tags=["map"])
 
@@ -283,7 +286,7 @@ async def fetch_from_overpass() -> list[dict] | None:
                     if buildings:
                         return buildings
             except Exception as e:
-                print(f"Overpass API ({endpoint}) failed: {e}")
+                logger.warning("Overpass API (%s) failed: %s", endpoint, e)
                 continue
     return None
 
@@ -330,7 +333,7 @@ async def get_buildings(current_user: User = Depends(get_current_user)):
                 source="redis"
             )
     except Exception as e:
-        print(f"Redis cache read failed: {e}")
+        logger.warning("Redis cache read failed: %s", e)
 
     # Cache miss - fetch from Overpass API
     buildings = await fetch_from_overpass()
@@ -343,9 +346,9 @@ async def get_buildings(current_user: User = Depends(get_current_user)):
                 json.dumps(buildings),
                 expire_seconds=CACHE_TTL_SECONDS
             )
-            print(f"Cached {len(buildings)} buildings in Redis")
+            logger.info("Cached %d buildings in Redis", len(buildings))
         except Exception as e:
-            print(f"Redis cache write failed: {e}")
+            logger.warning("Redis cache write failed: %s", e)
 
         return BuildingsResponse(
             buildings=buildings,

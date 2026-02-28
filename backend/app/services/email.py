@@ -1,11 +1,13 @@
 """Email service using Gmail SMTP for sending OTP codes."""
 
-import ssl
+import logging
 import aiosmtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 class EmailService:
@@ -71,12 +73,7 @@ If you didn't request this code, you can safely ignore this email.
             msg.attach(MIMEText(text_content, "plain"))
             msg.attach(MIMEText(html_content, "html"))
 
-            # Create SSL context that doesn't verify certificates (for macOS compatibility)
-            tls_context = ssl.create_default_context()
-            tls_context.check_hostname = False
-            tls_context.verify_mode = ssl.CERT_NONE
-
-            # Send via async SMTP
+            # Send via async SMTP with STARTTLS and verified certificates
             await aiosmtplib.send(
                 msg,
                 hostname=settings.smtp_host,
@@ -84,20 +81,19 @@ If you didn't request this code, you can safely ignore this email.
                 username=settings.smtp_user,
                 password=settings.smtp_password,
                 start_tls=True,
-                tls_context=tls_context,
             )
 
-            print(f"OTP email sent to {to_email}")
+            logger.info("OTP email sent to %s", to_email)
             return True, "Verification code sent to your email"
 
         except aiosmtplib.SMTPAuthenticationError as e:
-            print(f"SMTP Auth Error: {e}")
+            logger.error("SMTP authentication error: %s", e)
             return False, "Email authentication failed. Please contact support."
         except aiosmtplib.SMTPException as e:
-            print(f"SMTP Error: {e}")
+            logger.error("SMTP error: %s", e)
             return False, f"Failed to send email: {str(e)}"
         except Exception as e:
-            print(f"Email Error: {e}")
+            logger.error("Email send error: %s", e)
             return False, f"Failed to send email: {str(e)}"
 
 
