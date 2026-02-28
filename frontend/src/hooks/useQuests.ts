@@ -61,6 +61,7 @@ export function useCreateQuest() {
       latitude?: number;
       longitude?: number;
       vibe_level?: VibeLevel;
+      custom_vibe_level?: string;
       max_participants?: number;
       requires_approval?: boolean;
     }) => api.quests.createQuest(data),

@@ -112,7 +112,6 @@ export default function CreateGigPage() {
         price_min: priceMin ? parseFloat(priceMin) : undefined,
         price_max: priceMax ? parseFloat(priceMax) : undefined,
         location: locations[0],
-        locations,
         location_details: locationDetails || undefined,
         deadline: deadline ? new Date(deadline).toISOString() : undefined,
       });

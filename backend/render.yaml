@@ -1,0 +1,43 @@
+services:
+  - type: web
+    name: yorkpulse-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    region: ohio
+    plan: free
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        fromService:
+          name: yorkpulse-redis
+          type: redis
+          property: connectionString
+      - key: JWT_SECRET_KEY
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: DEBUG
+        value: "false"
+      - key: CORS_ORIGINS
+        value: '["https://yorkpulse.com","https://www.yorkpulse.com"]'
+
+  - type: redis
+    name: yorkpulse-redis
+    plan: free
+    maxmemoryPolicy: allkeys-lru

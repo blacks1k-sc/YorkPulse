@@ -387,6 +387,7 @@ class ApiClient {
       latitude?: number;
       longitude?: number;
       vibe_level?: VibeLevel;
+      custom_vibe_level?: string;
       max_participants?: number;
       requires_approval?: boolean;
     }) => this.post<SideQuest>("/quests", data),
@@ -653,6 +654,7 @@ class ApiClient {
         total_courses: number;
         vault_posts_today: number;
         total_users: number;
+        active_gigs: number;
       }>("/dashboard/stats"),
   };
 

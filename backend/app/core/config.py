@@ -53,7 +53,11 @@ class Settings(BaseSettings):
     email_from: str = ""
 
     # CORS
-    cors_origins: list[str] = ["http://localhost:3000"]
+    cors_origins: list[str] = [
+        "http://localhost:3000",
+        "https://yorkpulse.com",
+        "https://www.yorkpulse.com",
+    ]
 
     # Rate Limiting
     rate_limit_requests: int = 100

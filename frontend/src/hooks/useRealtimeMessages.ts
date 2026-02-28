@@ -17,6 +17,8 @@ export function useRealtimeMessages(conversationId: string | null) {
         conversation_id: payload.new.conversation_id,
         sender_id: payload.new.sender_id,
         content: payload.new.content,
+        image_url: null,
+        reply_to: null,
         is_deleted: payload.new.is_deleted,
         is_read: payload.new.read_at !== null,
         read_at: payload.new.read_at,
