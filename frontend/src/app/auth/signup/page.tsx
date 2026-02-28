@@ -66,7 +66,7 @@ export default function SignupPage() {
   // Validate York email
   const validateEmail = useCallback((value: string): boolean => {
     const emailLower = value.toLowerCase();
-    const isYorkEmail = emailLower.endsWith("@yorku.ca") || emailLower.endsWith("@my.yorku.ca");
+    const isYorkEmail = emailLower.endsWith("@yorku.ca") || emailLower.endsWith("@my.yorku.ca") || emailLower === "yorkpulse.app@gmail.com";
 
     if (!isYorkEmail) {
       setEmailError("YorkPulse is exclusively for York University. Please use your @yorku.ca or @my.yorku.ca email.");
