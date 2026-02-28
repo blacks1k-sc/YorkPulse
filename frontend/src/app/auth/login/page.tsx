@@ -110,12 +110,8 @@ export default function LoginPage() {
         description: "Email verified successfully!",
       });
 
-      // Redirect based on whether name verification is needed
-      if (response.requires_name_verification) {
-        router.push("/auth/setup-profile");
-      } else {
-        router.push("/");
-      }
+      // Redirect to home (simplified flow - no name verification needed)
+      router.push("/");
     } catch (error) {
       setOtp(""); // Clear OTP on error
       toast({

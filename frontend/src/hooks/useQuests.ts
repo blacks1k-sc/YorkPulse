@@ -34,7 +34,7 @@ export function useQuest(id: string) {
   });
 }
 
-export function useMyQuests(role?: "host" | "participant" | "pending" | "all") {
+export function useMyQuests(role?: "host" | "participant" | "pending" | "all", enabled = true) {
   return useInfiniteQuery({
     queryKey: ["quests", "my-quests", role],
     queryFn: ({ pageParam = 1 }) => api.quests.getMyQuests({ role, page: pageParam }),
@@ -42,6 +42,7 @@ export function useMyQuests(role?: "host" | "participant" | "pending" | "all") {
       return lastPage.has_more ? (lastPage.page || 1) + 1 : undefined;
     },
     initialPageParam: 1,
+    enabled,
   });
 }
 

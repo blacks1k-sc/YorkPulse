@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, UploadFile, File
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -28,7 +28,7 @@ from app.schemas.messaging import (
     ParticipantInfo,
     PendingRequestsResponse,
 )
-from app.services.s3 import s3_service
+from app.services.storage import storage_service
 
 router = APIRouter(prefix="/messages", tags=["Messaging"])
 
@@ -76,15 +76,12 @@ async def get_chat_image_upload_url(
 ):
     """Get a presigned URL for uploading a chat image in DMs."""
     try:
-        upload_url, file_key = s3_service.generate_upload_url(
-            folder="dm-images",
+        upload_url, file_path, file_url = storage_service.generate_upload_url(
+            folder="chat-images",
             filename=request.filename,
             content_type=request.content_type,
             expires_in=300,  # 5 minutes
         )
-
-        # Construct the public file URL
-        file_url = f"https://{s3_service.bucket_name}.s3.{s3_service.region}.amazonaws.com/{file_key}"
 
         return ChatImageUploadResponse(
             upload_url=upload_url,
@@ -95,6 +92,45 @@ async def get_chat_image_upload_url(
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=str(e),
+        )
+
+
+@router.post("/upload-image-direct")
+async def upload_chat_image_direct(
+    user: VerifiedUser,
+    file: UploadFile = File(...),
+):
+    """Upload a chat image directly through the backend."""
+    # Validate content type
+    allowed_types = ["image/jpeg", "image/png", "image/webp", "image/gif"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid file type. Only JPEG, PNG, WebP, and GIF are allowed.",
+        )
+
+    # Validate file size (max 5MB)
+    content = await file.read()
+    if len(content) > 5 * 1024 * 1024:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File too large. Maximum size is 5MB.",
+        )
+
+    try:
+        # Upload directly to Supabase Storage
+        public_url = storage_service.upload_file(
+            folder="chat-images",
+            filename=file.filename or "chat-image.jpg",
+            file_data=content,
+            content_type=file.content_type,
+        )
+
+        return {"file_url": public_url}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to upload image: {str(e)}",
         )
 
 

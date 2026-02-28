@@ -15,7 +15,7 @@ function VerifyContent() {
   const token = searchParams.get("token");
   const verifyMutation = useVerifyEmail();
   const [status, setStatus] = useState<"loading" | "success" | "error" | "timeout">(token ? "loading" : "error");
-  const [requiresNameVerification, setRequiresNameVerification] = useState(false);
+  // Name verification removed - simplified flow
   const hasRun = useRef(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -38,15 +38,10 @@ function VerifyContent() {
       }
 
       setStatus("success");
-      setRequiresNameVerification(data.requires_name_verification);
 
-      // Redirect after a short delay
+      // Redirect to home after a short delay (simplified flow)
       setTimeout(() => {
-        if (data.requires_name_verification) {
-          router.push("/auth/setup-profile");
-        } else {
-          router.push("/");
-        }
+        router.push("/");
       }, 1500);
     } catch {
       // Clear timeout on error
@@ -101,9 +96,7 @@ function VerifyContent() {
           <div className="space-y-2">
             <h1 className="text-2xl font-bold">Email verified!</h1>
             <p className="text-zinc-400">
-              {requiresNameVerification
-                ? "Setting up your profile..."
-                : "Redirecting you to YorkPulse..."}
+              Redirecting you to YorkPulse...
             </p>
           </div>
         </>

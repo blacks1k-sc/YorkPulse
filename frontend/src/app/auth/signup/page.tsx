@@ -139,12 +139,8 @@ export default function SignupPage() {
         description: "Your account has been created successfully.",
       });
 
-      // New users always need name verification
-      if (response.requires_name_verification) {
-        router.push("/auth/setup-profile");
-      } else {
-        router.push("/");
-      }
+      // Redirect to home (simplified flow - no name verification needed)
+      router.push("/");
     } catch (error) {
       setOtp("");
       toast({

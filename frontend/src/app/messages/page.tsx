@@ -816,12 +816,60 @@ export default function MessagesPage() {
   const [questUnreadCounts, setQuestUnreadCounts] = useState<Record<string, number>>({});
   const [activeTab, setActiveTab] = useState("all");
 
+  // All hooks must be called before any conditional returns (Rules of Hooks)
+  // Real-time subscription for conversations
+  useRealtimeConversations(user?.id || null);
+
+  const {
+    data: conversationsData,
+    isLoading: conversationsLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useConversations(isAuthenticated);
+
+  const { data: pendingData, isLoading: pendingLoading } = usePendingRequests(isAuthenticated);
+
+  // Fetch user's quest chats (hosted + joined)
+  const { data: hostedData, isLoading: loadingHosted } = useMyQuests("host", isAuthenticated);
+  const { data: joinedData, isLoading: loadingJoined } = useMyQuests("participant", isAuthenticated);
+
   // Load viewed timestamps on mount
   useEffect(() => {
     setViewedTimestamps(getViewedQuestTimestamps());
   }, []);
 
-  // Auth guard
+  // Callback for quest cards to report their unread count
+  const handleUnreadCountChange = useCallback((questId: string, count: number) => {
+    setQuestUnreadCounts(prev => {
+      if (prev[questId] === count) return prev;
+      return { ...prev, [questId]: count };
+    });
+  }, []);
+
+  // Derived state (computed after hooks)
+  const hostedQuests = hostedData?.pages?.flatMap((page) => page.items) || [];
+  const joinedQuests = joinedData?.pages?.flatMap((page) => page.items) || [];
+  const allQuestChats = [...hostedQuests, ...joinedQuests];
+  const questsLoading = loadingHosted || loadingJoined;
+
+  const conversations = conversationsData?.pages.flatMap((page) => page.items) || [];
+  const pendingRequests = pendingData?.requests || [];
+
+  // Calculate total unread (for future notification feature)
+  const totalUnread = conversations.reduce((sum, c) => sum + (c.unread_count || 0), 0);
+
+  // Calculate total unread quest messages
+  const totalUnreadQuestMessages = Object.values(questUnreadCounts).reduce((sum, count) => sum + count, 0);
+
+  // Handle opening a quest chat - marks it as viewed
+  const handleOpenQuestChat = (quest: SideQuest) => {
+    markQuestAsViewed(quest.id);
+    setViewedTimestamps(prev => ({ ...prev, [quest.id]: Date.now() }));
+    setSelectedQuest(quest);
+  };
+
+  // Auth guard - MUST be after all hooks
   if (!isAuthenticated) {
     return (
       <div className="container mx-auto px-4 py-6 max-w-2xl">
@@ -851,52 +899,6 @@ export default function MessagesPage() {
       </div>
     );
   }
-
-  // Real-time subscription for conversations
-  useRealtimeConversations(user?.id || null);
-
-  const {
-    data: conversationsData,
-    isLoading: conversationsLoading,
-    isFetchingNextPage,
-    hasNextPage,
-    fetchNextPage,
-  } = useConversations();
-
-  const { data: pendingData, isLoading: pendingLoading } = usePendingRequests();
-
-  // Fetch user's quest chats (hosted + joined)
-  const { data: hostedData, isLoading: loadingHosted } = useMyQuests("host");
-  const { data: joinedData, isLoading: loadingJoined } = useMyQuests("participant");
-
-  const hostedQuests = hostedData?.pages?.flatMap((page) => page.items) || [];
-  const joinedQuests = joinedData?.pages?.flatMap((page) => page.items) || [];
-  const allQuestChats = [...hostedQuests, ...joinedQuests];
-  const questsLoading = loadingHosted || loadingJoined;
-
-  const conversations = conversationsData?.pages.flatMap((page) => page.items) || [];
-  const pendingRequests = pendingData?.requests || [];
-
-  // Calculate total unread (for future notification feature)
-  const totalUnread = conversations.reduce((sum, c) => sum + (c.unread_count || 0), 0);
-
-  // Handle opening a quest chat - marks it as viewed
-  const handleOpenQuestChat = (quest: SideQuest) => {
-    markQuestAsViewed(quest.id);
-    setViewedTimestamps(prev => ({ ...prev, [quest.id]: Date.now() }));
-    setSelectedQuest(quest);
-  };
-
-  // Callback for quest cards to report their unread count
-  const handleUnreadCountChange = useCallback((questId: string, count: number) => {
-    setQuestUnreadCounts(prev => {
-      if (prev[questId] === count) return prev;
-      return { ...prev, [questId]: count };
-    });
-  }, []);
-
-  // Calculate total unread quest messages
-  const totalUnreadQuestMessages = Object.values(questUnreadCounts).reduce((sum, count) => sum + count, 0);
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-2xl">

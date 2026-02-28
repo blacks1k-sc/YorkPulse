@@ -3,7 +3,7 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -37,7 +37,7 @@ from app.schemas.auth import (
 from app.services.email_validation import email_validation_service
 from app.services.gemini import gemini_service
 from app.services.jwt import jwt_service
-from app.services.s3 import s3_service
+from app.services.storage import storage_service
 from app.services.supabase import supabase_auth_service
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -195,15 +195,15 @@ async def verify_otp(
     user = result.scalar_one_or_none()
 
     if not user:
-        # Create new user
+        # Create new user - auto-verify name (simplified flow)
         suggested_name = email_validation_service.suggest_name_from_email(request.email)
         is_admin = request.email.lower() in ADMIN_EMAILS
         user = User(
             id=uuid.uuid4(),
             email=request.email,
-            name=suggested_name or "New User",
+            name=suggested_name or "York User",
             email_verified=True,  # Email is now verified via OTP
-            name_verified=is_admin,  # Admin accounts are auto-verified
+            name_verified=True,  # Auto-verify all users (simplified flow)
             is_admin=is_admin,
         )
         db.add(user)
@@ -356,7 +356,7 @@ async def get_id_upload_url(
         )
 
     try:
-        upload_url, file_key = s3_service.generate_upload_url(
+        upload_url, file_path, public_url = storage_service.generate_upload_url(
             folder="student-ids",
             filename=request.filename,
             content_type=request.content_type,
@@ -365,7 +365,7 @@ async def get_id_upload_url(
 
         return IDUploadResponse(
             upload_url=upload_url,
-            file_key=file_key,
+            file_key=file_path,  # Use file_path as file_key for compatibility
             expires_in=300,
         )
     except ValueError as e:
@@ -392,9 +392,9 @@ async def verify_student_id(
             detail="Name already verified",
         )
 
-    # Get download URL for the uploaded image
+    # Get URL for the uploaded image
     try:
-        image_url = s3_service.generate_download_url(request.file_key)
+        image_url = storage_service.get_public_url("student-ids", request.file_key)
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -418,8 +418,8 @@ async def verify_student_id(
     user.name_verified = True
     await db.commit()
 
-    # Delete the ID image for privacy (optional - could also rely on S3 lifecycle)
-    s3_service.delete_file(request.file_key)
+    # Delete the ID image for privacy
+    storage_service.delete_file("student-ids", request.file_key)
 
     return IDVerificationResponse(
         success=True,
@@ -487,15 +487,12 @@ async def get_avatar_upload_url(
 ):
     """Get a presigned URL for uploading an avatar image."""
     try:
-        upload_url, file_key = s3_service.generate_upload_url(
+        upload_url, file_path, file_url = storage_service.generate_upload_url(
             folder="avatars",
             filename=request.filename,
             content_type=request.content_type,
             expires_in=300,  # 5 minutes
         )
-
-        # Construct the public file URL
-        file_url = f"https://{s3_service.bucket_name}.s3.{s3_service.region}.amazonaws.com/{file_key}"
 
         return AvatarUploadResponse(
             upload_url=upload_url,
@@ -506,6 +503,45 @@ async def get_avatar_upload_url(
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=str(e),
+        )
+
+
+@router.post("/avatar-upload-direct")
+async def upload_avatar_direct(
+    user: CurrentUser,
+    file: UploadFile = File(...),
+):
+    """Upload an avatar image directly through the backend."""
+    # Validate content type
+    allowed_types = ["image/jpeg", "image/png", "image/webp", "image/gif"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid file type. Only JPEG, PNG, WebP, and GIF are allowed.",
+        )
+
+    # Validate file size (max 5MB)
+    content = await file.read()
+    if len(content) > 5 * 1024 * 1024:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File too large. Maximum size is 5MB.",
+        )
+
+    try:
+        # Upload directly to Supabase Storage
+        public_url = storage_service.upload_file(
+            folder="avatars",
+            filename=file.filename or "avatar.jpg",
+            file_data=content,
+            content_type=file.content_type,
+        )
+
+        return {"file_url": public_url}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to upload avatar: {str(e)}",
         )
 
 

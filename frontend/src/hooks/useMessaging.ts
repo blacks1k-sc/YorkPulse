@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from "@tansta
 import { api } from "@/services/api";
 import type { Conversation } from "@/types";
 
-export function useConversations() {
+export function useConversations(enabled = true) {
   return useInfiniteQuery({
     queryKey: ["messaging", "conversations"],
     queryFn: ({ pageParam = 1 }) => api.messaging.getConversations(pageParam),
@@ -13,6 +13,7 @@ export function useConversations() {
       return totalFetched < lastPage.total ? allPages.length + 1 : undefined;
     },
     initialPageParam: 1,
+    enabled,
   });
 }
 
@@ -24,10 +25,11 @@ export function useConversation(id: string) {
   });
 }
 
-export function usePendingRequests() {
+export function usePendingRequests(enabled = true) {
   return useQuery({
     queryKey: ["messaging", "pending-requests"],
     queryFn: () => api.messaging.getPendingRequests(),
+    enabled,
   });
 }
 

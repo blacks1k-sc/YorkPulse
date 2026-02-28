@@ -36,7 +36,7 @@ from app.schemas.marketplace_review import (
     PendingReviewsListResponse,
 )
 from app.schemas.user import UserMinimal
-from app.services.s3 import s3_service
+from app.services.storage import storage_service
 
 # Review window in days
 REVIEW_WINDOW_DAYS = 7
@@ -347,19 +347,16 @@ async def get_image_upload_url(
 ):
     """Get presigned URL to upload a listing image."""
     try:
-        upload_url, file_key = s3_service.generate_upload_url(
+        upload_url, file_path, public_url = storage_service.generate_upload_url(
             folder="marketplace",
             filename=request.filename,
             content_type=request.content_type,
             expires_in=300,
         )
 
-        # Generate public URL (via CloudFront or S3)
-        public_url = f"https://{s3_service.bucket_name}.s3.{s3_service.region}.amazonaws.com/{file_key}"
-
         return ImageUploadResponse(
             upload_url=upload_url,
-            file_key=file_key,
+            file_key=file_path,
             public_url=public_url,
             expires_in=300,
         )
@@ -393,26 +390,15 @@ async def upload_image_direct(
         )
 
     try:
-        # Generate file key
-        from datetime import datetime
-        import uuid as uuid_module
-        timestamp = datetime.utcnow().strftime("%Y%m%d")
-        unique_id = str(uuid_module.uuid4())[:8]
-        extension = file.filename.rsplit(".", 1)[-1] if file.filename and "." in file.filename else "jpg"
-        file_key = f"marketplace/{timestamp}/{unique_id}.{extension}"
-
-        # Upload to S3
-        s3_service.client.put_object(
-            Bucket=s3_service.bucket_name,
-            Key=file_key,
-            Body=content,
-            ContentType=file.content_type,
+        # Upload directly to Supabase Storage
+        public_url = storage_service.upload_file(
+            folder="marketplace",
+            filename=file.filename or "image.jpg",
+            file_data=content,
+            content_type=file.content_type,
         )
 
-        # Generate public URL
-        public_url = f"https://{s3_service.bucket_name}.s3.{s3_service.region}.amazonaws.com/{file_key}"
-
-        return {"public_url": public_url, "file_key": file_key}
+        return {"public_url": public_url}
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
