@@ -356,7 +356,7 @@ export default function ConversationPage() {
   }
 
   return (
-    <div className="h-[calc(100vh-4rem)] md:h-[calc(100vh-4rem)] flex flex-col bg-gradient-to-b from-zinc-950 to-zinc-900">
+    <div className="h-[calc(100vh-9rem)] md:h-[calc(100vh-4rem)] flex flex-col overflow-hidden bg-gradient-to-b from-zinc-950 to-zinc-900">
       {/* Header with glassmorphism */}
       <div className="flex items-center gap-3 p-4 border-b border-white/10 bg-white/5 backdrop-blur-xl">
         <Button variant="ghost" size="icon" asChild>
@@ -465,6 +465,7 @@ export default function ConversationPage() {
           <AnimatePresence initial={false}>
             {messages.map((msg, i) => {
               const isOwn = msg.sender_id === user?.id;
+              const isImageOnly = !!msg.image_url && !msg.content && !msg.reply_to && !msg.is_deleted;
               const showDate =
                 i === 0 ||
                 formatDate(msg.created_at) !==
@@ -508,10 +509,9 @@ export default function ConversationPage() {
                     )}
                     <div
                       className={cn(
-                        "max-w-[70%] px-4 py-2.5 relative group",
-                        isOwn
-                          ? "bg-gradient-to-br from-purple-600 to-purple-700 text-white rounded-2xl rounded-br-md"
-                          : "bg-white/10 backdrop-blur-sm text-white rounded-2xl rounded-bl-md border border-white/5"
+                        "max-w-[70%] relative group",
+                        !isImageOnly && isOwn && "px-4 py-2.5 bg-gradient-to-br from-purple-600 to-purple-700 text-white rounded-2xl rounded-br-md",
+                        !isImageOnly && !isOwn && "px-4 py-2.5 bg-white/10 backdrop-blur-sm text-white rounded-2xl rounded-bl-md border border-white/5"
                       )}
                     >
                       {msg.is_deleted ? (
@@ -534,13 +534,31 @@ export default function ConversationPage() {
                               href={msg.image_url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="block mb-2"
+                              className={cn("block relative", msg.content && "mb-2")}
                             >
                               <img
                                 src={msg.image_url}
                                 alt="Shared image"
-                                className="max-w-full max-h-[200px] rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                className={cn(
+                                  "max-w-full max-h-[200px] cursor-pointer hover:opacity-90 transition-opacity",
+                                  isImageOnly
+                                    ? cn("rounded-2xl", isOwn ? "rounded-br-md" : "rounded-bl-md")
+                                    : "rounded-lg"
+                                )}
                               />
+                              {isImageOnly && (
+                                <div className={cn(
+                                  "absolute bottom-1.5 flex items-center gap-1 bg-black/50 px-1.5 py-0.5 rounded-full",
+                                  isOwn ? "right-1.5" : "left-1.5"
+                                )}>
+                                  <span className="text-[10px] text-white/90">{formatTime(msg.created_at)}</span>
+                                  {isOwn && (
+                                    <span className="text-white/80">
+                                      {msg.is_read ? <CheckCheck className="w-3 h-3" /> : <Check className="w-3 h-3" />}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
                             </a>
                           )}
                           {msg.content && (
@@ -550,30 +568,32 @@ export default function ConversationPage() {
                           )}
                         </>
                       )}
-                      <div
-                        className={cn(
-                          "flex items-center gap-1 mt-1",
-                          isOwn ? "justify-end" : "justify-start"
-                        )}
-                      >
-                        <span
+                      {!isImageOnly && (
+                        <div
                           className={cn(
-                            "text-[10px]",
-                            isOwn ? "text-purple-200/70" : "text-zinc-500"
+                            "flex items-center gap-1 mt-1",
+                            isOwn ? "justify-end" : "justify-start"
                           )}
                         >
-                          {formatTime(msg.created_at)}
-                        </span>
-                        {isOwn && !msg.is_deleted && (
-                          <span className="text-purple-200/70">
-                            {msg.is_read ? (
-                              <CheckCheck className="w-3.5 h-3.5" />
-                            ) : (
-                              <Check className="w-3.5 h-3.5" />
+                          <span
+                            className={cn(
+                              "text-[10px]",
+                              isOwn ? "text-purple-200/70" : "text-zinc-500"
                             )}
+                          >
+                            {formatTime(msg.created_at)}
                           </span>
-                        )}
-                      </div>
+                          {isOwn && !msg.is_deleted && (
+                            <span className="text-purple-200/70">
+                              {msg.is_read ? (
+                                <CheckCheck className="w-3.5 h-3.5" />
+                              ) : (
+                                <Check className="w-3.5 h-3.5" />
+                              )}
+                            </span>
+                          )}
+                        </div>
+                      )}
                       {/* Reply button */}
                       {!msg.is_deleted && (
                         <button

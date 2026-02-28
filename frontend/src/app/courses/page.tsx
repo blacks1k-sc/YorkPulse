@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -409,7 +409,7 @@ export default function CoursesPage() {
                 className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/5 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <GraduationCap className="w-5 h-5 text-purple-400" />
+                  <GraduationCap className="w-5 h-5 text-cyan-400" />
                   <span className="font-medium">{faculty.name}</span>
                 </div>
                 <ChevronRight
@@ -838,7 +838,7 @@ export default function CoursesPage() {
           <h1 className="text-2xl font-bold mb-1">Course Chat</h1>
           <p className="text-sm text-zinc-500">
             {viewMode === "browse"
-              ? "Browse and join course chat rooms"
+              ? "Browse and join across 7,706 course chat rooms"
               : `Chatting in ${selectedCourse?.code}`}
           </p>
         </div>
