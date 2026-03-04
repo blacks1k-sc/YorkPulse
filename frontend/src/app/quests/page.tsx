@@ -842,7 +842,7 @@ export default function QuestsPage() {
   const [category, setCategory] = useState<QuestCategory | "all">("all");
   const [status, setStatus] = useState<QuestStatus | "all">("open");
   const [sortBy, setSortBy] = useState<"newest" | "starting_soon" | "most_spots">("starting_soon");
-  const [viewMode, setViewMode] = useState<"list" | "map">("list");
+  const [viewMode, setViewMode] = useState<"list" | "map">("map");
   const { openCreateModal } = useUIStore();
   const { isAuthenticated } = useAuthStore();
 
