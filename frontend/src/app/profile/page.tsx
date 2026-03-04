@@ -99,6 +99,7 @@ export default function ProfilePage() {
   const updateProfileMutation = useUpdateProfile();
 
   const [isEditing, setIsEditing] = useState(false);
+  const [name, setName] = useState(user?.name || "");
   const [program, setProgram] = useState(user?.program || "");
   const [bio, setBio] = useState(user?.bio || "");
   const [interests, setInterests] = useState(user?.interests?.join(", ") || "");
@@ -161,6 +162,7 @@ export default function ProfilePage() {
   const handleSave = async () => {
     try {
       await updateProfileMutation.mutateAsync({
+        name: name.trim() || undefined,
         program: program || undefined,
         bio: bio || undefined,
         interests: interests
@@ -445,6 +447,16 @@ export default function ProfilePage() {
         {/* Bio & Interests */}
         {isEditing ? (
           <div className="mt-6 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Display Name</Label>
+              <Input
+                id="name"
+                placeholder="Your name"
+                value={name}
+                onChange={(e) => setName(capitalizeWords(e.target.value))}
+              />
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="program">
                 Program <span className="text-red-400">*</span>

@@ -195,13 +195,12 @@ async def verify_otp(
     user = result.scalar_one_or_none()
 
     if not user:
-        # Create new user - auto-verify name (simplified flow)
-        suggested_name = email_validation_service.suggest_name_from_email(request.email)
+        # Create new user
         is_admin = request.email.lower() in ADMIN_EMAILS
         user = User(
             id=uuid.uuid4(),
             email=request.email,
-            name=suggested_name or "York User",
+            name="York User",
             email_verified=True,  # Email is now verified via OTP
             name_verified=True,  # Auto-verify all users (simplified flow)
             is_admin=is_admin,

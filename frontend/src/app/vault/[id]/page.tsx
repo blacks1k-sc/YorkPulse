@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -321,13 +322,18 @@ export default function VaultPostPage() {
                 className="p-4 rounded-lg bg-white/5 border border-white/10"
               >
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center">
-                    {c.author && !c.is_anonymous ? (
-                      <User className="w-3 h-3 text-zinc-500" />
-                    ) : (
+                  {c.is_anonymous ? (
+                    <div className="w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center">
                       <Shield className="w-3 h-3 text-purple-400" />
-                    )}
-                  </div>
+                    </div>
+                  ) : (
+                    <Avatar className="w-6 h-6">
+                      <AvatarImage src={c.author?.avatar_url || undefined} />
+                      <AvatarFallback className="text-[10px] bg-zinc-800 text-zinc-400">
+                        {c.author?.name?.charAt(0) || "?"}
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
                   <span className="text-sm text-zinc-400">
                     {c.is_anonymous ? "Anonymous" : c.author?.name || "Unknown"}
                   </span>
