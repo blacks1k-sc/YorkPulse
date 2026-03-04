@@ -49,28 +49,29 @@ export default function LoginPage() {
   }, []);
 
   // Handle email submission
-  const handleEmailSubmit = async (e: React.FormEvent) => {
+  const handleEmailSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateEmail(email)) {
       return;
     }
 
-    try {
-      await loginMutation.mutateAsync({ email });
-      setStep("otp");
-      setCooldown(60); // Start 60 second cooldown
-      toast({
-        title: "Code sent",
-        description: "Please check your email for the verification code.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to send verification code",
-        variant: "destructive",
-      });
-    }
+    // Switch to OTP page immediately — don't block on API round-trip
+    setStep("otp");
+    setCooldown(60);
+
+    loginMutation.mutate({ email }, {
+      onError: (error) => {
+        // Revert if the request actually failed
+        setStep("email");
+        setCooldown(0);
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to send verification code",
+          variant: "destructive",
+        });
+      },
+    });
   };
 
   // Handle OTP verification

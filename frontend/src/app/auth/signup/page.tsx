@@ -77,28 +77,29 @@ export default function SignupPage() {
   }, []);
 
   // Handle email submission
-  const handleEmailSubmit = async (e: React.FormEvent) => {
+  const handleEmailSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateEmail(email)) {
       return;
     }
 
-    try {
-      await signupMutation.mutateAsync({ email });
-      setStep("otp");
-      setCooldown(60);
-      toast({
-        title: "Code sent",
-        description: "Please check your email for the verification code.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create account",
-        variant: "destructive",
-      });
-    }
+    // Switch to OTP page immediately — don't block on API round-trip
+    setStep("otp");
+    setCooldown(60);
+
+    signupMutation.mutate({ email }, {
+      onError: (error) => {
+        // Revert if the request actually failed
+        setStep("email");
+        setCooldown(0);
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to create account",
+          variant: "destructive",
+        });
+      },
+    });
   };
 
   // Handle OTP verification
