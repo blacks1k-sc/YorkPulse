@@ -151,9 +151,10 @@ function QuestCard({ quest, joinedQuestIds, pendingQuestIds }: { quest: SideQues
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ scale: 1.01 }}
       transition={{ duration: 0.2 }}
+      className="h-full"
     >
-      <Link href={`/quests/${quest.id}`}>
-        <div className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-green-500/30 transition-all hover:shadow-lg hover:shadow-green-500/5">
+      <Link href={`/quests/${quest.id}`} className="h-full block">
+        <div className="h-full flex flex-col p-4 rounded-xl bg-white/5 border border-white/10 hover:border-green-500/30 transition-all hover:shadow-lg hover:shadow-green-500/5">
           {/* Top Row: Category Badge + Vibe */}
           <div className="flex items-center justify-between mb-3">
             <Badge variant="secondary" className={cn("text-xs", catConfig.color)}>
@@ -188,6 +189,8 @@ function QuestCard({ quest, joinedQuestIds, pendingQuestIds }: { quest: SideQues
               <span>{formatTime(quest.start_time)}</span>
             </div>
           </div>
+
+          <div className="flex-1" />
 
           {/* Bottom Row: Host + Participants */}
           <div className="flex items-center justify-between pt-3 border-t border-white/5">

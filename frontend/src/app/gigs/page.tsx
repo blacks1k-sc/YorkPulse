@@ -85,11 +85,11 @@ function GigCard({ gig }: { gig: Gig }) {
   const isOffering = gig.gig_type === "offering";
 
   return (
-    <Link href={`/gigs/${gig.id}`}>
+    <Link href={`/gigs/${gig.id}`} className="h-full block">
       <motion.div
         whileHover={{ scale: 1.02 }}
         className={cn(
-          "p-4 rounded-xl bg-white/5 border transition-colors cursor-pointer",
+          "h-full flex flex-col p-4 rounded-xl bg-white/5 border transition-colors cursor-pointer",
           isOffering
             ? "border-green-500/20 hover:border-green-500/40"
             : "border-orange-500/20 hover:border-orange-500/40"
@@ -141,6 +141,8 @@ function GigCard({ gig }: { gig: Gig }) {
             </span>
           )}
         </div>
+
+        <div className="flex-1" />
 
         {/* Footer */}
         <div className="flex items-center justify-between">
