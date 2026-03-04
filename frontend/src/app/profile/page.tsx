@@ -519,7 +519,7 @@ export default function ProfilePage() {
           </div>
         ) : (
           <div className="mt-4">
-            {user?.bio && <p className="text-zinc-300 mb-3">{user.bio}</p>}
+            {user?.bio && <p className="text-zinc-300 mb-3 whitespace-pre-wrap">{user.bio}</p>}
             {user?.interests && user.interests.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {user.interests.map((interest) => (
