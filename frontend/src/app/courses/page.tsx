@@ -844,6 +844,21 @@ export default function CoursesPage() {
         </div>
       </motion.div>
 
+      {/* Disclaimer Banner */}
+      {viewMode === "browse" && (
+        <div className="mb-5 p-4 rounded-xl bg-blue-500/5 border border-blue-500/20 text-sm text-zinc-400 leading-relaxed">
+          <span className="font-medium text-blue-300">How courses are organised:</span> Courses are grouped by{" "}
+          <span className="text-zinc-300">Faculty → Program → Course</span>. Expand a faculty to find your program,
+          then select a course to join its chat.{" "}
+          <span className="text-zinc-300">Can&apos;t find your course?</span> Use the search bar above to look it up
+          by name or course code. If it&apos;s still missing,{" "}
+          <Link href="/#send-feedback" className="text-blue-400 underline underline-offset-2 hover:text-blue-300 transition-colors">
+            report it here
+          </Link>
+          .
+        </div>
+      )}
+
       {/* Main Content */}
       <AnimatePresence mode="wait">
         <motion.div

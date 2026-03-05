@@ -466,7 +466,7 @@ function FeedbackForm() {
   const isValid = subject.trim().length >= 5 && message.trim().length >= 20;
 
   return (
-    <div className="rounded-xl bg-zinc-900/50 border border-zinc-800/50 overflow-hidden">
+    <div id="send-feedback" className="rounded-xl bg-zinc-900/50 border border-zinc-800/50 overflow-hidden">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-full px-4 py-3 flex items-center justify-between hover:bg-zinc-800/30 transition-colors"
