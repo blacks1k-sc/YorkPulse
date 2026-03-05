@@ -95,8 +95,7 @@ export default function LoginPage() {
         description: "Email verified successfully!",
       });
 
-      // Redirect to home (simplified flow - no name verification needed)
-      router.push("/");
+      router.push("/auth/setup");
     } catch (error) {
       setOtp(""); // Clear OTP on error
       toast({

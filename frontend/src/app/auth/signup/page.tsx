@@ -123,8 +123,7 @@ export default function SignupPage() {
         description: "Your account has been created successfully.",
       });
 
-      // Redirect to home (simplified flow - no name verification needed)
-      router.push("/");
+      router.push("/auth/setup");
     } catch (error) {
       setOtp("");
       toast({

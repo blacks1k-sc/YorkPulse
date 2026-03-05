@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Providers } from "./providers";
 import { AppShell } from "@/components/layout";
+import { NameSetupGuard } from "@/components/NameSetupGuard";
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
 
@@ -42,6 +43,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}
       >
         <Providers>
+          <NameSetupGuard />
           <AppShell>{children}</AppShell>
         </Providers>
       </body>
