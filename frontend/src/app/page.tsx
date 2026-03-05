@@ -442,6 +442,15 @@ function FeedbackForm() {
   const [message, setMessage] = useState("");
   const { toast } = useToast();
 
+  useEffect(() => {
+    if (window.location.hash === "#send-feedback") {
+      setIsOpen(true);
+      setTimeout(() => {
+        document.getElementById("send-feedback")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
+    }
+  }, []);
+
   const submitMutation = useMutation({
     mutationFn: () => api.feedback.submit({ type, subject, message }),
     onSuccess: (data) => {
