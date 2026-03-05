@@ -194,7 +194,7 @@ export default function CreateGigPage() {
                     category === key && "bg-yellow-500 hover:bg-yellow-600 text-black"
                   )}
                 >
-                  <span className="text-xl mb-1">{config.emoji}</span>
+                  <config.icon className="w-5 h-5 mb-1" />
                   <span className="text-xs">{config.label}</span>
                 </Button>
               ))}
