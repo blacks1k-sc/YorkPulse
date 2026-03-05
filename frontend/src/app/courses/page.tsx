@@ -15,6 +15,7 @@ import {
   GraduationCap,
   LogOut,
   Vote,
+  PanelLeft,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
@@ -58,6 +59,7 @@ export default function CoursesPage() {
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [selectedChannel, setSelectedChannel] = useState<CourseChannel | null>(null);
   const [showVoteDialog, setShowVoteDialog] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showJoinDialog, setShowJoinDialog] = useState(false);
   const [previewCourse, setPreviewCourse] = useState<Course | null>(null);
   const [profNameInput, setProfNameInput] = useState("");
@@ -228,6 +230,7 @@ export default function CoursesPage() {
 
   // Handle channel click
   const handleChannelClick = (channel: CourseChannel) => {
+    setSidebarOpen(false);
     if (channel.type === "professor") {
       // Check if already a member
       joinChannelMutation.mutate(channel.id);
@@ -504,6 +507,14 @@ export default function CoursesPage() {
         <Button
           variant="ghost"
           size="sm"
+          className="md:hidden"
+          onClick={() => setSidebarOpen((prev) => !prev)}
+        >
+          <PanelLeft className="w-4 h-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={() => {
             setViewMode("browse");
             setSelectedCourse(null);
@@ -537,9 +548,21 @@ export default function CoursesPage() {
         </Button>
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Backdrop for mobile sidebar */}
+        {sidebarOpen && (
+          <div
+            className="md:hidden absolute inset-0 z-[5] bg-black/40"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
         {/* Channel Sidebar */}
-        <div className="w-48 border-r border-white/10 bg-white/[0.02] flex flex-col">
+        <div className={cn(
+          "flex flex-col bg-white/[0.02] transition-all duration-200",
+          "absolute md:relative z-10 h-full",
+          sidebarOpen ? "w-48 border-r border-white/10" : "w-0 overflow-hidden",
+          "md:w-48 md:overflow-visible md:border-r md:border-white/10"
+        )}>
           <div className="p-2 border-b border-white/10">
             <p className="text-xs text-zinc-500 px-2">Channels</p>
           </div>
