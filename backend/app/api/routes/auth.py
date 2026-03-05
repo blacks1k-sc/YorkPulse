@@ -452,6 +452,8 @@ async def update_profile(
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Update current user's profile."""
+    if request.name is not None:
+        user.name = request.name.strip()
     if request.program is not None:
         user.program = request.program
     if request.bio is not None:

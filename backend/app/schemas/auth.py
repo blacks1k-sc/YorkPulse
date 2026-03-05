@@ -204,6 +204,7 @@ class UserResponse(BaseModel):
 class ProfileUpdateRequest(BaseModel):
     """Request to update user profile."""
 
+    name: Annotated[str | None, Field(min_length=1, max_length=100)] = None
     program: Annotated[str | None, Field(min_length=3, max_length=200)] = None
     bio: Annotated[str | None, Field(min_length=20, max_length=500)] = None
     avatar_url: Annotated[str | None, Field(max_length=500)] = None

@@ -9,12 +9,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/stores/auth";
 import { useUser, useUpdateProfile } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 export default function SetupPage() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuthStore();
   const { isLoading } = useUser();
   const updateProfileMutation = useUpdateProfile();
+  const { toast } = useToast();
   const [name, setName] = useState("");
 
   // Redirect if not logged in
@@ -38,8 +40,12 @@ export default function SetupPage() {
     try {
       await updateProfileMutation.mutateAsync({ name: name.trim() });
       router.replace("/");
-    } catch {
-      // stay on page, user can retry
+    } catch (error) {
+      toast({
+        title: "Failed to save name",
+        description: error instanceof Error ? error.message : "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
