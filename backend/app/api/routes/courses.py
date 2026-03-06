@@ -81,8 +81,8 @@ def normalize_prof_name(name: str) -> str:
     return normalized
 
 
-def _course_to_response(course: Course) -> CourseResponse:
-    """Convert course model to response."""
+def _course_to_response(course: Course, live_count: int | None = None) -> CourseResponse:
+    """Convert course model to response. Uses live_count if provided, else cached."""
     return CourseResponse(
         id=str(course.id),
         code=course.code,
@@ -92,9 +92,17 @@ def _course_to_response(course: Course) -> CourseResponse:
         year=course.year,
         credits=course.credits,
         campus=course.campus,
-        member_count=course.member_count,
+        member_count=live_count if live_count is not None else course.member_count,
         created_at=course.created_at,
     )
+
+
+async def _live_member_count(course_id: uuid.UUID, db: AsyncSession) -> int:
+    """Return the live member count for a course from course_members table."""
+    result = await db.execute(
+        select(func.count()).where(CourseMember.course_id == course_id)
+    )
+    return result.scalar() or 0
 
 
 def _channel_to_response(channel: CourseChannel, unread_count: int = 0) -> ChannelResponse:
@@ -159,6 +167,13 @@ async def get_course_hierarchy(
     result = await db.execute(query)
     courses = result.scalars().all()
 
+    # Bulk live member counts
+    counts_result = await db.execute(
+        select(CourseMember.course_id, func.count().label("cnt"))
+        .group_by(CourseMember.course_id)
+    )
+    live_counts: dict[uuid.UUID, int] = {row.course_id: row.cnt for row in counts_result}
+
     # Build hierarchy: Faculty → Program → Year → Courses
     faculty_data: dict[str, dict[str, dict[int, list[CourseInHierarchy]]]] = defaultdict(
         lambda: defaultdict(lambda: defaultdict(list))
@@ -169,7 +184,7 @@ async def get_course_hierarchy(
             id=str(course.id),
             code=course.code,
             name=course.name,
-            member_count=course.member_count,
+            member_count=live_counts.get(course.id, 0),
         )
 
         # Add to each program
@@ -234,6 +249,18 @@ async def search_courses(
     result = await db.execute(query)
     courses = result.scalars().all()
 
+    # Live counts for returned courses
+    course_ids = [c.id for c in courses]
+    if course_ids:
+        counts_result = await db.execute(
+            select(CourseMember.course_id, func.count().label("cnt"))
+            .where(CourseMember.course_id.in_(course_ids))
+            .group_by(CourseMember.course_id)
+        )
+        live_counts: dict[uuid.UUID, int] = {row.course_id: row.cnt for row in counts_result}
+    else:
+        live_counts = {}
+
     return CourseSearchResponse(
         results=[
             CourseSearchResult(
@@ -242,7 +269,7 @@ async def search_courses(
                 name=c.name,
                 faculty=c.faculty,
                 year=c.year,
-                member_count=c.member_count,
+                member_count=live_counts.get(c.id, 0),
             )
             for c in courses
         ],
@@ -383,8 +410,7 @@ async def join_course(
     )
     db.add(channel_member)
 
-    # Update counts
-    course.member_count += 1
+    # Update channel count only (course member_count is now always live from DB)
     general_channel.member_count += 1
 
     await db.commit()
@@ -436,8 +462,7 @@ async def leave_course(
     # Remove course membership
     await db.delete(membership)
 
-    # Update course member count
-    course.member_count = max(0, course.member_count - 1)
+    # course.member_count is now always live from DB — no manual update needed
 
     # Remove any votes for this course
     await db.execute(
