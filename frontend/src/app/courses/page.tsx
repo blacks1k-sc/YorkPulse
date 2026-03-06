@@ -67,20 +67,6 @@ export default function CoursesPage() {
   const [replyTo, setReplyTo] = useState<{ id: string; authorName: string; content: string | null } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Derived: top 8 courses by member count for the popular strip
-  const popularCourses = useMemo(() => {
-    if (!hierarchy) return [];
-    const all: Course[] = [];
-    hierarchy.faculties.forEach(f =>
-      f.programs.forEach(p =>
-        p.years.forEach(y =>
-          y.courses.forEach(c => all.push(c as Course))
-        )
-      )
-    );
-    return all.sort((a, b) => b.member_count - a.member_count).slice(0, 8);
-  }, [hierarchy]);
-
   // Queries
   const { data: hierarchy, isLoading: hierarchyLoading } = useQuery({
     queryKey: ["courses", "hierarchy"],
@@ -98,6 +84,20 @@ export default function CoursesPage() {
     queryFn: () => api.courses.search(searchQuery),
     enabled: searchQuery.length >= 2,
   });
+
+  // Derived: top 8 courses by member count for the popular strip
+  const popularCourses = useMemo(() => {
+    if (!hierarchy) return [];
+    const all: Course[] = [];
+    hierarchy.faculties.forEach(f =>
+      f.programs.forEach(p =>
+        p.years.forEach(y =>
+          y.courses.forEach(c => all.push(c as Course))
+        )
+      )
+    );
+    return all.sort((a, b) => b.member_count - a.member_count).slice(0, 8);
+  }, [hierarchy]);
 
   const { data: channels } = useQuery({
     queryKey: ["courses", selectedCourse?.id, "channels"],
