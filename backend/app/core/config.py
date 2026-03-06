@@ -51,6 +51,7 @@ class Settings(BaseSettings):
     smtp_user: str = ""
     smtp_password: str = ""
     email_from: str = ""
+    admin_email: str = ""  # Admin email for failure alerts
 
     # CORS
     cors_origins: list[str] = [

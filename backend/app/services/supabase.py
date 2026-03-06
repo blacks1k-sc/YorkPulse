@@ -17,11 +17,15 @@ OTP_TTL_SECONDS = 600  # 10 minutes
 
 
 async def _send_email_background(email: str, otp: str) -> None:
-    """Send email in background - fire and forget."""
+    """Send email in background — notify admin on failure."""
     try:
-        await email_service.send_otp_email(email, otp)
+        success, message = await email_service.send_otp_email(email, otp)
+        if not success:
+            logger.error("OTP email failed for %s: %s", email, message)
+            await email_service.send_admin_alert(email, message)
     except Exception as e:
         logger.error("Background email send failed for %s: %s", email, e)
+        await email_service.send_admin_alert(email, str(e))
 
 
 def _make_otp_key(email: str) -> str:

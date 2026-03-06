@@ -111,6 +111,52 @@ class EmailService:
             logger.error("Email send error: %s", e)
             return False, f"Failed to send email: {str(e)}"
 
+    async def send_admin_alert(self, failed_email: str, error: str) -> None:
+        """Notify admin when an OTP email fails to deliver."""
+        if not settings.admin_email:
+            return
+        if not (settings.smtp_host and settings.smtp_user and settings.smtp_password):
+            return
+
+        html = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #e53e3e;">OTP Delivery Failure</h2>
+            <p>An OTP email could not be delivered to the following user:</p>
+            <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+                <tr>
+                    <td style="padding: 8px; background: #f7f7f7; font-weight: bold; width: 30%;">Email</td>
+                    <td style="padding: 8px;">{failed_email}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; background: #f7f7f7; font-weight: bold;">Error</td>
+                    <td style="padding: 8px; color: #e53e3e;">{error}</td>
+                </tr>
+            </table>
+            <p style="color: #666; font-size: 13px;">Please follow up with this user directly.</p>
+        </div>
+        """
+
+        try:
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = f"[YorkPulse] OTP delivery failed — {failed_email}"
+            msg["From"] = f"YorkPulse <{settings.email_from or settings.smtp_user}>"
+            msg["To"] = settings.admin_email
+            msg.attach(MIMEText(html, "html"))
+
+            tls_context = ssl.create_default_context(cafile=certifi.where())
+            await aiosmtplib.send(
+                msg,
+                hostname=settings.smtp_host,
+                port=settings.smtp_port,
+                username=settings.smtp_user,
+                password=settings.smtp_password,
+                start_tls=True,
+                tls_context=tls_context,
+            )
+            logger.info("Admin alert sent for failed OTP to %s", failed_email)
+        except Exception as e:
+            logger.error("Failed to send admin alert: %s", e)
+
 
 # Singleton instance
 email_service = EmailService()
