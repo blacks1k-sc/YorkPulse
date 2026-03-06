@@ -58,10 +58,13 @@ export function ChatMessage({
   const [imageError, setImageError] = useState(false);
   const isOwn = authorId === currentUserId;
 
-  const formattedTime = new Date(timestamp).toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const msgDate = new Date(timestamp);
+  const isToday = new Date().toDateString() === msgDate.toDateString();
+  const formattedTime = isToday
+    ? msgDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })
+    : msgDate.toLocaleDateString([], { month: "short", day: "numeric" }) +
+      " " +
+      msgDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
 
   // Get reply author name
   const replyAuthorName = replyTo?.author?.name || replyTo?.sender?.name || "Unknown";
