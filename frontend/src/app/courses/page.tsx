@@ -801,18 +801,20 @@ export default function CoursesPage() {
             )}
           </ScrollArea>
 
-          {/* Message Input */}
-          <div className="p-4 border-t border-white/10">
-            <ChatInput
-              placeholder={`Message #${selectedChannel?.name || "general"}`}
-              maxLength={500}
-              onSend={handleSendMessage}
-              getUploadUrl={api.courses.getChatImageUploadUrl}
-              disabled={sendMessageMutation.isPending}
-              replyTo={replyTo}
-              onCancelReply={() => setReplyTo(null)}
-            />
-          </div>
+          {/* Message Input — only shown inside a channel */}
+          {selectedChannel && (
+            <div className="p-4 border-t border-white/10">
+              <ChatInput
+                placeholder={`Message #${selectedChannel.name}`}
+                maxLength={500}
+                onSend={handleSendMessage}
+                getUploadUrl={api.courses.getChatImageUploadUrl}
+                disabled={sendMessageMutation.isPending}
+                replyTo={replyTo}
+                onCancelReply={() => setReplyTo(null)}
+              />
+            </div>
+          )}
         </div>
       </div>
 
