@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -16,6 +16,7 @@ import {
   LogOut,
   Vote,
   PanelLeft,
+  TrendingUp,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
@@ -65,6 +66,20 @@ export default function CoursesPage() {
   const [profNameInput, setProfNameInput] = useState("");
   const [replyTo, setReplyTo] = useState<{ id: string; authorName: string; content: string | null } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Derived: top 8 courses by member count for the popular strip
+  const popularCourses = useMemo(() => {
+    if (!hierarchy) return [];
+    const all: Course[] = [];
+    hierarchy.faculties.forEach(f =>
+      f.programs.forEach(p =>
+        p.years.forEach(y =>
+          y.courses.forEach(c => all.push(c as Course))
+        )
+      )
+    );
+    return all.sort((a, b) => b.member_count - a.member_count).slice(0, 8);
+  }, [hierarchy]);
 
   // Queries
   const { data: hierarchy, isLoading: hierarchyLoading } = useQuery({
@@ -362,6 +377,41 @@ export default function CoursesPage() {
         </motion.div>
       )}
 
+      {/* Popular Courses */}
+      {!searchQuery && popularCourses.length > 0 && (
+        <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+          <h3 className="text-sm font-medium text-zinc-400 mb-3 flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-[#00ff88]" />
+            Popular Courses
+          </h3>
+          <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
+            {popularCourses.map((course) => (
+              <motion.div
+                key={course.id}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => handleCourseClick(course)}
+                className={cn(
+                  "flex-shrink-0 w-40 p-3 rounded-xl cursor-pointer border transition-colors",
+                  isCourseMember(course.id)
+                    ? "bg-[#00ff88]/5 border-[#00ff88]/30"
+                    : "bg-white/5 hover:bg-white/10 border-white/10"
+                )}
+              >
+                <p className="font-mono text-sm text-[#00ff88] font-bold truncate">{course.code}</p>
+                <p className="text-xs text-zinc-400 mt-1 truncate">{course.name}</p>
+                <div className="flex items-center gap-1 mt-2 text-zinc-500">
+                  <Users className="w-3 h-3" />
+                  <span className="text-xs">{course.member_count}</span>
+                  {isCourseMember(course.id) && (
+                    <span className="ml-auto text-[10px] text-[#00ff88]">Joined</span>
+                  )}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* My Courses */}
       {isAuthenticated && myCourses && myCourses.courses.length > 0 && (
         <div className="p-4 rounded-xl bg-white/5 border border-white/10">
@@ -414,6 +464,9 @@ export default function CoursesPage() {
                 <div className="flex items-center gap-3">
                   <GraduationCap className="w-5 h-5 text-cyan-400" />
                   <span className="font-medium">{faculty.name}</span>
+                  <span className="text-xs text-zinc-500">
+                    ({faculty.programs.reduce((sum, p) => sum + p.years.reduce((s, y) => s + y.courses.length, 0), 0)})
+                  </span>
                 </div>
                 <ChevronRight
                   className={cn(
@@ -442,7 +495,12 @@ export default function CoursesPage() {
                             onClick={() => toggleProgram(programKey)}
                             className="w-full px-6 py-2 flex items-center justify-between hover:bg-white/5 transition-colors"
                           >
-                            <span className="text-sm text-zinc-300">{program.name}</span>
+                            <span className="text-sm text-zinc-300">
+                              {program.name}
+                              <span className="text-xs text-zinc-500 ml-1.5">
+                                ({program.years.reduce((sum, y) => sum + y.courses.length, 0)})
+                              </span>
+                            </span>
                             <ChevronDown
                               className={cn(
                                 "w-4 h-4 text-zinc-500 transition-transform",
