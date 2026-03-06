@@ -96,7 +96,8 @@ export default function CoursesPage() {
         )
       )
     );
-    return all.sort((a, b) => b.member_count - a.member_count).slice(0, 8);
+    const unique = Array.from(new Map(all.map(c => [c.id, c])).values());
+    return unique.sort((a, b) => b.member_count - a.member_count).slice(0, 8);
   }, [hierarchy]);
 
   const { data: channels } = useQuery({
