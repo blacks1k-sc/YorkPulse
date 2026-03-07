@@ -228,6 +228,7 @@ class ApiClient {
         id: string;
         name: string;
         name_verified: boolean;
+        is_founder: boolean;
         program: string | null;
         bio: string | null;
         avatar_url: string | null;
