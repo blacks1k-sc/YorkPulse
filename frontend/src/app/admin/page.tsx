@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuthStore } from "@/stores/auth";
 import { useToast } from "@/hooks/use-toast";
+import { useUser } from "@/hooks/useAuth";
 import { api } from "@/services/api";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -678,15 +679,20 @@ function isAdmin(user: { is_admin?: boolean; email?: string } | null) {
 export default function AdminPage() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuthStore();
+  const { isLoading } = useUser();
 
   useEffect(() => {
-    if (!isAuthenticated || !isAdmin(user)) {
+    if (!isLoading && (!isAuthenticated || !isAdmin(user))) {
       router.replace("/");
     }
-  }, [isAuthenticated, user, router]);
+  }, [isLoading, isAuthenticated, user, router]);
 
-  if (!isAuthenticated || !isAdmin(user)) {
-    return null;
+  if (isLoading || !isAuthenticated || !isAdmin(user)) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-6 h-6 animate-spin text-zinc-500" />
+      </div>
+    );
   }
 
   return (
