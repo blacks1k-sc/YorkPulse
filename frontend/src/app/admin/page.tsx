@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Trash2, Loader2, Shield, Users, ShoppingBag, FileText, MessageSquare, Flag, ChevronLeft, ChevronRight } from "lucide-react";
+import { Trash2, Loader2, Shield, Users, ShoppingBag, FileText, MessageSquare, Flag, ChevronLeft, ChevronRight, BookOpen, Image } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -476,6 +476,197 @@ function ReportsTab() {
   );
 }
 
+// ─── Course Monitor Tab ───────────────────────────────────────────────────────
+
+function CourseMonitorTab() {
+  const [overview, setOverview] = useState<Awaited<ReturnType<typeof api.admin.getCourseOverview>> | null>(null);
+  const [messages, setMessages] = useState<Awaited<ReturnType<typeof api.admin.getCourseMessages>> | null>(null);
+  const [votes, setVotes] = useState<Awaited<ReturnType<typeof api.admin.getCourseVotes>> | null>(null);
+  const [msgPage, setMsgPage] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [section, setSection] = useState<"courses" | "messages" | "votes">("courses");
+  const { toast } = useToast();
+
+  const loadOverview = useCallback(async () => {
+    const [ov, vt] = await Promise.all([
+      api.admin.getCourseOverview(),
+      api.admin.getCourseVotes(),
+    ]);
+    setOverview(ov);
+    setVotes(vt);
+  }, []);
+
+  const loadMessages = useCallback(async (p: number) => {
+    const result = await api.admin.getCourseMessages(p, 50);
+    setMessages(result);
+  }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    loadOverview().finally(() => setLoading(false));
+  }, [loadOverview]);
+
+  useEffect(() => {
+    if (section === "messages") {
+      setLoading(true);
+      loadMessages(msgPage).finally(() => setLoading(false));
+    }
+  }, [section, msgPage, loadMessages]);
+
+  async function handleDeleteMessage(id: string) {
+    await api.admin.deleteCourseMessage(id);
+    toast({ description: "Message deleted." });
+    await loadMessages(msgPage);
+  }
+
+  if (loading && !overview) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-zinc-500" /></div>;
+
+  return (
+    <div>
+      {/* Sub-nav */}
+      <div className="flex gap-2 mb-6 border-b border-zinc-800 pb-3">
+        {(["courses", "messages", "votes"] as const).map((s) => (
+          <button
+            key={s}
+            onClick={() => setSection(s)}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              section === s ? "bg-zinc-800 text-white" : "text-zinc-500 hover:text-zinc-300"
+            }`}
+          >
+            {s === "courses" ? "Enrollments" : s === "messages" ? "Messages" : "Prof Votes"}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Enrollments ── */}
+      {section === "courses" && overview && (
+        <div>
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            {[
+              { label: "Total Courses", value: overview.total_courses },
+              { label: "Total Members", value: overview.total_members },
+              { label: "Total Messages", value: overview.total_messages },
+            ].map((s) => (
+              <div key={s.label} className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 text-center">
+                <p className="text-2xl font-bold">{s.value.toLocaleString()}</p>
+                <p className="text-xs text-zinc-500 mt-1">{s.label}</p>
+              </div>
+            ))}
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-zinc-800 text-zinc-500 text-left">
+                  <th className="pb-2 pr-4 font-medium">Course</th>
+                  <th className="pb-2 pr-4 font-medium">Faculty</th>
+                  <th className="pb-2 pr-4 font-medium text-right">Members</th>
+                  <th className="pb-2 pr-4 font-medium text-right">Messages</th>
+                  <th className="pb-2 font-medium text-right">Channels</th>
+                </tr>
+              </thead>
+              <tbody>
+                {overview.top_courses.map((c) => (
+                  <tr key={c.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
+                    <td className="py-2 pr-4">
+                      <span className="font-mono text-purple-400 text-xs mr-2">{c.code}</span>
+                      <span className="text-zinc-300 truncate max-w-[200px] inline-block align-middle">{c.name}</span>
+                    </td>
+                    <td className="py-2 pr-4 text-zinc-500 text-xs">{c.faculty}</td>
+                    <td className="py-2 pr-4 text-right font-medium">{c.member_count}</td>
+                    <td className="py-2 pr-4 text-right text-zinc-400">{c.message_count}</td>
+                    <td className="py-2 text-right text-zinc-400">{c.channel_count}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ── Messages ── */}
+      {section === "messages" && (
+        <div>
+          {loading ? (
+            <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-zinc-500" /></div>
+          ) : messages && (
+            <>
+              <div className="space-y-2">
+                {messages.items.map((m) => (
+                  <div key={m.id} className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-3 flex items-start gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span className="font-medium text-sm">{m.user_name}</span>
+                        <span className="text-xs text-zinc-500">{m.user_email}</span>
+                        <span className="text-xs bg-zinc-800 rounded px-1.5 py-0.5 font-mono text-purple-400">{m.course_code}</span>
+                        <span className="text-xs text-zinc-500">#{m.channel_name}</span>
+                        <span className="text-xs text-zinc-600 ml-auto">{fmtDate(m.created_at)}</span>
+                      </div>
+                      {m.message && <p className="text-sm text-zinc-300">{m.message}</p>}
+                      {m.image_url && (
+                        <span className="inline-flex items-center gap-1 text-xs text-zinc-500 mt-1">
+                          <Image className="w-3 h-3" /> Image attachment
+                        </span>
+                      )}
+                    </div>
+                    <DeleteButton onDelete={() => handleDeleteMessage(m.id)} label="Delete message" />
+                  </div>
+                ))}
+              </div>
+              <Pagination
+                page={msgPage}
+                hasMore={messages.has_more}
+                total={messages.total}
+                perPage={50}
+                onPrev={() => setMsgPage(p => p - 1)}
+                onNext={() => setMsgPage(p => p + 1)}
+              />
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ── Prof Votes ── */}
+      {section === "votes" && votes && (
+        <div>
+          {votes.votes.length === 0 ? (
+            <p className="text-zinc-500 text-sm text-center py-8">No professor votes yet.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-zinc-800 text-zinc-500 text-left">
+                    <th className="pb-2 pr-4 font-medium">Course</th>
+                    <th className="pb-2 pr-4 font-medium">Professor</th>
+                    <th className="pb-2 pr-4 font-medium">Semester</th>
+                    <th className="pb-2 font-medium text-right">Votes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {votes.votes.map((v, i) => (
+                    <tr key={i} className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
+                      <td className="py-2 pr-4">
+                        <span className="font-mono text-purple-400 text-xs mr-2">{v.course_code}</span>
+                        <span className="text-zinc-400 text-xs">{v.course_name}</span>
+                      </td>
+                      <td className="py-2 pr-4 font-medium">{v.prof_name}</td>
+                      <td className="py-2 pr-4 text-zinc-400">{v.semester}</td>
+                      <td className="py-2 text-right">
+                        <span className={`font-medium ${v.vote_count >= v.threshold ? "text-green-400" : "text-zinc-300"}`}>
+                          {v.vote_count}/{v.threshold}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 const ADMIN_EMAIL = "yorkpulse.app@gmail.com";
@@ -527,6 +718,9 @@ export default function AdminPage() {
           <TabsTrigger value="reports" className="flex items-center gap-1.5">
             <Flag className="w-4 h-4" /> Reports
           </TabsTrigger>
+          <TabsTrigger value="courses" className="flex items-center gap-1.5">
+            <BookOpen className="w-4 h-4" /> Course Chat
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="users"><UsersTab /></TabsContent>
@@ -534,6 +728,7 @@ export default function AdminPage() {
         <TabsContent value="vault"><VaultTab /></TabsContent>
         <TabsContent value="feedback"><FeedbackTab /></TabsContent>
         <TabsContent value="reports"><ReportsTab /></TabsContent>
+        <TabsContent value="courses"><CourseMonitorTab /></TabsContent>
       </Tabs>
     </div>
   );

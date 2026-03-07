@@ -991,6 +991,196 @@ async def send_channel_message(
 # ============ Admin Endpoints ============
 
 
+@router.get("/admin/overview")
+async def admin_course_overview(
+    user: AdminUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Top courses by enrollment + global totals."""
+    from pydantic import BaseModel
+
+    # Total members + messages
+    total_members_r = await db.execute(select(func.count()).select_from(CourseMember))
+    total_members = total_members_r.scalar() or 0
+
+    total_messages_r = await db.execute(select(func.count()).select_from(CourseMessage))
+    total_messages = total_messages_r.scalar() or 0
+
+    total_courses_r = await db.execute(select(func.count()).select_from(Course))
+    total_courses = total_courses_r.scalar() or 0
+
+    # Per-course stats (top 30 by member count)
+    course_members_sq = (
+        select(CourseMember.course_id, func.count().label("mc"))
+        .group_by(CourseMember.course_id)
+        .subquery()
+    )
+    course_messages_sq = (
+        select(CourseChannel.course_id, func.count(CourseMessage.id).label("msgc"))
+        .join(CourseMessage, CourseMessage.channel_id == CourseChannel.id, isouter=True)
+        .group_by(CourseChannel.course_id)
+        .subquery()
+    )
+    course_channels_sq = (
+        select(CourseChannel.course_id, func.count().label("chc"))
+        .group_by(CourseChannel.course_id)
+        .subquery()
+    )
+
+    result = await db.execute(
+        select(
+            Course.id,
+            Course.code,
+            Course.name,
+            Course.faculty,
+            func.coalesce(course_members_sq.c.mc, 0).label("member_count"),
+            func.coalesce(course_messages_sq.c.msgc, 0).label("message_count"),
+            func.coalesce(course_channels_sq.c.chc, 0).label("channel_count"),
+        )
+        .outerjoin(course_members_sq, course_members_sq.c.course_id == Course.id)
+        .outerjoin(course_messages_sq, course_messages_sq.c.course_id == Course.id)
+        .outerjoin(course_channels_sq, course_channels_sq.c.course_id == Course.id)
+        .order_by(func.coalesce(course_members_sq.c.mc, 0).desc())
+        .limit(30)
+    )
+    rows = result.all()
+
+    return {
+        "total_courses": total_courses,
+        "total_members": total_members,
+        "total_messages": total_messages,
+        "top_courses": [
+            {
+                "id": str(r.id),
+                "code": r.code,
+                "name": r.name,
+                "faculty": r.faculty,
+                "member_count": r.member_count,
+                "message_count": r.message_count,
+                "channel_count": r.channel_count,
+            }
+            for r in rows
+        ],
+    }
+
+
+@router.get("/admin/messages")
+async def admin_course_messages(
+    user: AdminUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    page: int = 1,
+    per_page: int = 50,
+):
+    """Paginated feed of all course messages for moderation."""
+    from app.models.user import User as UserModel
+
+    offset = (page - 1) * per_page
+
+    total_r = await db.execute(select(func.count()).select_from(CourseMessage))
+    total = total_r.scalar() or 0
+
+    result = await db.execute(
+        select(
+            CourseMessage.id,
+            CourseMessage.message,
+            CourseMessage.image_url,
+            CourseMessage.created_at,
+            UserModel.id.label("user_id"),
+            UserModel.name.label("user_name"),
+            UserModel.email.label("user_email"),
+            CourseChannel.name.label("channel_name"),
+            Course.code.label("course_code"),
+            Course.name.label("course_name"),
+        )
+        .join(UserModel, UserModel.id == CourseMessage.user_id)
+        .join(CourseChannel, CourseChannel.id == CourseMessage.channel_id)
+        .join(Course, Course.id == CourseChannel.course_id)
+        .order_by(CourseMessage.created_at.desc())
+        .limit(per_page)
+        .offset(offset)
+    )
+    rows = result.all()
+
+    return {
+        "items": [
+            {
+                "id": str(r.id),
+                "message": r.message,
+                "image_url": r.image_url,
+                "created_at": r.created_at.isoformat(),
+                "user_id": str(r.user_id),
+                "user_name": r.user_name,
+                "user_email": r.user_email,
+                "channel_name": r.channel_name,
+                "course_code": r.course_code,
+                "course_name": r.course_name,
+            }
+            for r in rows
+        ],
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+        "has_more": offset + per_page < total,
+    }
+
+
+@router.delete("/admin/messages/{message_id}", status_code=204)
+async def admin_delete_course_message(
+    message_id: str,
+    user: AdminUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Delete a course message (admin moderation)."""
+    result = await db.execute(
+        select(CourseMessage).where(CourseMessage.id == message_id)
+    )
+    msg = result.scalar_one_or_none()
+    if not msg:
+        raise HTTPException(status_code=404, detail="Message not found")
+    await db.delete(msg)
+    await db.commit()
+
+
+@router.get("/admin/votes")
+async def admin_course_votes(
+    user: AdminUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """All professor channel creation votes grouped by course + prof + semester."""
+    result = await db.execute(
+        select(
+            Course.code.label("course_code"),
+            Course.name.label("course_name"),
+            ChannelCreationVote.prof_name_normalized,
+            ChannelCreationVote.semester,
+            func.count(ChannelCreationVote.id).label("vote_count"),
+        )
+        .join(Course, Course.id == ChannelCreationVote.course_id)
+        .group_by(
+            Course.code,
+            Course.name,
+            ChannelCreationVote.prof_name_normalized,
+            ChannelCreationVote.semester,
+        )
+        .order_by(func.count(ChannelCreationVote.id).desc())
+    )
+    rows = result.all()
+
+    return {
+        "votes": [
+            {
+                "course_code": r.course_code,
+                "course_name": r.course_name,
+                "prof_name": r.prof_name_normalized.title(),
+                "semester": r.semester,
+                "vote_count": r.vote_count,
+                "threshold": VOTE_THRESHOLD,
+            }
+            for r in rows
+        ]
+    }
+
+
 @router.post("/admin/seed", response_model=SeedCoursesResponse)
 async def seed_courses(
     user: AdminUser,

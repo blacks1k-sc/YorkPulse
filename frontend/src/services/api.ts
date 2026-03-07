@@ -913,6 +913,57 @@ class ApiClient {
         per_page: number;
         has_more: boolean;
       }>(`/admin/reports?page=${page}&per_page=${perPage}`),
+
+    getCourseOverview: () =>
+      this.get<{
+        total_courses: number;
+        total_members: number;
+        total_messages: number;
+        top_courses: Array<{
+          id: string;
+          code: string;
+          name: string;
+          faculty: string;
+          member_count: number;
+          message_count: number;
+          channel_count: number;
+        }>;
+      }>(`/courses/admin/overview`),
+
+    getCourseMessages: (page = 1, perPage = 50) =>
+      this.get<{
+        items: Array<{
+          id: string;
+          message: string | null;
+          image_url: string | null;
+          created_at: string;
+          user_id: string;
+          user_name: string;
+          user_email: string;
+          channel_name: string;
+          course_code: string;
+          course_name: string;
+        }>;
+        total: number;
+        page: number;
+        per_page: number;
+        has_more: boolean;
+      }>(`/courses/admin/messages?page=${page}&per_page=${perPage}`),
+
+    deleteCourseMessage: (messageId: string) =>
+      this.delete<void>(`/courses/admin/messages/${messageId}`),
+
+    getCourseVotes: () =>
+      this.get<{
+        votes: Array<{
+          course_code: string;
+          course_name: string;
+          prof_name: string;
+          semester: string;
+          vote_count: number;
+          threshold: number;
+        }>;
+      }>(`/courses/admin/votes`),
   };
 }
 
