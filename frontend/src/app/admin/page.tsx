@@ -678,16 +678,18 @@ function isAdmin(user: { is_admin?: boolean; email?: string } | null) {
 
 export default function AdminPage() {
   const router = useRouter();
-  const { user, isAuthenticated } = useAuthStore();
+  const { user, isAuthenticated, isHydrated } = useAuthStore();
   const { isLoading } = useUser();
 
   useEffect(() => {
-    if (!isLoading && (!isAuthenticated || !isAdmin(user))) {
+    // Wait for store to hydrate AND user query to finish before redirecting
+    if (!isHydrated || isLoading) return;
+    if (!isAuthenticated || !isAdmin(user)) {
       router.replace("/");
     }
-  }, [isLoading, isAuthenticated, user, router]);
+  }, [isHydrated, isLoading, isAuthenticated, user, router]);
 
-  if (isLoading || !isAuthenticated || !isAdmin(user)) {
+  if (!isHydrated || isLoading || !isAuthenticated || !isAdmin(user)) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="w-6 h-6 animate-spin text-zinc-500" />
