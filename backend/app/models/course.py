@@ -94,11 +94,6 @@ class Course(Base, UUIDMixin, TimestampMixin):
         back_populates="course",
         cascade="all, delete-orphan",
     )
-    professor_assignments: Mapped[list["ProfessorCourse"]] = relationship(
-        "ProfessorCourse",
-        back_populates="course",
-        cascade="all, delete-orphan",
-    )
 
     __table_args__ = (
         Index("ix_courses_faculty_year", "faculty", "year"),
@@ -373,4 +368,3 @@ class ChannelCreationVote(Base, UUIDMixin):
 
 # Import for type hints
 from app.models.user import User  # noqa: E402, F401
-from app.models.professor import ProfessorCourse  # noqa: E402, F401
