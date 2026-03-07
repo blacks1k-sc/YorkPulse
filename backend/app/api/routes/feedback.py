@@ -108,6 +108,50 @@ async def get_my_feedback(
     )
 
 
+@router.patch("/admin/{feedback_id}/resolve", response_model=FeedbackResponse)
+async def resolve_feedback(
+    feedback_id: str,
+    user: AdminUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Mark feedback as resolved (admin only)."""
+    from datetime import datetime, timezone
+
+    result = await db.execute(
+        select(UserFeedback)
+        .options(selectinload(UserFeedback.user))
+        .where(UserFeedback.id == feedback_id)
+    )
+    feedback = result.scalar_one_or_none()
+    if not feedback:
+        raise HTTPException(status_code=404, detail="Feedback not found")
+
+    feedback.status = FeedbackStatus.RESOLVED
+    feedback.responded_at = datetime.now(timezone.utc)
+    await db.commit()
+    await db.refresh(feedback)
+
+    return _feedback_to_response(feedback)
+
+
+@router.delete("/admin/{feedback_id}", status_code=204)
+async def delete_feedback(
+    feedback_id: str,
+    user: AdminUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Delete feedback (admin only)."""
+    result = await db.execute(
+        select(UserFeedback).where(UserFeedback.id == feedback_id)
+    )
+    feedback = result.scalar_one_or_none()
+    if not feedback:
+        raise HTTPException(status_code=404, detail="Feedback not found")
+
+    await db.delete(feedback)
+    await db.commit()
+
+
 @router.get("/admin", response_model=FeedbackListResponse)
 async def get_all_feedback(
     user: AdminUser,

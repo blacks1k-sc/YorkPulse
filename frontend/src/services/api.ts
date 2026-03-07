@@ -896,6 +896,12 @@ class ApiClient {
         total: number;
       }>(`/feedback/admin?page=${page}&per_page=${perPage}`),
 
+    resolveFeedback: (feedbackId: string) =>
+      this.patch<void>(`/feedback/admin/${feedbackId}/resolve`, {}),
+
+    deleteFeedback: (feedbackId: string) =>
+      this.delete<void>(`/feedback/admin/${feedbackId}`),
+
     getReports: (page = 1, perPage = 50) =>
       this.get<{
         items: Array<{

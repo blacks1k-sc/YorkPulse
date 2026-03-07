@@ -373,6 +373,7 @@ function FeedbackTab() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   const load = useCallback(async (p: number) => {
     setLoading(true);
@@ -388,6 +389,19 @@ function FeedbackTab() {
   useEffect(() => { load(page); }, [load, page]);
 
   const hasMore = page * FEEDBACK_PER_PAGE < total;
+
+  async function handleResolve(id: string) {
+    await api.admin.resolveFeedback(id);
+    toast({ description: "Marked as resolved." });
+    await load(page);
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm("Delete this feedback?")) return;
+    await api.admin.deleteFeedback(id);
+    toast({ description: "Feedback deleted." });
+    await load(page);
+  }
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-zinc-500" /></div>;
 
@@ -412,6 +426,26 @@ function FeedbackTab() {
                     <span className="text-zinc-500">Admin response: </span>{f.admin_response}
                   </div>
                 )}
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                {f.status !== "resolved" && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-green-400 hover:text-green-300 hover:bg-green-500/10 text-xs"
+                    onClick={() => handleResolve(f.id)}
+                  >
+                    ✓ Resolve
+                  </Button>
+                )}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                  onClick={() => handleDelete(f.id)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
               </div>
             </div>
           </div>
