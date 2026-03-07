@@ -191,6 +191,7 @@ class UserResponse(BaseModel):
     name_verified: bool
     email_verified: bool
     is_admin: bool = False
+    is_founder: bool = False
     program: str | None = None
     bio: str | None = None
     avatar_url: str | None = None
@@ -253,6 +254,7 @@ class PublicUserResponse(BaseModel):
     id: str
     name: str
     name_verified: bool
+    is_founder: bool = False
     program: str | None = None
     bio: str | None = None
     avatar_url: str | None = None

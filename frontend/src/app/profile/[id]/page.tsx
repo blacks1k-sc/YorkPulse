@@ -40,11 +40,13 @@ import { api } from "@/services/api";
 import { useAuthStore } from "@/stores/auth";
 import { useStartConversation } from "@/hooks/useMessaging";
 import { useToast } from "@/hooks/use-toast";
+import FounderBadge from "@/components/FounderBadge";
 
 interface PublicUser {
   id: string;
   name: string;
   name_verified: boolean;
+  is_founder: boolean;
   program: string | null;
   bio: string | null;
   avatar_url: string | null;
@@ -221,26 +223,33 @@ export default function PublicProfilePage() {
         className="p-6 rounded-xl bg-white/5 border border-white/10"
       >
         <div className="flex items-start gap-4">
-          <Avatar className="w-20 h-20">
-            <AvatarImage src={profile.avatar_url || undefined} />
-            <AvatarFallback className="text-2xl bg-purple-500/20 text-purple-400">
-              {profile.name
-                ?.split(" ")
-                .map((n) => n[0])
-                .join("")
-                .toUpperCase()
-                .slice(0, 2) || "?"}
-            </AvatarFallback>
-          </Avatar>
+          <div className="relative shrink-0">
+            <Avatar className="w-20 h-20">
+              <AvatarImage src={profile.avatar_url || undefined} />
+              <AvatarFallback className="text-2xl bg-purple-500/20 text-purple-400">
+                {profile.name
+                  ?.split(" ")
+                  .map((n) => n[0])
+                  .join("")
+                  .toUpperCase()
+                  .slice(0, 2) || "?"}
+              </AvatarFallback>
+            </Avatar>
+          </div>
 
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
               <h1 className="text-xl font-bold">{profile.name}</h1>
               {profile.name_verified && (
                 <Badge variant="secondary" className="bg-green-500/20 text-green-400">
                   <Shield className="w-3 h-3 mr-1" />
                   Verified
                 </Badge>
+              )}
+              {profile.is_founder && (
+                <span title="Founder — Early member of YorkPulse">
+                  <FounderBadge />
+                </span>
               )}
             </div>
 

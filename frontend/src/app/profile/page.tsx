@@ -41,6 +41,7 @@ import { useToast } from "@/hooks/use-toast";
 import { api } from "@/services/api";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import FounderBadge from "@/components/FounderBadge";
 
 // Program suggestions from York University courses
 const PROGRAM_SUGGESTIONS = [
@@ -412,13 +413,18 @@ export default function ProfilePage() {
           </div>
 
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
               <h1 className="text-xl font-bold">{user?.name}</h1>
               {user?.name_verified && (
                 <Badge variant="secondary" className="bg-green-500/20 text-green-400">
                   <Shield className="w-3 h-3 mr-1" />
                   Verified
                 </Badge>
+              )}
+              {user?.is_founder && (
+                <span title="Founder — Early member of YorkPulse">
+                  <FounderBadge />
+                </span>
               )}
             </div>
 

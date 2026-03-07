@@ -56,6 +56,13 @@ class User(Base, UUIDMixin, TimestampMixin):
         nullable=False,
     )
 
+    # Founder badge — granted to all users who existed at launch
+    is_founder: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+    )
+
     # Profile (name is immutable after verification)
     name: Mapped[str] = mapped_column(
         String(100),

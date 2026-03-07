@@ -6,6 +6,7 @@ export interface User {
   name_verified: boolean;
   email_verified: boolean;
   is_admin?: boolean;
+  is_founder?: boolean;
   program?: string;
   bio?: string;
   interests?: string[];
