@@ -1,6 +1,8 @@
 from decimal import Decimal
 
-from sqlalchemy import String, Boolean, ARRAY, Text, Integer, Numeric
+from datetime import datetime
+
+from sqlalchemy import String, Boolean, ARRAY, Text, Integer, Numeric, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -95,6 +97,12 @@ class User(Base, UUIDMixin, TimestampMixin):
     )
     interests: Mapped[list[str] | None] = mapped_column(
         ARRAY(String(50)),
+        nullable=True,
+    )
+
+    # Activity tracking
+    last_login_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
         nullable=True,
     )
 

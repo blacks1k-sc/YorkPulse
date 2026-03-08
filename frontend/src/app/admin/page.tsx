@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Trash2, Loader2, Shield, Users, ShoppingBag, FileText, MessageSquare, Flag, ChevronLeft, ChevronRight, BookOpen, Image } from "lucide-react";
+import { Trash2, Loader2, Shield, Users, ShoppingBag, FileText, MessageSquare, Flag, ChevronLeft, ChevronRight, BookOpen, Image, Search } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,7 @@ interface AdminUser {
   is_admin: boolean;
   is_banned: boolean;
   created_at: string | null;
+  last_login_at: string | null;
 }
 
 interface AdminVaultPost {
@@ -79,6 +80,12 @@ interface PagedResult<T> {
 function fmtDate(iso: string | null) {
   if (!iso) return "—";
   return new Date(iso).toLocaleDateString("en-CA");
+}
+
+function fmtDateTime(iso: string | null) {
+  if (!iso) return "Never";
+  const d = new Date(iso);
+  return d.toLocaleDateString("en-CA") + " " + d.toLocaleTimeString("en-CA", { hour: "2-digit", minute: "2-digit" });
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -165,63 +172,90 @@ function UsersTab() {
   const [data, setData] = useState<PagedResult<AdminUser> | null>(null);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const load = useCallback(async (p: number) => {
+  const load = useCallback(async (p: number, q: string) => {
     setLoading(true);
     try {
-      const result = await api.admin.getUsers(p, 50);
+      const result = await api.admin.getUsers(p, 50, q || undefined);
       setData(result);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => { load(page); }, [load, page]);
+  useEffect(() => { load(page, debouncedSearch); }, [load, page, debouncedSearch]);
+
+  function handleSearchChange(val: string) {
+    setSearch(val);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setPage(1);
+      setDebouncedSearch(val);
+    }, 300);
+  }
 
   async function handleDelete(userId: string) {
     await api.admin.deleteUser(userId);
-    await load(page);
+    await load(page, debouncedSearch);
   }
-
-  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-zinc-500" /></div>;
-  if (!data) return null;
 
   return (
     <div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-zinc-800 text-zinc-500 text-left">
-              <th className="pb-2 pr-4 font-medium">Name</th>
-              <th className="pb-2 pr-4 font-medium">Email</th>
-              <th className="pb-2 pr-4 font-medium">Joined</th>
-              <th className="pb-2 pr-4 font-medium">Flags</th>
-              <th className="pb-2 font-medium"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.items.map((u) => (
-              <tr key={u.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
-                <td className="py-2 pr-4">
-                  <span className="font-medium">{u.name}</span>
-                  {u.is_admin && <span className="ml-2 text-xs bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded-full">admin</span>}
-                </td>
-                <td className="py-2 pr-4 text-zinc-400">{u.email}</td>
-                <td className="py-2 pr-4 text-zinc-500">{fmtDate(u.created_at)}</td>
-                <td className="py-2 pr-4">
-                  {u.is_banned && <StatusBadge status="banned" />}
-                </td>
-                <td className="py-2 text-right">
-                  {!u.is_admin && (
-                    <DeleteButton onDelete={() => handleDelete(u.id)} label="Delete user" />
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="mb-4 relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+        <input
+          type="text"
+          placeholder="Search by name or email…"
+          value={search}
+          onChange={(e) => handleSearchChange(e.target.value)}
+          className="w-full pl-9 pr-4 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-500"
+        />
       </div>
-      <Pagination page={page} hasMore={data.has_more} total={data.total} perPage={data.per_page} onPrev={() => setPage(p => p - 1)} onNext={() => setPage(p => p + 1)} />
+      {loading ? (
+        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-zinc-500" /></div>
+      ) : !data ? null : (
+        <>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-zinc-800 text-zinc-500 text-left">
+                  <th className="pb-2 pr-4 font-medium">Name</th>
+                  <th className="pb-2 pr-4 font-medium">Email</th>
+                  <th className="pb-2 pr-4 font-medium">Last Login</th>
+                  <th className="pb-2 pr-4 font-medium">Joined</th>
+                  <th className="pb-2 pr-4 font-medium">Flags</th>
+                  <th className="pb-2 font-medium"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.items.map((u) => (
+                  <tr key={u.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
+                    <td className="py-2 pr-4">
+                      <span className="font-medium">{u.name}</span>
+                      {u.is_admin && <span className="ml-2 text-xs bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded-full">admin</span>}
+                    </td>
+                    <td className="py-2 pr-4 text-zinc-400">{u.email}</td>
+                    <td className="py-2 pr-4 text-zinc-400 whitespace-nowrap">{fmtDateTime(u.last_login_at)}</td>
+                    <td className="py-2 pr-4 text-zinc-500">{fmtDate(u.created_at)}</td>
+                    <td className="py-2 pr-4">
+                      {u.is_banned && <StatusBadge status="banned" />}
+                    </td>
+                    <td className="py-2 text-right">
+                      {!u.is_admin && (
+                        <DeleteButton onDelete={() => handleDelete(u.id)} label="Delete user" />
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <Pagination page={page} hasMore={data.has_more} total={data.total} perPage={data.per_page} onPrev={() => setPage(p => p - 1)} onNext={() => setPage(p => p + 1)} />
+        </>
+      )}
     </div>
   );
 }

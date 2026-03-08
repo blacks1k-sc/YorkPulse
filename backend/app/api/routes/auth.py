@@ -1,10 +1,11 @@
 """Authentication API routes."""
 
 import uuid
+from datetime import datetime, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status, UploadFile, File
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -212,7 +213,10 @@ async def verify_otp(
         # Mark email as verified if not already
         if not user.email_verified:
             user.email_verified = True
-            await db.commit()
+
+    # Track last login
+    user.last_login_at = datetime.now(timezone.utc)
+    await db.commit()
 
     # Generate our own JWT tokens (for API auth)
     access_token, refresh_token, expires_in = jwt_service.create_token_pair(
@@ -590,9 +594,18 @@ async def admin_list_users(
     db: Annotated[AsyncSession, Depends(get_db)],
     page: Annotated[int, Query(ge=1)] = 1,
     per_page: Annotated[int, Query(ge=1, le=100)] = 50,
+    search: Annotated[str | None, Query(max_length=100)] = None,
 ):
     """List all users (admin only)."""
-    query = select(User).order_by(User.created_at.desc())
+    query = select(User)
+
+    if search:
+        term = f"%{search.strip()}%"
+        query = query.where(
+            or_(User.name.ilike(term), User.email.ilike(term))
+        )
+
+    query = query.order_by(User.last_login_at.desc().nulls_last(), User.created_at.desc())
 
     count_query = select(func.count()).select_from(query.subquery())
     total = (await db.execute(count_query)).scalar() or 0
@@ -610,6 +623,7 @@ async def admin_list_users(
                 "is_admin": u.is_admin,
                 "is_banned": u.is_banned,
                 "created_at": u.created_at.isoformat() if u.created_at else None,
+                "last_login_at": u.last_login_at.isoformat() if u.last_login_at else None,
             }
             for u in users
         ],

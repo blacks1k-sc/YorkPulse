@@ -820,8 +820,10 @@ class ApiClient {
 
   // Admin endpoints
   admin = {
-    getUsers: (page = 1, perPage = 50) =>
-      this.get<{
+    getUsers: (page = 1, perPage = 50, search?: string) => {
+      const params = new URLSearchParams({ page: String(page), per_page: String(perPage) });
+      if (search) params.set("search", search);
+      return this.get<{
         items: Array<{
           id: string;
           name: string;
@@ -829,12 +831,14 @@ class ApiClient {
           is_admin: boolean;
           is_banned: boolean;
           created_at: string | null;
+          last_login_at: string | null;
         }>;
         total: number;
         page: number;
         per_page: number;
         has_more: boolean;
-      }>(`/auth/admin/users?page=${page}&per_page=${perPage}`),
+      }>(`/auth/admin/users?${params.toString()}`);
+    },
 
     deleteUser: (userId: string) =>
       this.delete<void>(`/auth/admin/users/${userId}`),
