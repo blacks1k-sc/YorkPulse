@@ -12,6 +12,9 @@ def _load_admin_emails() -> set[str]:
     return {e.strip().lower() for e in settings.admin_emails.split(",") if e.strip()}
 
 
+ADMIN_EMAILS = _load_admin_emails()
+
+
 def is_valid_email(email: str) -> bool:
     """Check if email is valid (York email or admin exception)."""
     email_lower = email.lower()
