@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { CreateModal } from "@/components/modals/CreateModal";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
+import FounderCelebration from "@/components/FounderCelebration";
 import { api } from "@/services/api";
 import { useAuthStore } from "@/stores/auth";
 
@@ -46,6 +47,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       {children}
       <CreateModal />
       <FloatingActionButton />
+      <FounderCelebration />
       <Toaster />
     </QueryClientProvider>
   );
