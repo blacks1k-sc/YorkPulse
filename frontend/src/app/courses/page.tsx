@@ -40,7 +40,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { ChatMessage } from "@/components/chat/ChatMessage";
-import type { Course, CourseChannel, CourseMessage, VoteStatus } from "@/types";
+import type { Course, CourseChannel, CourseMessage, CourseParticipant, VoteStatus } from "@/types";
 
 // View modes
 type ViewMode = "browse" | "chat";
@@ -65,6 +65,7 @@ export default function CoursesPage() {
   const [previewCourse, setPreviewCourse] = useState<Course | null>(null);
   const [profNameInput, setProfNameInput] = useState("");
   const [replyTo, setReplyTo] = useState<{ id: string; authorName: string; content: string | null } | null>(null);
+  const [showParticipants, setShowParticipants] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Queries
@@ -117,6 +118,12 @@ export default function CoursesPage() {
     queryKey: ["courses", selectedCourse?.id, "vote-status"],
     queryFn: () => api.courses.getVoteStatus(selectedCourse!.id),
     enabled: !!selectedCourse && viewMode === "chat",
+  });
+
+  const { data: participantsData, isLoading: participantsLoading } = useQuery({
+    queryKey: ["courses", selectedCourse?.id, "participants"],
+    queryFn: () => api.courses.getParticipants(selectedCourse!.id),
+    enabled: !!selectedCourse && showParticipants,
   });
 
   // Mutations
@@ -247,6 +254,7 @@ export default function CoursesPage() {
   // Handle channel click
   const handleChannelClick = (channel: CourseChannel) => {
     setSidebarOpen(false);
+    setShowParticipants(false);
     if (channel.type === "professor") {
       // Check if already a member
       joinChannelMutation.mutate(channel.id);
@@ -578,6 +586,7 @@ export default function CoursesPage() {
             setViewMode("browse");
             setSelectedCourse(null);
             setSelectedChannel(null);
+            setShowParticipants(false);
             // Refresh my courses to update unread counts
             queryClient.invalidateQueries({ queryKey: ["courses", "my"] });
           }}
@@ -587,13 +596,19 @@ export default function CoursesPage() {
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <span className="font-mono text-[#00ff88]">{selectedCourse?.code}</span>
-            {selectedChannel && (
+            {showParticipants ? (
+              <>
+                <ChevronRight className="w-4 h-4 text-zinc-500" />
+                <Users className="w-4 h-4 text-zinc-400" />
+                <span className="text-sm">Participants</span>
+              </>
+            ) : selectedChannel ? (
               <>
                 <ChevronRight className="w-4 h-4 text-zinc-500" />
                 <Hash className="w-4 h-4 text-zinc-400" />
                 <span className="text-sm">{selectedChannel.name}</span>
               </>
-            )}
+            ) : null}
           </div>
           <p className="text-xs text-zinc-500 mt-0.5">{selectedCourse?.name}</p>
         </div>
@@ -627,6 +642,25 @@ export default function CoursesPage() {
           </div>
           <ScrollArea className="flex-1">
             <div className="p-2 space-y-1">
+              {/* Participants tab */}
+              <button
+                onClick={() => {
+                  setShowParticipants(true);
+                  setSelectedChannel(null);
+                  setSidebarOpen(false);
+                }}
+                className={cn(
+                  "w-full px-2 py-1.5 rounded flex items-center gap-2 text-sm transition-colors",
+                  showParticipants
+                    ? "bg-[#00ff88]/20 text-[#00ff88]"
+                    : "hover:bg-white/5 text-zinc-400"
+                )}
+              >
+                <Users className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate flex-1">Participants</span>
+                <span className="text-[10px] text-zinc-500">{selectedCourse?.member_count}</span>
+              </button>
+
               {channels?.channels.map((channel) => (
                 <button
                   key={channel.id}
@@ -664,8 +698,50 @@ export default function CoursesPage() {
           </div>
         </div>
 
-        {/* Messages Area */}
+        {/* Messages / Participants Area */}
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+          {/* Participants Panel */}
+          {showParticipants && (
+            <ScrollArea className="flex-1 min-h-0 p-4">
+              {participantsLoading ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-white/5">
+                      <Skeleton className="w-10 h-10 rounded-full flex-shrink-0" />
+                      <Skeleton className="h-4 flex-1" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <>
+                  <p className="text-xs text-zinc-500 mb-3">
+                    {participantsData?.total ?? 0} enrolled
+                  </p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {participantsData?.participants.map((p: CourseParticipant) => (
+                      <Link
+                        key={p.id}
+                        href={`/profile/${p.id}`}
+                        className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-colors"
+                      >
+                        <Avatar className="w-10 h-10 flex-shrink-0">
+                          <AvatarImage src={p.avatar_url ?? undefined} />
+                          <AvatarFallback className="text-xs bg-[#00ff88]/10 text-[#00ff88]">
+                            {p.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm text-zinc-300 truncate">{p.name}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </>
+              )}
+            </ScrollArea>
+          )}
+
+          {/* Channel view (messages + input) */}
+          {!showParticipants && (
+          <>
           {/* Vote Status Banner (for general channel) */}
           {selectedChannel?.type === "general" && voteStatus && voteStatus.votes.length > 0 && (
             <div className="p-3 bg-purple-500/10 border-b border-purple-500/20">
@@ -814,6 +890,8 @@ export default function CoursesPage() {
                 onCancelReply={() => setReplyTo(null)}
               />
             </div>
+          )}
+          </>
           )}
         </div>
       </div>

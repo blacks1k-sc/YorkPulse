@@ -30,6 +30,8 @@ from app.schemas.course import (
     ChatImageUploadRequest,
     ChatImageUploadResponse,
     CourseInHierarchy,
+    CourseParticipant,
+    CourseParticipantsResponse,
     CourseResponse,
     CourseSearchResponse,
     CourseSearchResult,
@@ -292,6 +294,41 @@ async def get_course(
         raise HTTPException(status_code=404, detail="Course not found")
 
     return _course_to_response(course)
+
+
+@router.get("/{course_id}/participants", response_model=CourseParticipantsResponse)
+async def get_course_participants(
+    course_id: str,
+    current_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Get participants in a course. User must be enrolled."""
+    membership = await db.execute(
+        select(CourseMember).where(
+            and_(
+                CourseMember.course_id == course_id,
+                CourseMember.user_id == current_user.id,
+            )
+        )
+    )
+    if not membership.scalar_one_or_none():
+        raise HTTPException(status_code=403, detail="You must be enrolled in this course")
+
+    result = await db.execute(
+        select(User)
+        .join(CourseMember, CourseMember.user_id == User.id)
+        .where(CourseMember.course_id == course_id)
+        .order_by(User.name)
+    )
+    users = result.scalars().all()
+
+    return CourseParticipantsResponse(
+        participants=[
+            CourseParticipant(id=str(u.id), name=u.name, avatar_url=u.avatar_url)
+            for u in users
+        ],
+        total=len(users),
+    )
 
 
 # ============ Course Membership ============

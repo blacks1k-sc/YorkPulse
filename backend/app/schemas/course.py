@@ -277,6 +277,24 @@ class LeaveCourseResponse(BaseModel):
     message: str
 
 
+# ============ Participants Schemas ============
+
+
+class CourseParticipant(BaseModel):
+    """Minimal user info for course participants list."""
+
+    id: str
+    name: str
+    avatar_url: str | None
+
+
+class CourseParticipantsResponse(BaseModel):
+    """Participants in a course."""
+
+    participants: list[CourseParticipant]
+    total: int
+
+
 # ============ Admin Schemas ============
 
 

@@ -294,6 +294,12 @@ export interface CourseMembership {
   unread_count: number;
 }
 
+export interface CourseParticipant {
+  id: string;
+  name: string;
+  avatar_url: string | null;
+}
+
 // Quick Gigs types
 export type GigType = "offering" | "need_help";
 export type GigCategory = "academic" | "moving" | "tech_help" | "errands" | "creative" | "other";

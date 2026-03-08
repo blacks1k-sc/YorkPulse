@@ -18,6 +18,7 @@ import type {
   CourseHierarchy,
   VoteStatus,
   CourseMembership,
+  CourseParticipant,
   Gig,
   GigResponse,
   GigTransaction,
@@ -644,6 +645,11 @@ class ApiClient {
       this.post<{ upload_url: string; file_url: string; expires_in: number }>(
         "/courses/chat/upload-image",
         { filename, content_type: contentType }
+      ),
+
+    getParticipants: (courseId: string) =>
+      this.get<{ participants: CourseParticipant[]; total: number }>(
+        `/courses/${courseId}/participants`
       ),
   };
 
