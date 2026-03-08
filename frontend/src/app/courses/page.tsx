@@ -658,7 +658,6 @@ export default function CoursesPage() {
               >
                 <Users className="w-4 h-4 flex-shrink-0" />
                 <span className="truncate flex-1">Participants</span>
-                <span className="text-[10px] text-zinc-500">{selectedCourse?.member_count}</span>
               </button>
 
               {channels?.channels.map((channel) => (
