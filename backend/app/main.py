@@ -89,16 +89,15 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
 )
 
 # Timing middleware (logs slow requests > 1s)
 app.add_middleware(TimingMiddleware)
 
-# Rate limiting (add after CORS)
-# Uncomment when Redis is available:
-# app.add_middleware(RateLimitMiddleware)
+# Rate limiting
+app.add_middleware(RateLimitMiddleware)
 
 # Routes
 app.include_router(health.router, prefix=settings.api_prefix)

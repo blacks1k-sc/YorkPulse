@@ -6,14 +6,16 @@ from typing import Annotated
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
-# Admin emails that bypass York email validation
-ADMIN_EMAILS = {"yorkpulse.app@gmail.com"}
+def _load_admin_emails() -> set[str]:
+    """Load admin emails from config (env var ADMIN_EMAILS, comma-separated)."""
+    from app.core.config import settings
+    return {e.strip().lower() for e in settings.admin_emails.split(",") if e.strip()}
 
 
 def is_valid_email(email: str) -> bool:
     """Check if email is valid (York email or admin exception)."""
     email_lower = email.lower()
-    if email_lower in ADMIN_EMAILS:
+    if email_lower in _load_admin_emails():
         return True
     return email_lower.endswith("@yorku.ca") or email_lower.endswith("@my.yorku.ca")
 

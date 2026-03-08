@@ -1,6 +1,9 @@
 """Marketplace API routes."""
 
+import logging
 import uuid
+
+logger = logging.getLogger(__name__)
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
@@ -361,9 +364,10 @@ async def get_image_upload_url(
             expires_in=300,
         )
     except ValueError as e:
+        logger.error("Marketplace image upload URL error: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
+            detail="Upload service unavailable. Please try again.",
         )
 
 
@@ -400,9 +404,10 @@ async def upload_image_direct(
 
         return {"public_url": public_url}
     except Exception as e:
+        logger.error("Marketplace image direct upload error: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to upload image: {str(e)}",
+            detail="Failed to upload image. Please try again.",
         )
 
 

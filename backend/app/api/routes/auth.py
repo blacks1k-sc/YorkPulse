@@ -368,9 +368,10 @@ async def get_id_upload_url(
             expires_in=300,
         )
     except ValueError as e:
+        logger.error("ID upload error: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
+            detail="Failed to process request. Please try again.",
         )
 
 
@@ -505,9 +506,10 @@ async def get_avatar_upload_url(
             expires_in=300,
         )
     except ValueError as e:
+        logger.error("Avatar upload URL error: %s", e)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=str(e),
+            detail="Upload service unavailable. Please try again.",
         )
 
 
@@ -544,9 +546,10 @@ async def upload_avatar_direct(
 
         return {"file_url": public_url}
     except Exception as e:
+        logger.error("Avatar direct upload error: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to upload avatar: {str(e)}",
+            detail="Failed to upload avatar. Please try again.",
         )
 
 

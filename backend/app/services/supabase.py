@@ -2,7 +2,7 @@
 
 import asyncio
 import logging
-import random
+import secrets
 import string
 
 from supabase import create_client, Client
@@ -14,6 +14,8 @@ from app.services.email import email_service
 logger = logging.getLogger(__name__)
 
 OTP_TTL_SECONDS = 600  # 10 minutes
+OTP_MAX_ATTEMPTS = 5
+OTP_LOCKOUT_SECONDS = 900  # 15 minutes
 
 
 async def _send_email_background(email: str, otp: str) -> None:
@@ -30,6 +32,12 @@ async def _send_email_background(email: str, otp: str) -> None:
 
 def _make_otp_key(email: str) -> str:
     return f"otp:{email.lower()}"
+
+def _make_otp_attempts_key(email: str) -> str:
+    return f"otp_attempts:{email.lower()}"
+
+def _make_otp_lockout_key(email: str) -> str:
+    return f"otp_lockout:{email.lower()}"
 
 
 class SupabaseAuthService:
@@ -52,8 +60,8 @@ class SupabaseAuthService:
         return bool(settings.supabase_url and settings.supabase_key)
 
     def _make_otp(self) -> str:
-        """Generate a random 6-digit OTP code."""
-        return ''.join(random.choices(string.digits, k=6))
+        """Generate a cryptographically random 6-digit OTP code."""
+        return ''.join(secrets.choice(string.digits) for _ in range(6))
 
     async def _store_otp(self, email: str, otp: str) -> None:
         """Persist OTP in Redis with a 10-minute TTL.
@@ -67,12 +75,48 @@ class SupabaseAuthService:
             logger.warning("Redis OTP store failed, using in-memory fallback: %s", e)
             _otps_fallback[email.lower()] = otp
 
+    async def _is_otp_locked_out(self, email: str) -> bool:
+        """Return True if the email is currently locked out due to too many failed attempts."""
+        from app.services.redis import redis_service
+        try:
+            return await redis_service.get(_make_otp_lockout_key(email)) is not None
+        except Exception:
+            return False
+
+    async def _record_failed_attempt(self, email: str) -> None:
+        """Increment failed attempt counter; lock out after OTP_MAX_ATTEMPTS failures."""
+        from app.services.redis import redis_service
+        try:
+            key = _make_otp_attempts_key(email)
+            count = await redis_service.get(key)
+            count = int(count) + 1 if count else 1
+            await redis_service.set(key, str(count), expire_seconds=OTP_TTL_SECONDS)
+            if count >= OTP_MAX_ATTEMPTS:
+                await redis_service.set(_make_otp_lockout_key(email), "1", expire_seconds=OTP_LOCKOUT_SECONDS)
+                await redis_service.delete(key)
+                logger.warning("OTP lockout triggered for %s after %d failed attempts", email, count)
+        except Exception as e:
+            logger.warning("Failed to record OTP attempt for %s: %s", email, e)
+
+    async def _clear_otp_attempts(self, email: str) -> None:
+        """Clear attempt counter on successful verification."""
+        from app.services.redis import redis_service
+        try:
+            await redis_service.delete(_make_otp_attempts_key(email))
+        except Exception:
+            pass
+
     async def _verify_and_consume_otp(self, email: str, code: str) -> bool:
         """Check the submitted code against the stored OTP and delete it on match.
 
+        Enforces brute-force protection: locks out after OTP_MAX_ATTEMPTS failures.
         Tries Redis first, then in-memory fallback.
         """
         from app.services.redis import redis_service
+
+        if await self._is_otp_locked_out(email):
+            return False
+
         key = _make_otp_key(email)
 
         try:
@@ -80,7 +124,9 @@ class SupabaseAuthService:
             if stored is not None:
                 if stored == code:
                     await redis_service.delete(key)
+                    await self._clear_otp_attempts(email)
                     return True
+                await self._record_failed_attempt(email)
                 return False
         except Exception as e:
             logger.warning("Redis OTP verify failed, checking in-memory fallback: %s", e)
@@ -91,8 +137,10 @@ class SupabaseAuthService:
             stored = _otps_fallback[email_lower]
             if stored == code:
                 del _otps_fallback[email_lower]
+                await self._clear_otp_attempts(email)
                 return True
 
+        await self._record_failed_attempt(email)
         return False
 
     async def send_otp(self, email: str, force_dev_mode: bool = False) -> tuple[bool, str]:

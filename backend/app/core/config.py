@@ -52,6 +52,7 @@ class Settings(BaseSettings):
     smtp_password: str = ""
     email_from: str = ""
     admin_email: str = ""  # Admin email for failure alerts
+    admin_emails: str = "yorkpulse.app@gmail.com"  # Comma-separated emails that bypass York validation
 
     # CORS
     cors_origins: list[str] = [
