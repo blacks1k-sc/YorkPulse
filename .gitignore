@@ -52,6 +52,9 @@ env/
 # Docker
 .docker/
 
+# One-off scripts with credentials (never commit)
+backend/send_broadcast.py
+
 # Misc
 *.pem
 .vercel
