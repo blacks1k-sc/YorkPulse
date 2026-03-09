@@ -6,11 +6,13 @@ import certifi
 import aiosmtplib
 from email.message import EmailMessage
 
+import os
+
 SMTP_HOST = "smtp.gmail.com"
 SMTP_PORT = 587
-SMTP_USER = "yorkpulse.app@gmail.com"
-SMTP_PASSWORD = "qzokxsdcffaujcxx"
-FROM = "YorkPulse <yorkpulse.app@gmail.com>"
+SMTP_USER = os.environ["SMTP_USER"]
+SMTP_PASSWORD = os.environ["SMTP_PASSWORD"]
+FROM = f"YorkPulse <{SMTP_USER}>"
 
 SUBJECT = "You were one of the first 🙏"
 
@@ -108,7 +110,7 @@ async def send(to: str):
 async def get_all_emails() -> list[str]:
     import asyncpg
     conn = await asyncpg.connect(
-        "postgresql://postgres.rnqnmztvffkgozdjfjsa:York%406969%40nrupp@aws-1-ca-central-1.pooler.supabase.com:6543/postgres",
+        os.environ["DATABASE_URL"],
         statement_cache_size=0,
     )
     rows = await conn.fetch(
