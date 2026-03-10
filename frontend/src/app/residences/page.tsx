@@ -80,6 +80,7 @@ export default function ResidencesPage() {
     mutationFn: (residenceId: string) => api.residences.join(residenceId),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["residences", "my"] });
+      queryClient.invalidateQueries({ queryKey: ["residences", "list"] });
       setSelectedResidence(data.residence);
       setSelectedChannel(data.channel);
       setViewMode("chat");
@@ -94,6 +95,7 @@ export default function ResidencesPage() {
     mutationFn: (residenceId: string) => api.residences.leave(residenceId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["residences", "my"] });
+      queryClient.invalidateQueries({ queryKey: ["residences", "list"] });
       setViewMode("browse");
       setSelectedResidence(null);
       setSelectedChannel(null);
