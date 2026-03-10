@@ -137,7 +137,7 @@ const dashboardFeatures = [
     icon: GraduationCap,
     title: "Course Chat",
     subtitle: "Class Discussions",
-    description: "Join course-specific rooms to ask questions and form study groups.",
+    description: "Join course-specific rooms for study groups and Q&A, now including a dedicated chat for our on campus residence community.",
     accentColor: "blue",
     statKey: "total_courses" as const,
     statLabel: "courses",
