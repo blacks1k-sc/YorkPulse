@@ -81,7 +81,7 @@ const landingFeatures = [
   {
     href: "/courses",
     icon: GraduationCap,
-    title: "Courses",
+    title: "Link Up",
     description: "Join course chats and connect with classmates.",
     iconBg: "bg-cyan-500/10",
     iconColor: "text-cyan-500",

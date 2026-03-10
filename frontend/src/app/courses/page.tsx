@@ -1013,7 +1013,7 @@ export default function CoursesPage() {
           </button>
           <Link href="/residences">
             <button className="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors text-zinc-400 hover:text-zinc-200">
-              Residences
+              Residence
             </button>
           </Link>
         </div>

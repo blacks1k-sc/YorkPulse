@@ -493,7 +493,7 @@ export default function ResidencesPage() {
             </button>
           </Link>
           <button className="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors bg-purple-500/20 text-purple-300">
-            Residences
+            Residence
           </button>
         </div>
       )}
