@@ -221,7 +221,7 @@ export default function ResidencesPage() {
         </div>
       )}
 
-      {/* Residence List by Campus */}
+      {/* Residence List */}
       {listLoading ? (
         <div className="space-y-4">
           {[...Array(3)].map((_, i) => (
@@ -229,101 +229,43 @@ export default function ResidencesPage() {
           ))}
         </div>
       ) : (
-        <>
-          {/* Keele Campus */}
-          {residenceList && residenceList.keele.length > 0 && (
-            <div className="space-y-2">
-              <h3 className="text-sm font-medium text-zinc-400 flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-cyan-400" />
-                Keele Campus
-              </h3>
-              <div className="space-y-2">
-                {residenceList.keele.map((residence) => {
-                  const joined = isResidenceMember(residence.id);
-                  return (
-                    <motion.div
-                      key={residence.id}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => handleResidenceClick(residence)}
-                      className={cn(
-                        "flex items-center justify-between p-4 rounded-xl cursor-pointer border transition-colors",
-                        joined
-                          ? "bg-purple-500/5 border-purple-500/30"
-                          : "bg-white/5 hover:bg-white/10 border-white/10"
-                      )}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={cn(
-                          "w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0",
-                          joined ? "bg-purple-500/20" : "bg-white/5"
-                        )}>
-                          <Building2 className={cn("w-4 h-4", joined ? "text-purple-400" : "text-zinc-400")} />
-                        </div>
-                        <div>
-                          <p className="font-medium text-sm">{residence.name}</p>
-                          <div className="flex items-center gap-1 mt-0.5 text-zinc-500">
-                            <Users className="w-3 h-3" />
-                            <span className="text-xs">{residence.member_count} members</span>
-                          </div>
-                        </div>
-                      </div>
-                      {joined && (
-                        <span className="text-[10px] text-purple-400 font-medium">Joined</span>
-                      )}
-                    </motion.div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Glendon Campus */}
-          {residenceList && residenceList.glendon.length > 0 && (
-            <div className="space-y-2">
-              <h3 className="text-sm font-medium text-zinc-400 flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-amber-400" />
-                Glendon Campus
-              </h3>
-              <div className="space-y-2">
-                {residenceList.glendon.map((residence) => {
-                  const joined = isResidenceMember(residence.id);
-                  return (
-                    <motion.div
-                      key={residence.id}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => handleResidenceClick(residence)}
-                      className={cn(
-                        "flex items-center justify-between p-4 rounded-xl cursor-pointer border transition-colors",
-                        joined
-                          ? "bg-amber-500/5 border-amber-500/30"
-                          : "bg-white/5 hover:bg-white/10 border-white/10"
-                      )}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={cn(
-                          "w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0",
-                          joined ? "bg-amber-500/20" : "bg-white/5"
-                        )}>
-                          <Building2 className={cn("w-4 h-4", joined ? "text-amber-400" : "text-zinc-400")} />
-                        </div>
-                        <div>
-                          <p className="font-medium text-sm">{residence.name}</p>
-                          <div className="flex items-center gap-1 mt-0.5 text-zinc-500">
-                            <Users className="w-3 h-3" />
-                            <span className="text-xs">{residence.member_count} members</span>
-                          </div>
-                        </div>
-                      </div>
-                      {joined && (
-                        <span className="text-[10px] text-amber-400 font-medium">Joined</span>
-                      )}
-                    </motion.div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </>
+        <div className="space-y-2">
+          {[...(residenceList?.keele ?? []), ...(residenceList?.glendon ?? [])].map((residence) => {
+            const joined = isResidenceMember(residence.id);
+            return (
+              <motion.div
+                key={residence.id}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => handleResidenceClick(residence)}
+                className={cn(
+                  "flex items-center justify-between p-4 rounded-xl cursor-pointer border transition-colors",
+                  joined
+                    ? "bg-purple-500/5 border-purple-500/30"
+                    : "bg-white/5 hover:bg-white/10 border-white/10"
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0",
+                    joined ? "bg-purple-500/20" : "bg-white/5"
+                  )}>
+                    <Building2 className={cn("w-4 h-4", joined ? "text-purple-400" : "text-zinc-400")} />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">{residence.name}</p>
+                    <div className="flex items-center gap-1 mt-0.5 text-zinc-500">
+                      <Users className="w-3 h-3" />
+                      <span className="text-xs">{residence.member_count} members</span>
+                    </div>
+                  </div>
+                </div>
+                {joined && (
+                  <span className="text-[10px] text-purple-400 font-medium">Joined</span>
+                )}
+              </motion.div>
+            );
+          })}
+        </div>
       )}
     </div>
   );
