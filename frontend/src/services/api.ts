@@ -29,6 +29,11 @@ import type {
   GigPriceType,
   GigLocation,
   GigStatus,
+  Residence,
+  ResidenceChannel,
+  ResidenceMessage,
+  ResidenceMembership,
+  ResidenceParticipant,
 } from "@/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -980,6 +985,59 @@ class ApiClient {
           threshold: number;
         }>;
       }>(`/courses/admin/votes`),
+  };
+
+  // Residences chat endpoints
+  residences = {
+    list: () =>
+      this.get<{ keele: Residence[]; glendon: Residence[] }>("/residences/list"),
+
+    getMyResidences: () =>
+      this.get<{ residences: ResidenceMembership[] }>("/residences/my/residences"),
+
+    join: (residenceId: string) =>
+      this.post<{ residence: Residence; channel: ResidenceChannel; message: string }>(
+        `/residences/${residenceId}/join`
+      ),
+
+    leave: (residenceId: string) =>
+      this.post<{ message: string }>(`/residences/${residenceId}/leave`),
+
+    getChannel: (residenceId: string) =>
+      this.get<ResidenceChannel>(`/residences/${residenceId}/channel`),
+
+    getMessages: (channelId: string, params?: { before?: string; limit?: number }) => {
+      const searchParams = new URLSearchParams();
+      if (params?.before) searchParams.set("before", params.before);
+      if (params?.limit) searchParams.set("limit", params.limit.toString());
+      const query = searchParams.toString();
+      return this.get<{ messages: ResidenceMessage[]; has_more: boolean }>(
+        `/residences/channels/${channelId}/messages${query ? `?${query}` : ""}`
+      );
+    },
+
+    sendMessage: (channelId: string, message?: string, imageUrl?: string, replyToId?: string) =>
+      this.post<ResidenceMessage>(`/residences/channels/${channelId}/messages`, {
+        message: message || null,
+        image_url: imageUrl || null,
+        reply_to_id: replyToId || null,
+      }),
+
+    getChatImageUploadUrl: (filename: string, contentType: string) =>
+      this.post<{ upload_url: string; file_url: string; expires_in: number }>(
+        "/residences/chat/upload-image",
+        { filename, content_type: contentType }
+      ),
+
+    getParticipants: (residenceId: string) =>
+      this.get<{ participants: ResidenceParticipant[]; total: number }>(
+        `/residences/${residenceId}/participants`
+      ),
+
+    seed: () =>
+      this.post<{ residences_created: number; channels_created: number; message: string }>(
+        "/residences/admin/seed"
+      ),
   };
 }
 

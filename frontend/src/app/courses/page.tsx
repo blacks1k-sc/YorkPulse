@@ -1005,6 +1005,20 @@ export default function CoursesPage() {
         </div>
       </motion.div>
 
+      {/* Tab Switcher */}
+      {viewMode === "browse" && (
+        <div className="flex gap-1 p-1 mb-5 bg-white/5 border border-white/10 rounded-xl w-fit">
+          <button className="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors bg-cyan-500/20 text-cyan-300">
+            Courses
+          </button>
+          <Link href="/residences">
+            <button className="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors text-zinc-400 hover:text-zinc-200">
+              Residences
+            </button>
+          </Link>
+        </div>
+      )}
+
       {/* Disclaimer Banner */}
       {viewMode === "browse" && (
         <div className="mb-5 p-4 rounded-xl bg-blue-500/5 border border-blue-500/20 text-sm text-zinc-400 leading-relaxed">

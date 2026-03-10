@@ -300,6 +300,62 @@ export interface CourseParticipant {
   avatar_url: string | null;
 }
 
+// Residence Chat types
+export interface Residence {
+  id: string;
+  name: string;
+  campus: string;
+  member_count: number;
+  created_at: string;
+}
+
+export interface ResidenceChannel {
+  id: string;
+  residence_id: string;
+  name: string;
+  member_count: number;
+  created_at: string;
+  unread_count: number;
+}
+
+export interface ResidenceMessageReply {
+  id: string;
+  message: string | null;
+  image_url: string | null;
+  author: {
+    id: string;
+    name: string;
+    avatar_url: string | null;
+  };
+}
+
+export interface ResidenceMessage {
+  id: string;
+  channel_id: string;
+  message: string | null;
+  image_url: string | null;
+  author: {
+    id: string;
+    name: string;
+    avatar_url: string | null;
+  };
+  reply_to: ResidenceMessageReply | null;
+  created_at: string;
+}
+
+export interface ResidenceMembership {
+  residence: Residence;
+  channel: ResidenceChannel;
+  joined_at: string;
+  unread_count: number;
+}
+
+export interface ResidenceParticipant {
+  id: string;
+  name: string;
+  avatar_url: string | null;
+}
+
 // Quick Gigs types
 export type GigType = "offering" | "need_help";
 export type GigCategory = "academic" | "moving" | "tech_help" | "errands" | "creative" | "other";

@@ -237,6 +237,12 @@ class User(Base, UUIDMixin, TimestampMixin):
         back_populates="ratee",
         lazy="dynamic",
     )
+    # Residence membership relationships
+    residence_memberships: Mapped[list["ResidenceMember"]] = relationship(
+        "ResidenceMember",
+        back_populates="user",
+        lazy="dynamic",
+    )
 
     def __repr__(self) -> str:
         return f"<User {self.email}>"
@@ -253,3 +259,4 @@ from app.models.report import UserReport  # noqa: E402, F401
 from app.models.course import CourseMember  # noqa: E402, F401
 from app.models.feedback import UserFeedback  # noqa: E402, F401
 from app.models.gig import Gig, GigResponse, GigTransaction, GigRating  # noqa: E402, F401
+from app.models.residence import ResidenceMember  # noqa: E402, F401
