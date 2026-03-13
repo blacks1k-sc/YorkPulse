@@ -61,18 +61,36 @@ export const useAuthStore = create<AuthState>()(
   )
 );
 
+// Check if a JWT access token is expired
+function isTokenExpired(token: string | null): boolean {
+  if (!token) return true;
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.exp ? payload.exp * 1000 < Date.now() : false;
+  } catch {
+    return true;
+  }
+}
+
 // Handle hydration after store is created
 // This runs once on client after the store is initialized
 if (typeof window !== "undefined") {
   // Use a microtask to ensure store is fully initialized
   Promise.resolve().then(() => {
-    useAuthStore.persist.onFinishHydration(() => {
-      useAuthStore.getState().setHydrated();
-    });
+    const finishHydration = () => {
+      const state = useAuthStore.getState();
+      // Clear expired tokens immediately so the user sees the landing page
+      if (state.isAuthenticated && isTokenExpired(state.accessToken)) {
+        state.logout();
+      }
+      state.setHydrated();
+    };
+
+    useAuthStore.persist.onFinishHydration(finishHydration);
 
     // If already hydrated (e.g., no persisted state), set immediately
     if (useAuthStore.persist.hasHydrated()) {
-      useAuthStore.getState().setHydrated();
+      finishHydration();
     }
   });
 }

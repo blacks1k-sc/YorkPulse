@@ -591,6 +591,9 @@ function DashboardView() {
 
 // York U campus images for hero carousel
 const heroImages = [
+  "/images/vari-drone.jpg",
+  "/images/york-u-new-student-centre-2-cannon-design-1300x700-1.jpg",
+  "/images/bergeron5-1024x683.jpg",
   "/images/library_atrium3-1.jpg",
 ];
 
@@ -789,14 +792,9 @@ export default function Home() {
     return () => clearTimeout(timeout);
   }, [setHydrated]);
 
+  // Before hydration, show landing page so expired JWT users never see skeletons
   if (!mounted || !isHydrated) {
-    return (
-      <main className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-pulse">
-          <div className="w-10 h-10 rounded-lg bg-[#E31837]/20" />
-        </div>
-      </main>
-    );
+    return <LandingView />;
   }
 
   return isAuthenticated ? <DashboardView /> : <LandingView />;
