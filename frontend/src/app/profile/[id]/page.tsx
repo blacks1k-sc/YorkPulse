@@ -190,11 +190,11 @@ export default function PublicProfilePage() {
   if (error || !profile) {
     return (
       <div className="container mx-auto px-4 py-12 max-w-2xl text-center">
-        <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-zinc-800 flex items-center justify-center">
-          <User className="w-10 h-10 text-zinc-600" />
+        <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gray-100 flex items-center justify-center">
+          <User className="w-10 h-10 text-gray-500" />
         </div>
         <h2 className="text-xl font-semibold mb-2">User not found</h2>
-        <p className="text-zinc-500 mb-6">This profile doesn't exist or has been removed</p>
+        <p className="text-gray-400 mb-6">This profile doesn't exist or has been removed</p>
         <Button variant="outline" onClick={() => router.back()}>
           <ArrowLeft className="w-4 h-4 mr-2" />
           Go Back
@@ -220,7 +220,7 @@ export default function PublicProfilePage() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="p-6 rounded-xl bg-white/5 border border-white/10"
+        className="p-6 rounded-xl bg-white border border-gray-100 shadow-sm"
       >
         <div className="flex items-start gap-4">
           <div className="relative shrink-0">
@@ -254,13 +254,13 @@ export default function PublicProfilePage() {
             </div>
 
             {profile.program && (
-              <div className="flex items-center gap-2 text-sm text-zinc-400 mb-2">
+              <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
                 <GraduationCap className="w-4 h-4" />
                 {profile.program}
               </div>
             )}
 
-            <div className="flex items-center gap-2 text-sm text-zinc-500">
+            <div className="flex items-center gap-2 text-sm text-gray-400">
               <Calendar className="w-4 h-4" />
               Joined {formatJoinDate(profile.created_at)}
             </div>
@@ -269,7 +269,7 @@ export default function PublicProfilePage() {
 
         {/* Bio */}
         {profile.bio && (
-          <p className="mt-4 text-zinc-300">{profile.bio}</p>
+          <p className="mt-4 text-gray-700">{profile.bio}</p>
         )}
 
         {/* Interests */}
@@ -307,7 +307,7 @@ export default function PublicProfilePage() {
           {isAuthenticated && (
             <Dialog open={showReportDialog} onOpenChange={setShowReportDialog}>
               <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-zinc-500 hover:text-red-400 hover:bg-red-500/10">
+                <Button variant="ghost" size="icon" className="text-gray-400 hover:text-red-400 hover:bg-red-500/10">
                   <Flag className="w-4 h-4" />
                 </Button>
               </DialogTrigger>
@@ -342,7 +342,7 @@ export default function PublicProfilePage() {
                       onChange={(e) => setReportExplanation(e.target.value)}
                       className="min-h-[100px]"
                     />
-                    <p className="text-xs text-zinc-500">
+                    <p className="text-xs text-gray-400">
                       Minimum 10 characters required
                     </p>
                   </div>

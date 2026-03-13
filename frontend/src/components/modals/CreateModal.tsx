@@ -229,7 +229,7 @@ export function CreateModal() {
   const getIcon = () => {
     switch (createModalType) {
       case "vault":
-        return <Shield className="w-5 h-5 text-purple-400" />;
+        return <Shield className="w-5 h-5 text-[#E31837]" />;
       case "marketplace":
         return <ShoppingBag className="w-5 h-5 text-red-400" />;
       default:
@@ -383,7 +383,7 @@ export function CreateModal() {
                   {images.map((url, index) => (
                     <div
                       key={index}
-                      className="relative w-20 h-20 rounded-lg overflow-hidden border border-white/10"
+                      className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-100"
                     >
                       <img
                         src={url}
@@ -405,7 +405,7 @@ export function CreateModal() {
                         type="button"
                         onClick={() => setShowPhotoMenu((v) => !v)}
                         disabled={isUploadingImage}
-                        className="w-20 h-20 rounded-lg border-2 border-dashed border-white/20 hover:border-red-500/50 transition-colors flex flex-col items-center justify-center gap-1 text-zinc-500 hover:text-red-400"
+                        className="w-20 h-20 rounded-lg border-2 border-dashed border-white/20 hover:border-red-500/50 transition-colors flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-red-400"
                       >
                         {isUploadingImage ? (
                           <Loader2 className="w-5 h-5 animate-spin" />
@@ -417,7 +417,7 @@ export function CreateModal() {
                         )}
                       </button>
                       {showPhotoMenu && (
-                        <div className="absolute bottom-full left-0 mb-2 w-40 rounded-xl bg-zinc-900 border border-white/10 shadow-xl overflow-hidden z-50">
+                        <div className="absolute bottom-full left-0 mb-2 w-40 rounded-xl bg-white border border-gray-100 shadow-xl overflow-hidden z-50">
                           <button
                             type="button"
                             onClick={() => { setShowPhotoMenu(false); setIsCameraOpen(true); }}
@@ -450,7 +450,7 @@ export function CreateModal() {
             </Button>
             <Button
               type="submit"
-              className={createModalType === "marketplace" ? "bg-red-600 hover:bg-red-700" : "bg-purple-600 hover:bg-purple-700"}
+              className={createModalType === "marketplace" ? "bg-red-600 hover:bg-red-700" : "bg-[#E31837] hover:bg-[#C41230]"}
               disabled={isLoading}
             >
               {isLoading ? (

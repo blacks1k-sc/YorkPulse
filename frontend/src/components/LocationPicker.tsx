@@ -136,8 +136,8 @@ export function LocationPicker({ value, onChange, className }: LocationPickerPro
 
   if (!mounted) {
     return (
-      <div className={cn("w-full h-64 bg-zinc-800/50 rounded-2xl flex items-center justify-center border border-white/10", className)}>
-        <div className="text-zinc-500">Loading map...</div>
+      <div className={cn("w-full h-64 bg-gray-50 rounded-2xl flex items-center justify-center border border-gray-100", className)}>
+        <div className="text-gray-400">Loading map...</div>
       </div>
     );
   }
@@ -153,7 +153,7 @@ export function LocationPicker({ value, onChange, className }: LocationPickerPro
           placeholder="Location name (or tap map to select)"
           value={value.name}
           onChange={(e) => onChange({ ...value, name: e.target.value })}
-          className="pr-10 bg-white/5 border-white/10 focus:border-purple-500/50"
+          className="pr-10 bg-white border-gray-100 focus:border-purple-500/50"
         />
         {(value.lat || value.name) && (
           <button
@@ -161,7 +161,7 @@ export function LocationPicker({ value, onChange, className }: LocationPickerPro
             onClick={handleClearLocation}
             className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 hover:bg-white/10 rounded-full transition-colors"
           >
-            <X className="w-4 h-4 text-zinc-400" />
+            <X className="w-4 h-4 text-gray-500" />
           </button>
         )}
       </div>
@@ -173,15 +173,15 @@ export function LocationPicker({ value, onChange, className }: LocationPickerPro
           variant="outline"
           size="sm"
           onClick={() => setShowQuickLocations(!showQuickLocations)}
-          className="w-full justify-between bg-white/5 border-white/10 hover:bg-white/10 hover:border-purple-500/30"
+          className="w-full justify-between bg-white border-gray-100 hover:bg-white/10 hover:border-purple-500/30"
         >
           <span className="flex items-center gap-2">
             <MapPin className="w-4 h-4 text-purple-400" />
-            <span className="text-zinc-300">Quick Locations</span>
+            <span className="text-gray-700">Quick Locations</span>
           </span>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-zinc-500">York Campus</span>
-            <ChevronDown className={cn("w-4 h-4 text-zinc-400 transition-transform", showQuickLocations && "rotate-180")} />
+            <span className="text-xs text-gray-400">York Campus</span>
+            <ChevronDown className={cn("w-4 h-4 text-gray-500 transition-transform", showQuickLocations && "rotate-180")} />
           </div>
         </Button>
 
@@ -191,7 +191,7 @@ export function LocationPicker({ value, onChange, className }: LocationPickerPro
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="absolute z-50 w-full mt-2 backdrop-blur-xl bg-zinc-900/95 border border-white/10 rounded-xl shadow-xl shadow-purple-500/10 overflow-hidden max-h-64 overflow-y-auto"
+              className="absolute z-50 w-full mt-2 backdrop-blur-xl bg-white border border-gray-100 rounded-xl shadow-xl shadow-purple-500/10 overflow-hidden max-h-64 overflow-y-auto"
             >
               {YORK_LOCATIONS.map((loc) => (
                 <button
@@ -199,7 +199,7 @@ export function LocationPicker({ value, onChange, className }: LocationPickerPro
                   type="button"
                   onClick={() => handleQuickLocationSelect(loc)}
                   className={cn(
-                    "w-full px-4 py-3 text-left text-sm hover:bg-white/5 transition-colors flex items-center gap-3 border-b border-white/5 last:border-0",
+                    "w-full px-4 py-3 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-3 border-b border-white/5 last:border-0",
                     value.name === loc.name && "bg-purple-500/20"
                   )}
                 >
@@ -208,7 +208,7 @@ export function LocationPicker({ value, onChange, className }: LocationPickerPro
                     value.name === loc.name ? "bg-purple-400" : "bg-zinc-600"
                   )} />
                   <span className={cn(
-                    value.name === loc.name ? "text-purple-300" : "text-zinc-300"
+                    value.name === loc.name ? "text-purple-300" : "text-gray-700"
                   )}>
                     {loc.name}
                   </span>
@@ -244,9 +244,9 @@ export function LocationPicker({ value, onChange, className }: LocationPickerPro
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="absolute bottom-3 left-3 right-3 backdrop-blur-xl bg-black/60 border border-white/10 rounded-xl px-4 py-2.5 text-center"
+            className="absolute bottom-3 left-3 right-3 backdrop-blur-xl bg-black/60 border border-gray-100 rounded-xl px-4 py-2.5 text-center"
           >
-            <p className="text-sm text-zinc-300">
+            <p className="text-sm text-gray-700">
               <span className="text-purple-400">Tap</span> on the map to drop a pin
             </p>
           </motion.div>

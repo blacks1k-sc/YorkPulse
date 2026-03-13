@@ -52,9 +52,9 @@ const categoryConfig: Record<QuestCategory, { label: string; icon: typeof Dumbbe
   gym: { label: "Gym", icon: Dumbbell, color: "bg-red-500/20 text-red-400" },
   food: { label: "Food", icon: Utensils, color: "bg-orange-500/20 text-orange-400" },
   study: { label: "Study", icon: BookOpen, color: "bg-blue-500/20 text-blue-400" },
-  game: { label: "Game", icon: Gamepad2, color: "bg-purple-500/20 text-purple-400" },
+  game: { label: "Game", icon: Gamepad2, color: "bg-violet-100 text-violet-600" },
   commute: { label: "Commute", icon: Car, color: "bg-green-500/20 text-green-400" },
-  custom: { label: "Custom", icon: Sparkles, color: "bg-zinc-500/20 text-zinc-400" },
+  custom: { label: "Custom", icon: Sparkles, color: "bg-gray-100 text-gray-500" },
 };
 
 function ConversationCard({ conversation, userId }: { conversation: Conversation; userId?: string }) {
@@ -125,18 +125,18 @@ function ConversationCard({ conversation, userId }: { conversation: Conversation
                 <div className="flex items-center gap-2">
                   <span className={cn(
                     "font-medium truncate",
-                    isUnread && "text-white"
+                    isUnread && "text-gray-900 font-semibold"
                   )}>
                     {otherUser?.name || "Unknown"}
                   </span>
                   {isPending && isInitiator && (
-                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-zinc-700 text-zinc-300">
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-gray-100 text-gray-600">
                       <Clock className="w-2.5 h-2.5 mr-1" />
                       Pending
                     </Badge>
                   )}
                 </div>
-                <span className="text-xs text-zinc-500 flex-shrink-0">
+                <span className="text-xs text-gray-400 flex-shrink-0">
                   {conversation.last_message_at
                     ? timeAgo(conversation.last_message_at)
                     : ""}
@@ -147,7 +147,7 @@ function ConversationCard({ conversation, userId }: { conversation: Conversation
                 {conversation.last_message && (
                   <>
                     {conversation.last_message.sender_id === userId && (
-                      <span className="text-zinc-500 flex-shrink-0">
+                      <span className="text-gray-400 flex-shrink-0">
                         {conversation.last_message.is_read ? (
                           <CheckCheck className="w-3.5 h-3.5 text-green-400" />
                         ) : (
@@ -158,7 +158,7 @@ function ConversationCard({ conversation, userId }: { conversation: Conversation
                     <p
                       className={cn(
                         "text-sm truncate",
-                        isUnread ? "text-zinc-300 font-medium" : "text-zinc-500"
+                        isUnread ? "text-gray-700 font-medium" : "text-gray-400"
                       )}
                     >
                       {conversation.last_message.is_deleted
@@ -230,7 +230,7 @@ function RequestCard({ conversation, userId }: { conversation: Conversation; use
 
 function ConversationSkeleton() {
   return (
-    <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+    <div className="p-4 rounded-2xl bg-white border border-gray-100 shadow-sm">
       <div className="flex items-center gap-3">
         <Skeleton className="w-12 h-12 rounded-full" />
         <div className="flex-1">
@@ -338,27 +338,27 @@ function QuestChatDialogInMessages({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-lg md:max-w-xl lg:max-w-2xl h-[80vh] max-h-[600px] flex flex-col p-0 gap-0">
         {/* Header - Clickable */}
-        <DialogHeader className="px-4 py-3 border-b border-white/10 shrink-0">
+        <DialogHeader className="px-4 py-3 border-b border-gray-200 shrink-0">
           <DialogTitle asChild>
             <button
               onClick={() => setShowQuestInfo(!showQuestInfo)}
-              className="flex items-center gap-3 w-full text-left hover:bg-white/5 -mx-2 px-2 py-1 rounded-lg transition-colors"
+              className="flex items-center gap-3 w-full text-left hover:bg-gray-50 -mx-2 px-2 py-1 rounded-lg transition-colors"
             >
               <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center", catConfig.color)}>
                 <Icon className="w-5 h-5" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold truncate">{currentQuest.activity}</p>
-                <div className="flex items-center gap-2 text-xs text-zinc-500 font-normal">
+                <div className="flex items-center gap-2 text-xs text-gray-400 font-normal">
                   <Users className="w-3 h-3" />
                   <span>{currentQuest.current_participants} participants</span>
-                  <span className="text-zinc-600">•</span>
+                  <span className="text-gray-500">•</span>
                   <span className="truncate">{currentQuest.location}</span>
                 </div>
               </div>
               <div className={cn(
                 "p-1.5 rounded-lg transition-colors",
-                showQuestInfo ? "bg-white/10 text-white" : "text-zinc-500 hover:text-zinc-300"
+                showQuestInfo ? "bg-[#E31837]/10 text-[#E31837]" : "text-gray-400 hover:text-gray-700"
               )}>
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -373,16 +373,16 @@ function QuestChatDialogInMessages({
           <div className="flex-1 overflow-y-auto p-4 space-y-5">
             {/* Quest Details */}
             <div className="space-y-2">
-              <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Quest Details</h3>
+              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Quest Details</h3>
 
-              <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-3">
+              <div className="p-4 rounded-xl bg-white border border-gray-100 shadow-sm space-y-3">
                 <div className="flex items-start gap-3">
-                  <Calendar className="w-5 h-5 text-purple-400 mt-0.5" />
+                  <Calendar className="w-5 h-5 text-violet-600 mt-0.5" />
                   <div>
-                    <p className="text-sm text-zinc-400">When</p>
-                    <p className="text-white">{formatDateTime(currentQuest.start_time)}</p>
+                    <p className="text-sm text-gray-500">When</p>
+                    <p className="text-gray-900 font-medium">{formatDateTime(currentQuest.start_time)}</p>
                     {currentQuest.end_time && (
-                      <p className="text-xs text-zinc-500">Until {formatDateTime(currentQuest.end_time)}</p>
+                      <p className="text-xs text-gray-400">Until {formatDateTime(currentQuest.end_time)}</p>
                     )}
                   </div>
                 </div>
@@ -390,15 +390,15 @@ function QuestChatDialogInMessages({
                 <div className="flex items-start gap-3">
                   <MapPin className="w-5 h-5 text-green-400 mt-0.5" />
                   <div>
-                    <p className="text-sm text-zinc-400">Where</p>
-                    <p className="text-white">{currentQuest.location}</p>
+                    <p className="text-sm text-gray-500">Where</p>
+                    <p className="text-gray-900 font-medium">{currentQuest.location}</p>
                   </div>
                 </div>
 
                 {currentQuest.description && (
-                  <div className="pt-2 border-t border-white/10">
-                    <p className="text-sm text-zinc-400 mb-1">Description</p>
-                    <p className="text-zinc-300 text-sm">{currentQuest.description}</p>
+                  <div className="pt-2 border-t border-gray-200">
+                    <p className="text-sm text-gray-500 mb-1">Description</p>
+                    <p className="text-gray-700 text-sm">{currentQuest.description}</p>
                   </div>
                 )}
 
@@ -406,7 +406,7 @@ function QuestChatDialogInMessages({
                   <Badge variant="secondary" className={cn("text-xs", catConfig.color)}>
                     {catConfig.label}
                   </Badge>
-                  <Badge variant="secondary" className="text-xs bg-zinc-700 text-zinc-300">
+                  <Badge variant="secondary" className="text-xs bg-gray-100 text-gray-600">
                     {currentQuest.vibe_level.replace("_", " ")}
                   </Badge>
                 </div>
@@ -415,7 +415,7 @@ function QuestChatDialogInMessages({
 
             {/* Participants */}
             <div className="space-y-2">
-              <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
                 Participants ({currentQuest.current_participants}/{currentQuest.max_participants})
               </h3>
 
@@ -423,25 +423,25 @@ function QuestChatDialogInMessages({
                 {/* Host */}
                 <Link
                   href={`/profile/${currentQuest.host.id}`}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors group"
+                  className="flex items-center gap-3 p-3 rounded-xl bg-white border border-gray-100 shadow-sm hover:bg-gray-50 transition-colors group"
                   onClick={() => onClose()}
                 >
                   <Avatar className="w-10 h-10 ring-2 ring-purple-500/30">
                     <AvatarImage src={currentQuest.host.avatar_url || undefined} />
-                    <AvatarFallback className="bg-purple-500/30 text-purple-300">
+                    <AvatarFallback className="bg-violet-100 text-violet-600">
                       {currentQuest.host.name.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="font-medium truncate">{currentQuest.host.name}</span>
-                      <Badge className="text-[10px] px-1.5 py-0 bg-purple-500/20 text-purple-400 border-purple-500/30">
+                      <Badge className="text-[10px] px-1.5 py-0 bg-violet-100 text-violet-600 border-violet-200">
                         Host
                       </Badge>
                     </div>
-                    <p className="text-xs text-zinc-500">Quest organizer</p>
+                    <p className="text-xs text-gray-400">Quest organizer</p>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 transition-colors" />
+                  <ChevronRight className="w-4 h-4 text-gray-500 group-hover:text-gray-500 transition-colors" />
                 </Link>
 
                 {/* Other Participants from API */}
@@ -451,26 +451,26 @@ function QuestChatDialogInMessages({
                     <Link
                       key={participant.user.id}
                       href={`/profile/${participant.user.id}`}
-                      className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors group"
+                      className="flex items-center gap-3 p-3 rounded-xl bg-white border border-gray-100 shadow-sm hover:bg-gray-50 transition-colors group"
                       onClick={() => onClose()}
                     >
                       <Avatar className="w-10 h-10">
                         <AvatarImage src={participant.user.avatar_url || undefined} />
-                        <AvatarFallback className="bg-zinc-700">
+                        <AvatarFallback className="bg-gray-200">
                           {participant.user.name.charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <span className="font-medium truncate">{participant.user.name}</span>
-                        <p className="text-xs text-zinc-500">Participant</p>
+                        <p className="text-xs text-gray-400">Participant</p>
                       </div>
-                      <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 transition-colors" />
+                      <ChevronRight className="w-4 h-4 text-gray-500 group-hover:text-gray-500 transition-colors" />
                     </Link>
                   ))}
 
                 {/* Empty state for no other participants */}
                 {participants.filter((p) => p.user.id !== currentQuest.host.id && p.status === "accepted").length === 0 && (
-                  <p className="text-sm text-zinc-500 text-center py-2">No other participants yet</p>
+                  <p className="text-sm text-gray-400 text-center py-2">No other participants yet</p>
                 )}
               </div>
             </div>
@@ -480,7 +480,7 @@ function QuestChatDialogInMessages({
               {/* Edit Button for Host */}
               {isHost && (
                 <Link href={`/quests/${quest.id}/edit`} onClick={() => onClose()}>
-                  <Button variant="outline" className="w-full border-zinc-700 hover:bg-zinc-800 hover:border-zinc-600">
+                  <Button variant="outline" className="w-full border-gray-200 hover:bg-gray-100 hover:border-zinc-600">
                     <Pencil className="w-4 h-4 mr-2" />
                     Edit Quest
                   </Button>
@@ -489,7 +489,7 @@ function QuestChatDialogInMessages({
 
               {/* View Full Quest Page */}
               <Link href={`/quests/${quest.id}`} onClick={() => onClose()}>
-                <Button variant="ghost" className="w-full text-zinc-400 hover:text-white hover:bg-white/5">
+                <Button variant="ghost" className="w-full text-gray-500 hover:text-white hover:bg-gray-50">
                   <ExternalLink className="w-4 h-4 mr-2" />
                   View Full Quest Page
                 </Button>
@@ -526,8 +526,8 @@ function QuestChatDialogInMessages({
           {allMessages.length === 0 ? (
             <div className="h-full flex items-center justify-center">
               <div className="text-center">
-                <MessageCircle className="w-12 h-12 mx-auto text-zinc-700 mb-3" />
-                <p className="text-zinc-500 text-sm">
+                <MessageCircle className="w-12 h-12 mx-auto text-gray-700 mb-3" />
+                <p className="text-gray-400 text-sm">
                   No messages yet. Start the conversation!
                 </p>
               </div>
@@ -547,7 +547,7 @@ function QuestChatDialogInMessages({
                     <Link href={`/profile/${message.sender.id}`}>
                       <Avatar className="w-8 h-8 shrink-0">
                         <AvatarImage src={message.sender.avatar_url || undefined} />
-                        <AvatarFallback className="text-xs bg-zinc-800">
+                        <AvatarFallback className="text-xs bg-gray-100 text-gray-600">
                           {message.sender.name.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
@@ -558,11 +558,11 @@ function QuestChatDialogInMessages({
                       "max-w-[70%] rounded-lg px-3 py-2 relative",
                       isOwnMessage
                         ? "bg-green-600 text-white"
-                        : "bg-white/10"
+                        : "bg-gray-100"
                     )}
                   >
                     {!isOwnMessage && (
-                      <p className="text-xs text-zinc-400 mb-0.5">
+                      <p className="text-xs text-gray-500 mb-0.5">
                         {message.sender.name}
                         {message.sender.id === quest.host.id && (
                           <span className="ml-1 text-green-400">(Host)</span>
@@ -573,12 +573,12 @@ function QuestChatDialogInMessages({
                     {message.reply_to && !message.is_deleted && (
                       <div className="mb-1.5 px-2 py-1 rounded border-l-2 border-green-400/50 bg-black/20 text-xs">
                         <p className="text-green-300 font-medium">{message.reply_to.sender.name}</p>
-                        <p className="text-zinc-400 line-clamp-1">{message.reply_to.content}</p>
+                        <p className="text-gray-500 line-clamp-1">{message.reply_to.content}</p>
                       </div>
                     )}
                     <p className="text-sm whitespace-pre-wrap break-words">
                       {message.is_deleted ? (
-                        <span className="italic text-zinc-500">Message deleted</span>
+                        <span className="italic text-gray-400">Message deleted</span>
                       ) : (
                         message.content
                       )}
@@ -586,7 +586,7 @@ function QuestChatDialogInMessages({
                     <p
                       className={cn(
                         "text-xs mt-1",
-                        isOwnMessage ? "text-green-200" : "text-zinc-500"
+                        isOwnMessage ? "text-green-200" : "text-gray-400"
                       )}
                     >
                       {timeAgo(message.created_at)}
@@ -595,10 +595,10 @@ function QuestChatDialogInMessages({
                     {!message.is_deleted && (
                       <button
                         onClick={() => setReplyTo({ id: message.id, senderName: message.sender.name, content: message.content })}
-                        className="absolute -top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full bg-zinc-800/80 hover:bg-zinc-700 border border-white/10"
+                        className="absolute -top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full bg-white/90 hover:bg-white shadow-sm border border-gray-100"
                         title="Reply"
                       >
-                        <Reply className="w-3 h-3 text-zinc-300" />
+                        <Reply className="w-3 h-3 text-gray-700" />
                       </button>
                     )}
                   </div>
@@ -611,7 +611,7 @@ function QuestChatDialogInMessages({
         {/* Message Input */}
         <form
           onSubmit={handleSendMessage}
-          className="p-4 border-t border-white/10 shrink-0"
+          className="p-4 border-t border-gray-200 shrink-0"
         >
           {/* Reply Preview */}
           {replyTo && (
@@ -619,14 +619,14 @@ function QuestChatDialogInMessages({
               <Reply className="w-4 h-4 text-green-400 shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-green-400">Replying to {replyTo.senderName}</p>
-                <p className="text-xs text-zinc-400 truncate">{replyTo.content}</p>
+                <p className="text-xs text-gray-500 truncate">{replyTo.content}</p>
               </div>
               <button
                 type="button"
                 onClick={() => setReplyTo(null)}
-                className="p-1 hover:bg-white/10 rounded"
+                className="p-1 hover:bg-gray-50 rounded"
               >
-                <X className="w-4 h-4 text-zinc-400" />
+                <X className="w-4 h-4 text-gray-500" />
               </button>
             </div>
           )}
@@ -636,7 +636,7 @@ function QuestChatDialogInMessages({
               value={messageInput}
               onChange={(e) => setMessageInput(e.target.value)}
               placeholder="Type a message..."
-              className="flex-1 bg-white/5 border-white/10"
+              className="flex-1 bg-white border-gray-100"
               disabled={sendMessageMutation.isPending}
             />
             <Button
@@ -777,18 +777,18 @@ function QuestChatCardWithUnread({
             <div className="flex items-center justify-between mb-1">
               <span className={cn(
                 "font-medium truncate",
-                isRead ? "text-zinc-200" : "text-white"
+                isRead ? "text-gray-400" : "text-gray-700"
               )}>
                 {quest.activity}
               </span>
-              <span className="text-xs text-zinc-500 flex-shrink-0">
+              <span className="text-xs text-gray-400 flex-shrink-0">
                 {formatTime(quest.start_time)}
               </span>
             </div>
-            <div className="flex items-center gap-2 text-xs text-zinc-400">
+            <div className="flex items-center gap-2 text-xs text-gray-500">
               <Users className={cn("w-3 h-3", isRead ? "text-green-400" : "text-red-400")} />
               <span>{currentParticipants} participants</span>
-              <span className="text-zinc-600">•</span>
+              <span className="text-gray-500">•</span>
               <MapPin className="w-3 h-3" />
               <span className="truncate">{quest.location}</span>
             </div>
@@ -879,7 +879,7 @@ export default function MessagesPage() {
           </div>
           <div>
             <h1 className="text-xl font-bold">Messages</h1>
-            <p className="text-sm text-zinc-500">Your conversations</p>
+            <p className="text-sm text-gray-400">Your conversations</p>
           </div>
         </div>
         <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -887,7 +887,7 @@ export default function MessagesPage() {
             <MessageCircle className="w-10 h-10 text-blue-400" />
           </div>
           <h2 className="text-xl font-semibold mb-2">Sign in to access Messages</h2>
-          <p className="text-zinc-500 mb-6 max-w-md">
+          <p className="text-gray-400 mb-6 max-w-md">
             Chat with verified York University students and manage your conversations.
           </p>
           <Link href="/auth/login">
@@ -909,15 +909,15 @@ export default function MessagesPage() {
         </div>
         <div>
           <h1 className="text-2xl font-bold">Messages</h1>
-          <p className="text-sm text-zinc-500">Your private conversations</p>
+          <p className="text-sm text-gray-400">Your private conversations</p>
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full mb-4 bg-white/5 border border-white/10 p-1 rounded-xl">
+        <TabsList className="w-full mb-4 bg-white border border-gray-100 shadow-sm p-1 rounded-xl">
           <TabsTrigger
             value="all"
-            className="flex-1 rounded-lg data-[state=active]:bg-white/10 transition-all"
+            className="flex-1 rounded-lg data-[state=active]:bg-[#E31837]/10 transition-all"
           >
             All
             {totalUnread > 0 && (
@@ -932,7 +932,7 @@ export default function MessagesPage() {
           </TabsTrigger>
           <TabsTrigger
             value="quests"
-            className="flex-1 rounded-lg data-[state=active]:bg-white/10 transition-all relative"
+            className="flex-1 rounded-lg data-[state=active]:bg-[#E31837]/10 transition-all relative"
           >
             Quests
             {totalUnreadQuestMessages > 0 && (
@@ -947,7 +947,7 @@ export default function MessagesPage() {
           </TabsTrigger>
           <TabsTrigger
             value="requests"
-            className="flex-1 rounded-lg data-[state=active]:bg-white/10 transition-all relative"
+            className="flex-1 rounded-lg data-[state=active]:bg-[#E31837]/10 transition-all relative"
           >
             Requests
             {pendingRequests.length > 0 && (
@@ -975,11 +975,11 @@ export default function MessagesPage() {
               animate={{ opacity: 1, y: 0 }}
               className="text-center py-16"
             >
-              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center border border-white/10">
-                <Inbox className="w-10 h-10 text-zinc-600" />
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center border border-gray-100">
+                <Inbox className="w-10 h-10 text-gray-500" />
               </div>
               <h3 className="text-lg font-medium mb-2">No conversations yet</h3>
-              <p className="text-sm text-zinc-500 max-w-xs mx-auto">
+              <p className="text-sm text-gray-400 max-w-xs mx-auto">
                 Start a conversation from a marketplace listing or side quest to connect with other students
               </p>
             </motion.div>
@@ -1001,7 +1001,7 @@ export default function MessagesPage() {
                   <button
                     onClick={() => fetchNextPage()}
                     disabled={isFetchingNextPage}
-                    className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors inline-flex items-center gap-2"
+                    className="text-sm text-gray-400 hover:text-gray-700 transition-colors inline-flex items-center gap-2"
                   >
                     {isFetchingNextPage ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -1027,11 +1027,11 @@ export default function MessagesPage() {
               animate={{ opacity: 1, y: 0 }}
               className="text-center py-16"
             >
-              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center border border-white/10">
-                <Users className="w-10 h-10 text-zinc-600" />
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center border border-gray-100">
+                <Users className="w-10 h-10 text-gray-500" />
               </div>
               <h3 className="text-lg font-medium mb-2">No quest chats yet</h3>
-              <p className="text-sm text-zinc-500 max-w-xs mx-auto">
+              <p className="text-sm text-gray-400 max-w-xs mx-auto">
                 Join or create a Side Quest to start group chatting with other participants
               </p>
             </motion.div>
@@ -1066,11 +1066,11 @@ export default function MessagesPage() {
               animate={{ opacity: 1, y: 0 }}
               className="text-center py-16"
             >
-              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center border border-white/10">
-                <Sparkles className="w-10 h-10 text-zinc-600" />
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center border border-gray-100">
+                <Sparkles className="w-10 h-10 text-gray-500" />
               </div>
               <h3 className="text-lg font-medium mb-2">No pending requests</h3>
-              <p className="text-sm text-zinc-500 max-w-xs mx-auto">
+              <p className="text-sm text-gray-400 max-w-xs mx-auto">
                 When someone sends you a message request, it will appear here
               </p>
             </motion.div>

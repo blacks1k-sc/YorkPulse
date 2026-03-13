@@ -22,8 +22,8 @@ export function LocationPickerWrapper({ value, onChange, className }: LocationPi
 
   if (!PickerComponent) {
     return (
-      <div className={cn("h-64 bg-zinc-800 rounded-xl flex items-center justify-center", className)}>
-        <Loader2 className="w-6 h-6 animate-spin text-zinc-500" />
+      <div className={cn("h-64 bg-gray-100 rounded-xl flex items-center justify-center", className)}>
+        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
       </div>
     );
   }

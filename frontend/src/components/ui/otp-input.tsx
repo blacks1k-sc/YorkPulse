@@ -115,7 +115,7 @@ export function OTPInput({
           disabled={disabled}
           className={cn(
             "w-12 h-14 text-center text-2xl font-bold rounded-lg",
-            "bg-white/5 border-2 border-white/10",
+            "bg-white/5 border-2 border-gray-200",
             "focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20",
             "transition-all duration-200",
             "disabled:opacity-50 disabled:cursor-not-allowed",

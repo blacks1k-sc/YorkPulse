@@ -235,7 +235,7 @@ export function CameraModal({ open, onClose, onCapture }: CameraModalProps) {
           </DialogTitle>
         </DialogHeader>
 
-        <div className="relative aspect-square bg-zinc-900">
+        <div className="relative aspect-square bg-white">
           {/* Video preview */}
           {!capturedImage && !isCropping && (
             <video
@@ -268,9 +268,9 @@ export function CameraModal({ open, onClose, onCapture }: CameraModalProps) {
 
           {/* Error message */}
           {error && (
-            <div className="absolute inset-0 flex items-center justify-center bg-zinc-900/90 p-4">
+            <div className="absolute inset-0 flex items-center justify-center bg-white p-4">
               <div className="text-center">
-                <Camera className="w-12 h-12 text-zinc-500 mx-auto mb-3" />
+                <Camera className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                 <p className="text-red-400 text-sm">{error}</p>
                 <Button
                   variant="outline"
@@ -286,10 +286,10 @@ export function CameraModal({ open, onClose, onCapture }: CameraModalProps) {
 
           {/* Loading state */}
           {!isStreaming && !capturedImage && !error && !isCropping && (
-            <div className="absolute inset-0 flex items-center justify-center bg-zinc-900">
+            <div className="absolute inset-0 flex items-center justify-center bg-white">
               <div className="text-center">
-                <Camera className="w-12 h-12 text-zinc-500 mx-auto mb-3 animate-pulse" />
-                <p className="text-zinc-400 text-sm">Starting camera...</p>
+                <Camera className="w-12 h-12 text-gray-400 mx-auto mb-3 animate-pulse" />
+                <p className="text-gray-500 text-sm">Starting camera...</p>
               </div>
             </div>
           )}
@@ -297,7 +297,7 @@ export function CameraModal({ open, onClose, onCapture }: CameraModalProps) {
 
         {/* Zoom slider for crop mode */}
         {isCropping && (
-          <div className="px-4 py-2 bg-zinc-900">
+          <div className="px-4 py-2 bg-white">
             <input
               type="range"
               min={1}
@@ -307,7 +307,7 @@ export function CameraModal({ open, onClose, onCapture }: CameraModalProps) {
               onChange={(e) => setZoom(Number(e.target.value))}
               className="w-full accent-purple-500"
             />
-            <p className="text-xs text-zinc-500 text-center mt-1">
+            <p className="text-xs text-gray-400 text-center mt-1">
               Pinch or use slider to zoom
             </p>
           </div>

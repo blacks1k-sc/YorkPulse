@@ -72,7 +72,7 @@ export default function VaultPostPage() {
           </div>
           <div>
             <h1 className="text-xl font-bold">The Vault</h1>
-            <p className="text-sm text-zinc-500">Anonymous community forum</p>
+            <p className="text-sm text-gray-400">Anonymous community forum</p>
           </div>
         </div>
         <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -80,7 +80,7 @@ export default function VaultPostPage() {
             <Shield className="w-10 h-10 text-purple-400" />
           </div>
           <h2 className="text-xl font-semibold mb-2">Sign in to view this post</h2>
-          <p className="text-zinc-500 mb-6 max-w-md">
+          <p className="text-gray-400 mb-6 max-w-md">
             Join anonymous discussions with verified York University students.
           </p>
           <Link href="/auth/login">
@@ -172,7 +172,7 @@ export default function VaultPostPage() {
   if (!post) {
     return (
       <div className="container mx-auto px-4 py-6 max-w-2xl text-center">
-        <p className="text-zinc-500">Post not found</p>
+        <p className="text-gray-400">Post not found</p>
         <Button variant="link" asChild>
           <Link href="/vault">Back to The Vault</Link>
         </Button>
@@ -197,7 +197,7 @@ export default function VaultPostPage() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="p-6 rounded-xl bg-white/5 border border-white/10 mb-6"
+        className="p-6 rounded-xl bg-white border border-gray-100 shadow-sm mb-6"
       >
         {/* Author & Actions */}
         <div className="flex items-center justify-between mb-4">
@@ -213,7 +213,7 @@ export default function VaultPostPage() {
               <span className="text-sm font-medium">
                 {post.is_anonymous ? "Anonymous" : post.author?.name || "Unknown"}
               </span>
-              <div className="flex items-center gap-2 text-xs text-zinc-500">
+              <div className="flex items-center gap-2 text-xs text-gray-400">
                 <Clock className="w-3 h-3" />
                 {timeAgo(post.created_at)}
               </div>
@@ -248,14 +248,14 @@ export default function VaultPostPage() {
 
         {/* Content */}
         <h1 className="text-xl font-bold mb-3">{post.title}</h1>
-        <p className="text-zinc-300 whitespace-pre-wrap mb-4">{post.content}</p>
+        <p className="text-gray-700 whitespace-pre-wrap mb-4">{post.content}</p>
 
         {/* Footer */}
         <div className="flex items-center gap-3">
           <Badge variant="secondary">
             {categories.find((c) => c.value === post.category)?.label || post.category}
           </Badge>
-          <div className="flex items-center gap-1 text-sm text-zinc-500">
+          <div className="flex items-center gap-1 text-sm text-gray-400">
             <MessageCircle className="w-4 h-4" />
             {post.comment_count} comments
           </div>
@@ -278,7 +278,7 @@ export default function VaultPostPage() {
                 checked={isAnonymous}
                 onCheckedChange={(checked) => setIsAnonymous(checked as boolean)}
               />
-              <Label htmlFor="anonymous" className="text-sm text-zinc-400 cursor-pointer">
+              <Label htmlFor="anonymous" className="text-sm text-gray-500 cursor-pointer">
                 Post anonymously
               </Label>
             </div>
@@ -311,7 +311,7 @@ export default function VaultPostPage() {
             <Skeleton className="w-full h-20" />
           </div>
         ) : comments.length === 0 ? (
-          <p className="text-zinc-500 text-sm py-4">No comments yet. Be the first to comment!</p>
+          <p className="text-gray-400 text-sm py-4">No comments yet. Be the first to comment!</p>
         ) : (
           <>
             {comments.map((c) => (
@@ -319,29 +319,29 @@ export default function VaultPostPage() {
                 key={c.id}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="p-4 rounded-lg bg-white/5 border border-white/10"
+                className="p-4 rounded-lg bg-white border border-gray-100 shadow-sm"
               >
                 <div className="flex items-center gap-2 mb-2">
                   {c.is_anonymous ? (
-                    <div className="w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center">
+                    <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center">
                       <Shield className="w-3 h-3 text-purple-400" />
                     </div>
                   ) : (
                     <Avatar className="w-6 h-6">
                       <AvatarImage src={c.author?.avatar_url || undefined} />
-                      <AvatarFallback className="text-[10px] bg-zinc-800 text-zinc-400">
+                      <AvatarFallback className="text-[10px] bg-gray-100 text-gray-500">
                         {c.author?.name?.charAt(0) || "?"}
                       </AvatarFallback>
                     </Avatar>
                   )}
-                  <span className="text-sm text-zinc-400">
+                  <span className="text-sm text-gray-500">
                     {c.is_anonymous ? "Anonymous" : c.author?.name || "Unknown"}
                   </span>
-                  <span className="text-xs text-zinc-600">
+                  <span className="text-xs text-gray-500">
                     {timeAgo(c.created_at)}
                   </span>
                 </div>
-                <p className="text-sm text-zinc-300">{c.content}</p>
+                <p className="text-sm text-gray-700">{c.content}</p>
               </motion.div>
             ))}
 

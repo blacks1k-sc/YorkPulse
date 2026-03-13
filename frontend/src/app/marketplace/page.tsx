@@ -127,11 +127,11 @@ function ListingCard({
       className="rounded-xl"
     >
       <Link href={`/marketplace/${listing.id}`}>
-        <div className="rounded-xl bg-white/5 border border-white/10 transition-colors overflow-hidden relative">
+        <div className="rounded-xl bg-white border border-gray-100 shadow-sm transition-colors overflow-hidden relative">
           {/* Subtle gradient accent overlay */}
           <div className={`absolute inset-0 bg-gradient-to-b ${gradient} pointer-events-none z-10`} />
           {/* Image */}
-          <div className="aspect-square bg-zinc-900 relative">
+          <div className="aspect-square bg-white relative">
             {listing.images && listing.images.length > 0 ? (
               <img
                 src={listing.images[0]}
@@ -140,11 +140,11 @@ function ListingCard({
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
-                <ShoppingBag className="w-12 h-12 text-zinc-700" />
+                <ShoppingBag className="w-12 h-12 text-gray-700" />
               </div>
             )}
             <Badge
-              className="absolute top-2 right-2 bg-black/50 backdrop-blur-sm"
+              className="absolute top-2 right-2 bg-black/50 "
               variant="secondary"
             >
               {conditions.find((c) => c.value === listing.condition)?.label || listing.condition}
@@ -166,7 +166,7 @@ function ListingCard({
               ${Number(listing.price).toFixed(2)}
             </p>
 
-            <div className="flex items-center justify-between text-xs text-zinc-500">
+            <div className="flex items-center justify-between text-xs text-gray-400">
               <div className="flex items-center gap-1">
                 <User className="w-3 h-3" />
                 {listing.seller.name}
@@ -200,7 +200,7 @@ function ListingCard({
 
 function ListingSkeleton() {
   return (
-    <div className="rounded-xl bg-white/5 border border-white/10 overflow-hidden">
+    <div className="rounded-xl bg-white border border-gray-100 shadow-sm overflow-hidden">
       <Skeleton className="aspect-square" />
       <div className="p-3">
         <Skeleton className="w-3/4 h-5 mb-2" />
@@ -273,7 +273,7 @@ export default function MarketplacePage() {
           </div>
           <div>
             <h1 className="text-xl font-bold">Marketplace</h1>
-            <p className="text-sm text-zinc-500">Buy & sell with verified students</p>
+            <p className="text-sm text-gray-400">Buy & sell with verified students</p>
           </div>
         </div>
 
@@ -283,7 +283,7 @@ export default function MarketplacePage() {
             <ShoppingBag className="w-10 h-10 text-red-400" />
           </div>
           <h2 className="text-xl font-semibold mb-2">Sign in to access Marketplace</h2>
-          <p className="text-zinc-500 mb-6 max-w-md">
+          <p className="text-gray-400 mb-6 max-w-md">
             Browse listings, buy items, and sell to verified York University students.
           </p>
           <Link href="/auth/login">
@@ -306,7 +306,7 @@ export default function MarketplacePage() {
           </div>
           <div>
             <h1 className="text-xl font-bold">Marketplace</h1>
-            <p className="text-sm text-zinc-500">Buy & sell with verified students</p>
+            <p className="text-sm text-gray-400">Buy & sell with verified students</p>
           </div>
         </div>
         <Button
@@ -327,7 +327,7 @@ export default function MarketplacePage() {
             "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
             activeTab === "browse"
               ? "bg-red-500 text-white"
-              : "bg-white/5 text-zinc-400 hover:bg-white/10"
+              : "bg-white text-gray-500 hover:bg-gray-50"
           )}
         >
           Browse All
@@ -338,7 +338,7 @@ export default function MarketplacePage() {
             "px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2",
             activeTab === "my-listings"
               ? "bg-red-500 text-white"
-              : "bg-white/5 text-zinc-400 hover:bg-white/10"
+              : "bg-white text-gray-500 hover:bg-gray-50"
           )}
         >
           <Package className="w-4 h-4" />
@@ -351,7 +351,7 @@ export default function MarketplacePage() {
         <>
           <form onSubmit={handleSearch} className="mb-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
                 placeholder="Search listings..."
                 value={search}
@@ -363,7 +363,7 @@ export default function MarketplacePage() {
 
           {/* Filters */}
           <div className="flex items-center gap-3 mb-6 overflow-x-auto pb-2">
-            <Filter className="w-4 h-4 text-zinc-500 flex-shrink-0" />
+            <Filter className="w-4 h-4 text-gray-400 flex-shrink-0" />
             <Select value={category} onValueChange={setCategory}>
               <SelectTrigger className="w-40 flex-shrink-0">
                 <SelectValue placeholder="Category" />
@@ -404,8 +404,8 @@ export default function MarketplacePage() {
           </div>
         ) : listings.length === 0 ? (
           <div className="text-center py-12">
-            <ShoppingBag className="w-12 h-12 mx-auto text-zinc-700 mb-4" />
-            <p className="text-zinc-500">No listings found</p>
+            <ShoppingBag className="w-12 h-12 mx-auto text-gray-700 mb-4" />
+            <p className="text-gray-400">No listings found</p>
             <Button
               onClick={() => openCreateModal("marketplace")}
               variant="link"
@@ -453,8 +453,8 @@ export default function MarketplacePage() {
           </div>
         ) : myListings.length === 0 ? (
           <div className="text-center py-12">
-            <Package className="w-12 h-12 mx-auto text-zinc-700 mb-4" />
-            <p className="text-zinc-500 mb-4">You haven't created any listings yet</p>
+            <Package className="w-12 h-12 mx-auto text-gray-700 mb-4" />
+            <p className="text-gray-400 mb-4">You haven't created any listings yet</p>
             <Button
               onClick={() => openCreateModal("marketplace")}
               className="bg-red-500 hover:bg-red-600"

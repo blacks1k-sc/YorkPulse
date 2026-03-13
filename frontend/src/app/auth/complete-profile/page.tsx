@@ -130,11 +130,11 @@ export default function CompleteProfilePage() {
     >
       {/* Header */}
       <div className="text-center space-y-2">
-        <div className="w-16 h-16 mx-auto rounded-full bg-purple-500/20 flex items-center justify-center">
-          <Sparkles className="w-8 h-8 text-purple-400" />
+        <div className="w-16 h-16 mx-auto rounded-full bg-[#E31837]/10 flex items-center justify-center">
+          <Sparkles className="w-8 h-8 text-[#E31837]" />
         </div>
         <h1 className="text-2xl font-bold">Complete Your Profile</h1>
-        <p className="text-zinc-400">
+        <p className="text-gray-500">
           Tell us a bit about yourself to get started
         </p>
       </div>
@@ -144,7 +144,7 @@ export default function CompleteProfilePage() {
         {/* Program */}
         <div className="space-y-2">
           <Label htmlFor="program" className="flex items-center gap-2">
-            <GraduationCap className="w-4 h-4 text-purple-400" />
+            <GraduationCap className="w-4 h-4 text-[#E31837]" />
             Program <span className="text-red-400">*</span>
           </Label>
           <Input
@@ -154,7 +154,7 @@ export default function CompleteProfilePage() {
             value={program}
             onChange={(e) => setProgram(e.target.value)}
             className={cn(
-              "bg-white/5 border-white/10",
+              "bg-white border-gray-100",
               programError && "border-red-500 focus-visible:ring-red-500"
             )}
           />
@@ -164,17 +164,17 @@ export default function CompleteProfilePage() {
             ))}
           </datalist>
           <div className="flex justify-between text-xs">
-            <span className={cn(programError ? "text-red-400" : "text-zinc-500")}>
+            <span className={cn(programError ? "text-red-400" : "text-gray-400")}>
               {programError || `Min ${MIN_PROGRAM_LENGTH} characters`}
             </span>
-            <span className="text-zinc-500">{program.trim().length} chars</span>
+            <span className="text-gray-400">{program.trim().length} chars</span>
           </div>
         </div>
 
         {/* Bio */}
         <div className="space-y-2">
           <Label htmlFor="bio" className="flex items-center gap-2">
-            <FileText className="w-4 h-4 text-purple-400" />
+            <FileText className="w-4 h-4 text-[#E31837]" />
             Bio <span className="text-red-400">*</span>
           </Label>
           <Textarea
@@ -183,21 +183,21 @@ export default function CompleteProfilePage() {
             value={bio}
             onChange={(e) => setBio(e.target.value)}
             className={cn(
-              "min-h-[120px] bg-white/5 border-white/10 resize-none",
+              "min-h-[120px] bg-white border-gray-100 resize-none",
               bioError && "border-red-500 focus-visible:ring-red-500"
             )}
           />
           <div className="flex justify-between text-xs">
-            <span className={cn(bioError ? "text-red-400" : "text-zinc-500")}>
+            <span className={cn(bioError ? "text-red-400" : "text-gray-400")}>
               {bioError || `Min ${MIN_BIO_LENGTH} characters`}
             </span>
-            <span className="text-zinc-500">{bio.trim().length} chars</span>
+            <span className="text-gray-400">{bio.trim().length} chars</span>
           </div>
         </div>
 
         {/* Interests */}
         <div className="space-y-2">
-          <Label htmlFor="interests" className="text-zinc-400">
+          <Label htmlFor="interests" className="text-gray-500">
             Interests (optional)
           </Label>
           <Input
@@ -205,15 +205,15 @@ export default function CompleteProfilePage() {
             placeholder="e.g., coding, music, basketball"
             value={interests}
             onChange={(e) => setInterests(e.target.value)}
-            className="bg-white/5 border-white/10"
+            className="bg-white border-gray-100"
           />
-          <p className="text-xs text-zinc-500">Separate with commas</p>
+          <p className="text-xs text-gray-400">Separate with commas</p>
         </div>
 
         {/* Submit */}
         <Button
           type="submit"
-          className="w-full bg-purple-600 hover:bg-purple-700"
+          className="w-full bg-[#E31837] hover:bg-[#C41230]"
           disabled={updateProfileMutation.isPending || !isFormValid}
         >
           {updateProfileMutation.isPending ? (
@@ -231,7 +231,7 @@ export default function CompleteProfilePage() {
       </form>
 
       {/* Info */}
-      <p className="text-xs text-center text-zinc-500">
+      <p className="text-xs text-center text-gray-400">
         You can update your profile anytime from your profile page
       </p>
     </motion.div>

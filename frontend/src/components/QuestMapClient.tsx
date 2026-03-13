@@ -292,16 +292,16 @@ function BuildingPopupContent({
       </div>
 
       {/* Name */}
-      <h3 className="font-semibold text-zinc-900 mb-2">{building.name}</h3>
+      <h3 className="font-semibold text-gray-900 mb-2">{building.name}</h3>
 
       {/* Description */}
       {building.description && (
-        <p className="text-xs text-zinc-600 mb-2">{building.description}</p>
+        <p className="text-xs text-gray-500 mb-2">{building.description}</p>
       )}
 
       {/* Hours */}
       {building.hours && (
-        <div className="flex items-center gap-1.5 text-xs text-zinc-500 mb-2">
+        <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-2">
           <Clock className="w-3 h-3" />
           <span>{building.hours}</span>
         </div>
@@ -309,7 +309,7 @@ function BuildingPopupContent({
 
       {/* Category indicator */}
       <div className="mt-2 pt-2 border-t border-zinc-200">
-        <span className="text-xs text-zinc-500">
+        <span className="text-xs text-gray-400">
           {info.emoji} {info.label} Building
         </span>
       </div>
@@ -343,7 +343,7 @@ function StatsOverlay({
       animate={{ opacity: 1, x: 0 }}
       className="absolute top-3 left-3 z-[1000] pointer-events-auto"
     >
-      <div className="backdrop-blur-xl bg-black/40 border border-white/10 rounded-2xl p-4 shadow-xl shadow-purple-500/10">
+      <div className="backdrop-blur-xl bg-black/40 border border-gray-100 rounded-2xl p-4 shadow-xl shadow-purple-500/10">
         {/* Live indicator */}
         <div className="flex items-center gap-2 mb-3">
           <div className="relative">
@@ -359,13 +359,13 @@ function StatsOverlay({
             <span className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
               {questsWithCoords.length}
             </span>
-            <span className="text-sm text-zinc-400">active quests</span>
+            <span className="text-sm text-gray-500">active quests</span>
           </div>
         </div>
 
         {/* Category legend */}
         <div className="space-y-2">
-          <p className="text-xs text-zinc-500 uppercase tracking-wider mb-2">Quest Categories</p>
+          <p className="text-xs text-gray-400 uppercase tracking-wider mb-2">Quest Categories</p>
           {Object.entries(categoryConfig).map(([key, config]) => {
             const count = categoryCounts[key] || 0;
             if (count === 0) return null;
@@ -376,9 +376,9 @@ function StatsOverlay({
                     className="w-3 h-3 rounded-full"
                     style={{ background: config.gradient }}
                   />
-                  <span className="text-sm text-zinc-300">{config.label}</span>
+                  <span className="text-sm text-gray-700">{config.label}</span>
                 </div>
-                <span className="text-sm text-zinc-500">{count}</span>
+                <span className="text-sm text-gray-400">{count}</span>
               </div>
             );
           })}
@@ -394,24 +394,24 @@ function StatsOverlay({
             "w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg transition-all text-sm",
             showBuildings
               ? "bg-purple-500/20 border border-purple-500/30"
-              : "bg-white/5 border border-white/10 hover:bg-white/10"
+              : "bg-white border border-gray-100 shadow-sm hover:bg-white/10"
           )}
         >
           <div className="flex items-center gap-2">
             <Building2 className="w-4 h-4 text-purple-400" />
-            <span className={showBuildings ? "text-purple-300" : "text-zinc-400"}>
+            <span className={showBuildings ? "text-purple-300" : "text-gray-500"}>
               Buildings
             </span>
             {buildingsLoading ? (
               <Loader2 className="w-3 h-3 text-purple-400 animate-spin" />
             ) : (
-              <span className="text-xs text-zinc-500">({buildingCount})</span>
+              <span className="text-xs text-gray-400">({buildingCount})</span>
             )}
           </div>
           {showBuildings ? (
             <Eye className="w-4 h-4 text-purple-400" />
           ) : (
-            <EyeOff className="w-4 h-4 text-zinc-500" />
+            <EyeOff className="w-4 h-4 text-gray-400" />
           )}
         </button>
 
@@ -423,14 +423,14 @@ function StatsOverlay({
             exit={{ opacity: 0, height: 0 }}
             className="mt-3 space-y-1.5"
           >
-            <p className="text-xs text-zinc-500 uppercase tracking-wider mb-2">Building Types</p>
+            <p className="text-xs text-gray-400 uppercase tracking-wider mb-2">Building Types</p>
             {Object.entries(buildingCategoryConfig).map(([key, config]) => (
               <div key={key} className="flex items-center gap-2">
                 <div
                   className="w-3 h-3 rounded-sm"
                   style={{ background: config.color, opacity: 0.6 }}
                 />
-                <span className="text-xs text-zinc-400">{config.label}</span>
+                <span className="text-xs text-gray-500">{config.label}</span>
               </div>
             ))}
           </motion.div>
@@ -471,7 +471,7 @@ function MobileQuestSheet({
           exit={{ y: "100%" }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
           onClick={(e) => e.stopPropagation()}
-          className="absolute bottom-0 left-0 right-0 backdrop-blur-xl bg-zinc-900/90 border-t border-white/10 rounded-t-3xl p-6"
+          className="absolute bottom-0 left-0 right-0 backdrop-blur-xl bg-white border-t border-gray-200 rounded-t-3xl p-6"
         >
           {/* Handle bar */}
           <div className="w-12 h-1 bg-white/20 rounded-full mx-auto mb-4" />
@@ -497,7 +497,7 @@ function MobileQuestSheet({
           <h3 className="text-xl font-bold text-white mb-3">{quest.activity}</h3>
 
           {/* Meta info */}
-          <div className="flex flex-wrap gap-4 mb-4 text-sm text-zinc-400">
+          <div className="flex flex-wrap gap-4 mb-4 text-sm text-gray-500">
             <div className="flex items-center gap-1.5">
               <MapPin className="w-4 h-4" />
               <span>{quest.location}</span>
@@ -525,12 +525,12 @@ function MobileQuestSheet({
               </Avatar>
               <div>
                 <p className="text-sm font-medium text-white">{quest.host.name}</p>
-                <p className="text-xs text-zinc-500">Host</p>
+                <p className="text-xs text-gray-400">Host</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-zinc-400" />
-              <span className="text-sm text-zinc-300">
+              <Users className="w-4 h-4 text-gray-500" />
+              <span className="text-sm text-gray-700">
                 {spotsLeft > 0 ? `${spotsLeft} spots left` : "Full"}
               </span>
             </div>
@@ -572,10 +572,10 @@ function QuestPopupContent({
       </div>
 
       {/* Title */}
-      <h3 className="font-semibold text-zinc-900 mb-2 line-clamp-2">{quest.activity}</h3>
+      <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">{quest.activity}</h3>
 
       {/* Meta */}
-      <div className="space-y-1.5 mb-3 text-xs text-zinc-600">
+      <div className="space-y-1.5 mb-3 text-xs text-gray-500">
         <div className="flex items-center gap-1.5">
           <MapPin className="w-3 h-3" />
           <span className="truncate">{quest.location}</span>
@@ -600,10 +600,10 @@ function QuestPopupContent({
           <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-medium">
             {quest.host.name.charAt(0).toUpperCase()}
           </div>
-          <span className="text-xs text-zinc-600">{quest.host.name}</span>
+          <span className="text-xs text-gray-500">{quest.host.name}</span>
         </div>
         <div className="flex items-center gap-1 text-xs">
-          <Users className="w-3 h-3 text-zinc-500" />
+          <Users className="w-3 h-3 text-gray-400" />
           <span className={spotsLeft > 0 ? "text-green-600" : "text-red-500"}>
             {spotsLeft > 0 ? `${spotsLeft} spots` : "Full"}
           </span>
@@ -690,7 +690,7 @@ export default function QuestMapClient({ quests, className }: QuestMapClientProp
   return (
     <div className={cn("relative w-full h-full", className)}>
       {/* Map container with glow effect */}
-      <div className="relative w-full h-full rounded-2xl overflow-hidden shadow-[0_0_60px_-15px_rgba(168,85,247,0.4)] border border-white/10">
+      <div className="relative w-full h-full rounded-2xl overflow-hidden shadow-[0_0_60px_-15px_rgba(168,85,247,0.4)] border border-gray-100">
         <MapContainer
           center={YORK_CENTER}
           zoom={DEFAULT_ZOOM}

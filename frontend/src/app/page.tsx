@@ -12,8 +12,6 @@ import {
   ChevronDown,
   Sparkles,
   Lock,
-  Zap,
-  MapPin,
   ArrowRight,
   CheckCircle2,
   MessageSquarePlus,
@@ -27,7 +25,6 @@ import {
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -43,60 +40,54 @@ const landingFeatures = [
     icon: Shield,
     title: "The Vault",
     description: "Anonymous discussions. No tracking, no judgment.",
-    iconBg: "bg-purple-500/10",
-    iconColor: "text-purple-500",
-    hoverBorder: "hover:border-purple-500/50",
-    hoverGlow: "hover:shadow-purple-500/20",
+    iconBg: "bg-[#E31837]/10",
+    iconColor: "text-[#E31837]",
+    accentBorder: "border-t-[#E31837]",
   },
   {
     href: "/marketplace",
     icon: ShoppingBag,
     title: "Marketplace",
     description: "Buy and sell with verified students only.",
-    iconBg: "bg-coral/10",
-    iconColor: "text-coral",
-    hoverBorder: "hover:border-coral/50",
-    hoverGlow: "hover:shadow-coral/20",
+    iconBg: "bg-blue-50",
+    iconColor: "text-blue-600",
+    accentBorder: "border-t-blue-500",
   },
   {
     href: "/quests",
     icon: Users,
     title: "Side Quests",
     description: "Find gym partners, study buddies, and more.",
-    iconBg: "bg-green-500/10",
-    iconColor: "text-green-500",
-    hoverBorder: "hover:border-green-500/50",
-    hoverGlow: "hover:shadow-green-500/20",
+    iconBg: "bg-emerald-50",
+    iconColor: "text-emerald-600",
+    accentBorder: "border-t-emerald-500",
   },
   {
     href: "/messages",
     icon: MessageCircle,
     title: "Messaging",
     description: "Request-based DMs. You control who can reach you.",
-    iconBg: "bg-blue-500/10",
-    iconColor: "text-blue-500",
-    hoverBorder: "hover:border-blue-500/50",
-    hoverGlow: "hover:shadow-blue-500/20",
+    iconBg: "bg-cyan-50",
+    iconColor: "text-cyan-600",
+    accentBorder: "border-t-cyan-500",
   },
   {
     href: "/courses",
     icon: GraduationCap,
     title: "Link Up",
     description: "Join course chats and connect with classmates.",
-    iconBg: "bg-cyan-500/10",
-    iconColor: "text-cyan-500",
-    hoverBorder: "hover:border-cyan-500/50",
-    hoverGlow: "hover:shadow-cyan-500/20",
+    iconBg: "bg-violet-50",
+    iconColor: "text-violet-600",
+    accentBorder: "border-t-violet-500",
   },
   {
     href: "/gigs",
     icon: Briefcase,
     title: "Quick Gigs",
     description: "Find or offer services within the York community.",
-    iconBg: "bg-amber-500/10",
-    iconColor: "text-amber-500",
-    hoverBorder: "hover:border-amber-500/50",
-    hoverGlow: "hover:shadow-amber-500/20",
+    iconBg: "bg-amber-50",
+    iconColor: "text-amber-600",
+    accentBorder: "border-t-amber-500",
   },
 ];
 
@@ -108,9 +99,11 @@ const dashboardFeatures = [
     title: "The Vault",
     subtitle: "Anonymous Forum",
     description: "Share thoughts anonymously. Vent, confess, or discuss sensitive topics without judgment.",
-    accentColor: "purple",
+    iconBg: "bg-[#E31837]/10",
+    iconColor: "text-[#E31837]",
     statKey: "vault_posts_today" as const,
     statLabel: "posts today",
+    statColor: "text-[#E31837]",
   },
   {
     href: "/marketplace",
@@ -118,9 +111,11 @@ const dashboardFeatures = [
     title: "Marketplace",
     subtitle: "Buy & Sell",
     description: "Trade textbooks, furniture, and electronics with verified York students.",
-    accentColor: "red",
+    iconBg: "bg-blue-50",
+    iconColor: "text-blue-600",
     statKey: "marketplace_listings" as const,
     statLabel: "active listings",
+    statColor: "text-blue-600",
   },
   {
     href: "/quests",
@@ -128,19 +123,23 @@ const dashboardFeatures = [
     title: "Side Quests",
     subtitle: "Find Partners",
     description: "Connect for gym sessions, study groups, coffee meetups, or campus events.",
-    accentColor: "emerald",
+    iconBg: "bg-emerald-50",
+    iconColor: "text-emerald-600",
     statKey: "side_quests_active" as const,
     statLabel: "active quests",
+    statColor: "text-emerald-600",
   },
   {
     href: "/courses",
     icon: GraduationCap,
     title: "Link Up",
     subtitle: "Class & Residence Discussions",
-    description: "Join course-specific rooms for study groups and Q&A, now including a dedicated chat for our on campus residence community.",
-    accentColor: "blue",
+    description: "Join course-specific rooms for study groups and Q&A, plus a dedicated chat for on-campus residence.",
+    iconBg: "bg-violet-50",
+    iconColor: "text-violet-600",
     statKey: "total_courses" as const,
     statLabel: "courses",
+    statColor: "text-violet-600",
   },
   {
     href: "/messages",
@@ -148,9 +147,11 @@ const dashboardFeatures = [
     title: "Messages",
     subtitle: "Direct Messages",
     description: "Private conversations with other students in your York community.",
-    accentColor: "cyan",
+    iconBg: "bg-cyan-50",
+    iconColor: "text-cyan-600",
     statKey: "total_users" as const,
     statLabel: "students",
+    statColor: "text-cyan-600",
   },
   {
     href: "/gigs",
@@ -158,9 +159,11 @@ const dashboardFeatures = [
     title: "Quick Gigs",
     subtitle: "Find or Offer Help",
     description: "Find help or offer your services to verified York University students.",
-    accentColor: "yellow",
+    iconBg: "bg-amber-50",
+    iconColor: "text-amber-600",
     statKey: "active_gigs" as const,
     statLabel: "active gigs",
+    statColor: "text-amber-600",
   },
 ];
 
@@ -173,112 +176,31 @@ const comingSoonFeatures = [
 ];
 
 const quickStartSteps = [
-  {
-    step: 1,
-    title: "Complete your profile",
-    description: "Add interests and bio",
-    href: "/profile",
-  },
-  {
-    step: 2,
-    title: "Join your courses",
-    description: "Find and join class chats",
-    href: "/courses",
-  },
-  {
-    step: 3,
-    title: "Browse Marketplace",
-    description: "Find deals on textbooks",
-    href: "/marketplace",
-  },
-  {
-    step: 4,
-    title: "Post in The Vault",
-    description: "Share anonymously",
-    href: "/vault",
-  },
-  {
-    step: 5,
-    title: "Find activity partners",
-    description: "Join or create quests",
-    href: "/quests",
-  },
+  { step: 1, title: "Complete your profile", description: "Add interests and bio", href: "/profile" },
+  { step: 2, title: "Join your courses", description: "Find and join class chats", href: "/courses" },
+  { step: 3, title: "Browse Marketplace", description: "Find deals on textbooks", href: "/marketplace" },
+  { step: 4, title: "Post in The Vault", description: "Share anonymously", href: "/vault" },
+  { step: 5, title: "Find activity partners", description: "Join or create quests", href: "/quests" },
 ];
 
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
+    transition: { staggerChildren: 0.05 },
   },
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 16 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: {
-      duration: 0.5,
-    },
+    transition: { duration: 0.4 },
   },
 };
 
-// Color mappings for feature cards
-const accentColors = {
-  purple: {
-    bg: "bg-purple-500/15",
-    icon: "text-purple-400",
-    gradient: "bg-gradient-to-br from-purple-900/30 via-purple-800/10 to-transparent",
-    border: "border-purple-500/20",
-  },
-  orange: {
-    bg: "bg-orange-500/15",
-    icon: "text-orange-400",
-    gradient: "bg-gradient-to-br from-orange-900/30 via-orange-800/10 to-transparent",
-    border: "border-orange-500/20",
-  },
-  red: {
-    bg: "bg-red-500/15",
-    icon: "text-red-400",
-    gradient: "bg-gradient-to-br from-red-900/30 via-red-800/10 to-transparent",
-    border: "border-red-500/20",
-  },
-  emerald: {
-    bg: "bg-emerald-500/15",
-    icon: "text-emerald-400",
-    gradient: "bg-gradient-to-br from-emerald-900/30 via-emerald-800/10 to-transparent",
-    border: "border-emerald-500/20",
-  },
-  blue: {
-    bg: "bg-blue-500/15",
-    icon: "text-blue-400",
-    gradient: "bg-gradient-to-br from-blue-900/30 via-blue-800/10 to-transparent",
-    border: "border-blue-500/20",
-  },
-  pink: {
-    bg: "bg-pink-500/15",
-    icon: "text-pink-400",
-    gradient: "bg-gradient-to-br from-pink-900/30 via-pink-800/10 to-transparent",
-    border: "border-pink-500/20",
-  },
-  cyan: {
-    bg: "bg-cyan-500/15",
-    icon: "text-cyan-400",
-    gradient: "bg-gradient-to-br from-cyan-900/30 via-cyan-800/10 to-transparent",
-    border: "border-cyan-500/20",
-  },
-  yellow: {
-    bg: "bg-yellow-500/15",
-    icon: "text-yellow-400",
-    gradient: "bg-gradient-to-br from-yellow-900/30 via-yellow-800/10 to-transparent",
-    border: "border-yellow-500/20",
-  },
-};
-
-// Feature Card Component
+// Feature Card for Dashboard
 function FeatureCard({
   feature,
   stats,
@@ -294,81 +216,68 @@ function FeatureCard({
   };
 }) {
   const statValue = stats?.[feature.statKey];
-  const colors = accentColors[feature.accentColor as keyof typeof accentColors];
   const Icon = feature.icon;
 
   return (
     <Link href={feature.href}>
       <motion.div
-        whileHover={{ y: -2 }}
-        whileTap={{ scale: 0.995 }}
-        className={cn(
-          "group relative h-full rounded-2xl p-5 cursor-pointer transition-all duration-200 overflow-hidden",
-          "bg-zinc-900/90 border",
-          colors.border,
-          "hover:border-zinc-700"
-        )}
+        whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(0,0,0,0.08)" }}
+        whileTap={{ scale: 0.99 }}
+        transition={{ duration: 0.2 }}
+        className="group h-full rounded-xl p-5 cursor-pointer bg-white border border-gray-100 shadow-sm transition-all duration-200"
       >
-        {/* Gradient background */}
-        <div className={cn("absolute inset-0", colors.gradient)} />
-
-        {/* Content wrapper */}
-        <div className="relative">
-          {/* Header with icon and stats */}
-          <div className="flex items-start justify-between mb-4">
-            <div className={cn("p-2.5 rounded-xl", colors.bg)}>
-              <Icon className={cn("w-5 h-5", colors.icon)} />
+        {/* Header */}
+        <div className="flex items-start justify-between mb-4">
+          <div className={cn("p-2.5 rounded-lg", feature.iconBg)}>
+            <Icon className={cn("w-5 h-5", feature.iconColor)} />
+          </div>
+          {statValue !== undefined && (
+            <div className="text-right">
+              <p className={cn("text-xl font-bold", feature.statColor)}>
+                {statValue.toLocaleString()}
+              </p>
+              <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium">
+                {feature.statLabel}
+              </p>
             </div>
-            {statValue !== undefined && (
-              <div className="text-right">
-                <p className="text-xl font-bold text-white">{statValue.toLocaleString()}</p>
-                <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">{feature.statLabel}</p>
-              </div>
-            )}
-          </div>
+          )}
+        </div>
 
-          {/* Content */}
-          <div className="space-y-1 mb-3">
-            <h3 className="text-base font-semibold text-white">{feature.title}</h3>
-            <p className="text-xs text-zinc-500">{feature.subtitle}</p>
-          </div>
+        {/* Content */}
+        <div className="space-y-0.5 mb-2">
+          <h3 className="text-sm font-semibold text-gray-900">{feature.title}</h3>
+          <p className="text-xs text-gray-400">{feature.subtitle}</p>
+        </div>
+        <p className="text-sm text-gray-500 leading-relaxed mb-4">{feature.description}</p>
 
-          <p className="text-sm text-zinc-400 leading-relaxed mb-4">
-            {feature.description}
-          </p>
-
-          {/* Open link */}
-          <div className="flex items-center gap-1.5 text-sm text-zinc-500 group-hover:text-zinc-300 transition-colors">
-            <span>Open</span>
-            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-          </div>
+        {/* Open link */}
+        <div className="flex items-center gap-1.5 text-sm text-gray-400 group-hover:text-[#E31837] transition-colors">
+          <span>Open</span>
+          <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
         </div>
       </motion.div>
     </Link>
   );
 }
 
-// Quick Start Guide Component
+// Quick Start Guide
 function QuickStartGuide() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="rounded-xl bg-zinc-900/50 border border-zinc-800/50 overflow-hidden">
+    <div className="rounded-xl bg-white border border-gray-100 shadow-sm overflow-hidden">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-4 py-3 flex items-center justify-between hover:bg-zinc-800/30 transition-colors"
+        className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
           </div>
-          <span className="text-sm font-medium text-zinc-300">Getting Started Guide</span>
+          <span className="text-sm font-medium text-gray-700">Getting Started Guide</span>
         </div>
         <ChevronDown
-          className={cn(
-            "w-4 h-4 text-zinc-500 transition-transform duration-200",
-            isOpen && "rotate-180"
-          )}
+          className={cn("w-4 h-4 text-gray-400 transition-transform duration-200", isOpen && "rotate-180")}
         />
       </button>
 
@@ -379,27 +288,27 @@ function QuickStartGuide() {
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="border-t border-zinc-800/50"
+            className="border-t border-gray-100"
           >
-            <div className="p-4 space-y-2">
+            <div className="p-4 space-y-1">
               {quickStartSteps.map((step, index) => (
                 <Link key={step.step} href={step.href}>
                   <motion.div
-                    initial={{ opacity: 0, x: -10 }}
+                    initial={{ opacity: 0, x: -8 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.03 }}
-                    className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-zinc-800/40 transition-colors group"
+                    className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-50 transition-colors group"
                   >
-                    <div className="w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center flex-shrink-0 text-xs font-medium text-zinc-400 group-hover:bg-emerald-500/20 group-hover:text-emerald-400 transition-colors">
+                    <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 text-xs font-semibold text-gray-500 group-hover:bg-[#E31837]/10 group-hover:text-[#E31837] transition-colors">
                       {step.step}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-medium text-zinc-300 group-hover:text-white transition-colors truncate">
+                      <h4 className="text-sm font-medium text-gray-700 group-hover:text-gray-900 transition-colors truncate">
                         {step.title}
                       </h4>
-                      <p className="text-xs text-zinc-600 truncate">{step.description}</p>
+                      <p className="text-xs text-gray-400 truncate">{step.description}</p>
                     </div>
-                    <ArrowRight className="w-3.5 h-3.5 text-zinc-600 group-hover:text-zinc-400 group-hover:translate-x-0.5 transition-all flex-shrink-0" />
+                    <ArrowRight className="w-3.5 h-3.5 text-gray-300 group-hover:text-[#E31837] group-hover:translate-x-0.5 transition-all flex-shrink-0" />
                   </motion.div>
                 </Link>
               ))}
@@ -411,14 +320,14 @@ function QuickStartGuide() {
   );
 }
 
-// Safety Banner Component
+// Safety Banner
 function SafetyBanner() {
   return (
-    <div className="flex items-center justify-center gap-2 text-xs text-zinc-600 py-6 border-t border-zinc-800/30">
+    <div className="flex items-center justify-center gap-2 text-xs text-gray-400 py-6 border-t border-gray-100">
       <Lock className="w-3 h-3" />
       <span>
         Your privacy is protected.{" "}
-        <Link href="/privacy" className="text-zinc-500 hover:text-zinc-400 underline-offset-2 hover:underline">
+        <Link href="/privacy" className="text-[#E31837] hover:underline underline-offset-2">
           Learn more
         </Link>
       </span>
@@ -426,15 +335,14 @@ function SafetyBanner() {
   );
 }
 
-// Feedback types with icons
 const feedbackTypes = [
-  { value: "suggestion" as const, label: "Suggestion", icon: Lightbulb, color: "text-yellow-400" },
-  { value: "bug" as const, label: "Bug Report", icon: Bug, color: "text-red-400" },
-  { value: "problem" as const, label: "Problem", icon: AlertCircle, color: "text-orange-400" },
-  { value: "other" as const, label: "Other", icon: HelpCircle, color: "text-blue-400" },
+  { value: "suggestion" as const, label: "Suggestion", icon: Lightbulb, color: "text-amber-500" },
+  { value: "bug" as const, label: "Bug Report", icon: Bug, color: "text-red-500" },
+  { value: "problem" as const, label: "Problem", icon: AlertCircle, color: "text-orange-500" },
+  { value: "other" as const, label: "Other", icon: HelpCircle, color: "text-blue-500" },
 ];
 
-// Feedback Form Component
+// Feedback Form
 function FeedbackForm() {
   const [isOpen, setIsOpen] = useState(false);
   const [type, setType] = useState<"suggestion" | "bug" | "problem" | "other">("suggestion");
@@ -454,43 +362,33 @@ function FeedbackForm() {
   const submitMutation = useMutation({
     mutationFn: () => api.feedback.submit({ type, subject, message }),
     onSuccess: (data) => {
-      toast({
-        title: "Feedback Submitted",
-        description: data.message,
-      });
+      toast({ title: "Feedback Submitted", description: data.message });
       setSubject("");
       setMessage("");
       setType("suggestion");
       setIsOpen(false);
     },
     onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to submit feedback",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: error.message || "Failed to submit feedback", variant: "destructive" });
     },
   });
 
   const isValid = subject.trim().length >= 5 && message.trim().length >= 20;
 
   return (
-    <div id="send-feedback" className="rounded-xl bg-zinc-900/50 border border-zinc-800/50 overflow-hidden">
+    <div id="send-feedback" className="rounded-xl bg-white border border-gray-100 shadow-sm overflow-hidden">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-4 py-3 flex items-center justify-between hover:bg-zinc-800/30 transition-colors"
+        className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
-            <MessageSquarePlus className="w-4 h-4 text-purple-400" />
+          <div className="w-8 h-8 rounded-lg bg-[#E31837]/10 flex items-center justify-center">
+            <MessageSquarePlus className="w-4 h-4 text-[#E31837]" />
           </div>
-          <span className="text-sm font-medium text-zinc-300">Send Feedback</span>
+          <span className="text-sm font-medium text-gray-700">Send Feedback</span>
         </div>
         <ChevronDown
-          className={cn(
-            "w-4 h-4 text-zinc-500 transition-transform duration-200",
-            isOpen && "rotate-180"
-          )}
+          className={cn("w-4 h-4 text-gray-400 transition-transform duration-200", isOpen && "rotate-180")}
         />
       </button>
 
@@ -501,12 +399,12 @@ function FeedbackForm() {
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="border-t border-zinc-800/50"
+            className="border-t border-gray-100"
           >
             <div className="p-4 space-y-4">
-              {/* Feedback Type Selection */}
+              {/* Feedback Type */}
               <div className="space-y-2">
-                <Label className="text-xs text-zinc-500">Type</Label>
+                <Label className="text-xs text-gray-500">Type</Label>
                 <div className="grid grid-cols-4 gap-2">
                   {feedbackTypes.map((ft) => (
                     <button
@@ -515,11 +413,11 @@ function FeedbackForm() {
                       className={cn(
                         "flex flex-col items-center gap-1.5 px-2 py-2.5 rounded-lg border transition-all text-xs",
                         type === ft.value
-                          ? "border-purple-500/50 bg-purple-500/10 text-white"
-                          : "border-zinc-800 hover:border-zinc-700 text-zinc-500"
+                          ? "border-[#E31837]/40 bg-[#E31837]/5 text-gray-900"
+                          : "border-gray-200 hover:border-gray-300 text-gray-500"
                       )}
                     >
-                      <ft.icon className={cn("w-4 h-4", type === ft.value ? ft.color : "")} />
+                      <ft.icon className={cn("w-4 h-4", type === ft.value ? ft.color : "text-gray-400")} />
                       <span>{ft.label}</span>
                     </button>
                   ))}
@@ -528,44 +426,44 @@ function FeedbackForm() {
 
               {/* Subject */}
               <div className="space-y-1.5">
-                <Label htmlFor="feedback-subject" className="text-xs text-zinc-500">Subject</Label>
+                <Label htmlFor="feedback-subject" className="text-xs text-gray-500">Subject</Label>
                 <Input
                   id="feedback-subject"
                   placeholder="Brief summary..."
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
                   maxLength={200}
-                  className="h-9 text-sm bg-zinc-800/50 border-zinc-700/50 focus:border-purple-500/50"
+                  className="h-9 text-sm"
                 />
               </div>
 
               {/* Message */}
               <div className="space-y-1.5">
-                <Label htmlFor="feedback-message" className="text-xs text-zinc-500">Details</Label>
+                <Label htmlFor="feedback-message" className="text-xs text-gray-500">Details</Label>
                 <Textarea
                   id="feedback-message"
                   placeholder="Describe in detail..."
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   maxLength={2000}
-                  className="min-h-[100px] text-sm bg-zinc-800/50 border-zinc-700/50 focus:border-purple-500/50 resize-none"
+                  className="min-h-[100px] text-sm resize-none"
                 />
               </div>
 
-              {/* Submit Button */}
-              <div className="flex items-center justify-between pt-2">
-                <p className="text-xs text-zinc-600">
+              {/* Submit */}
+              <div className="flex items-center justify-between pt-1">
+                <p className="text-xs text-gray-400">
                   {subject.length >= 5 && message.length >= 20 ? (
-                    <span className="text-emerald-500">Ready to submit</span>
+                    <span className="text-emerald-600">Ready to submit</span>
                   ) : (
-                    `Min: 5 char subject, 20 char message`
+                    "Min: 5 char subject, 20 char message"
                   )}
                 </p>
                 <Button
                   onClick={() => submitMutation.mutate()}
                   disabled={!isValid || submitMutation.isPending}
                   size="sm"
-                  className="bg-purple-600 hover:bg-purple-700 h-8 px-3 text-xs"
+                  className="bg-[#E31837] hover:bg-[#C41230] h-8 px-3 text-xs"
                 >
                   {submitMutation.isPending ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -585,8 +483,7 @@ function FeedbackForm() {
   );
 }
 
-
-// Dashboard View (for authenticated users)
+// Dashboard View (authenticated users)
 function DashboardView() {
   const { user } = useAuthStore();
 
@@ -598,24 +495,24 @@ function DashboardView() {
 
   const firstName = user?.name?.split(" ")[0] || "there";
 
-  // Split features into rows: first 3, then remaining 2
   const topRowFeatures = dashboardFeatures.slice(0, 3);
   const bottomRowFeatures = dashboardFeatures.slice(3);
 
   return (
-    <main className="min-h-screen bg-[#0a0a0a] pt-16">
-      <div className="container mx-auto px-4 py-6 max-w-6xl">
+    <main className="min-h-screen bg-gray-50 pt-16">
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: -10 }}
+          initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
           className="mb-8"
         >
-          <h1 className="text-2xl font-semibold text-white">{firstName}</h1>
-          <div className="w-12 h-1 bg-purple-500 rounded-full mt-2" />
+          <h1 className="text-2xl font-semibold text-gray-900">Hi, {firstName}</h1>
+          <div className="w-10 h-1 bg-[#E31837] rounded-full mt-2" />
         </motion.div>
 
-        {/* Top Row - 3 cards */}
+        {/* Top Row */}
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -624,27 +521,21 @@ function DashboardView() {
         >
           {topRowFeatures.map((feature) => (
             <motion.div key={feature.href} variants={itemVariants}>
-              <FeatureCard
-                feature={feature}
-                stats={stats}
-              />
+              <FeatureCard feature={feature} stats={stats} />
             </motion.div>
           ))}
         </motion.div>
 
-        {/* Bottom Row - 3 cards */}
+        {/* Bottom Row */}
         <motion.div
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="grid gap-4 grid-cols-1 md:grid-cols-3 mb-12"
+          className="grid gap-4 grid-cols-1 md:grid-cols-3 mb-10"
         >
           {bottomRowFeatures.map((feature) => (
             <motion.div key={feature.href} variants={itemVariants}>
-              <FeatureCard
-                feature={feature}
-                stats={stats}
-              />
+              <FeatureCard feature={feature} stats={stats} />
             </motion.div>
           ))}
         </motion.div>
@@ -654,12 +545,12 @@ function DashboardView() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="mb-10"
+          className="mb-8"
         >
           <div className="flex items-center gap-4 mb-5">
-            <div className="h-px flex-1 bg-zinc-800" />
-            <span className="text-xs font-medium text-zinc-500 uppercase tracking-widest">Coming Soon</span>
-            <div className="h-px flex-1 bg-zinc-800" />
+            <div className="h-px flex-1 bg-gray-200" />
+            <span className="text-xs font-medium text-gray-400 uppercase tracking-widest">Coming Soon</span>
+            <div className="h-px flex-1 bg-gray-200" />
           </div>
           <div className="flex justify-center">
             {comingSoonFeatures.map((feature) => {
@@ -667,13 +558,13 @@ function DashboardView() {
               return (
                 <div
                   key={feature.title}
-                  className="rounded-2xl p-6 text-center bg-zinc-900/50 border border-zinc-800/50 max-w-xs"
+                  className="rounded-xl p-6 text-center bg-white border border-gray-100 shadow-sm max-w-xs"
                 >
-                  <div className="w-10 h-10 mx-auto mb-3 rounded-xl bg-zinc-800/50 flex items-center justify-center">
-                    <Icon className="w-5 h-5 text-zinc-500" />
+                  <div className="w-10 h-10 mx-auto mb-3 rounded-lg bg-gray-50 flex items-center justify-center">
+                    <Icon className="w-5 h-5 text-gray-400" />
                   </div>
-                  <h3 className="font-semibold text-zinc-300 mb-1">{feature.title}</h3>
-                  <p className="text-sm text-zinc-500">{feature.description}</p>
+                  <h3 className="font-semibold text-gray-700 mb-1">{feature.title}</h3>
+                  <p className="text-sm text-gray-400">{feature.description}</p>
                 </div>
               );
             })}
@@ -691,74 +582,75 @@ function DashboardView() {
           <FeedbackForm />
         </motion.div>
 
-        {/* Footer */}
         <SafetyBanner />
       </div>
     </main>
   );
 }
 
-// Landing View (for non-authenticated users)
+// Landing View (non-authenticated users)
 function LandingView() {
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-white">
       {/* Hero Section */}
-      <div className="relative overflow-hidden">
-        {/* Background gradient mesh */}
+      <div className="relative overflow-hidden bg-white">
+        {/* Subtle background pattern */}
         <div className="absolute inset-0 gradient-mesh" />
 
-        <div className="relative mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8">
+        <div className="relative mx-auto max-w-5xl px-6 pt-28 pb-16 sm:pt-36 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.5 }}
             className="mx-auto max-w-2xl text-center"
           >
-            {/* Logo */}
+            {/* York U badge */}
             <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
+              initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="mb-8 flex justify-center"
+              transition={{ duration: 0.4, delay: 0.1 }}
+              className="mb-6 flex justify-center"
             >
-              <div className="gradient-purple rounded-2xl p-4">
-                <span className="text-4xl font-bold text-white">YP</span>
-              </div>
+              <span className="inline-flex items-center gap-2 rounded-full bg-[#E31837]/10 px-4 py-1.5 text-sm font-medium text-[#E31837]">
+                <Shield className="w-3.5 h-3.5" />
+                Exclusively for York University Students
+              </span>
             </motion.div>
 
             {/* Title */}
-            <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-6xl">
+            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
               Your Campus.{" "}
-              <span className="bg-gradient-to-r from-purple-500 to-coral bg-clip-text text-transparent">
-                Your Community.
-              </span>
+              <span className="text-[#E31837]">Your Community.</span>
             </h1>
 
             {/* Subtitle */}
-            <p className="mt-6 text-lg leading-8 text-muted-foreground">
+            <p className="mt-6 text-lg leading-8 text-gray-500 max-w-xl mx-auto">
               YorkPulse is the exclusive platform for York University students.
               Connect, trade, and build lasting friendships in a safe, verified community.
             </p>
 
             {/* CTA Buttons */}
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="mt-10 flex items-center justify-center gap-x-6"
+              transition={{ duration: 0.4, delay: 0.25 }}
+              className="mt-10 flex items-center justify-center gap-4"
             >
-              <Link
-                href="/auth/signup"
-                className="gradient-purple rounded-xl px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-purple-500/25 transition-all hover:shadow-purple-500/40 hover:scale-105"
+              <Button
+                size="lg"
+                className="bg-[#E31837] hover:bg-[#C41230] text-white px-8 shadow-sm"
+                asChild
               >
-                Get Started
-              </Link>
-              <Link
-                href="/auth/login"
-                className="glass rounded-xl px-6 py-3 text-sm font-semibold text-foreground transition-all hover:bg-white/10"
+                <Link href="/auth/signup">Get Started</Link>
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                className="px-8 border-gray-200 text-gray-700 hover:bg-gray-50"
+                asChild
               >
-                Sign In
-              </Link>
+                <Link href="/auth/login">Sign In</Link>
+              </Button>
             </motion.div>
           </motion.div>
 
@@ -769,22 +661,23 @@ function LandingView() {
             animate="visible"
             className="mx-auto mt-20 max-w-5xl"
           >
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {landingFeatures.map((feature) => (
                 <motion.div key={feature.href} variants={itemVariants} className="h-full">
                   <Link href={feature.href} className="h-full block">
                     <motion.div
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className={`glass-card p-6 h-full cursor-pointer transition-all duration-300 border border-white/10 ${feature.hoverBorder} ${feature.hoverGlow} hover:shadow-lg`}
+                      whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(0,0,0,0.08)" }}
+                      transition={{ duration: 0.2 }}
+                      className={cn(
+                        "bg-white p-6 h-full rounded-xl border-t-2 border border-gray-100 cursor-pointer transition-all duration-200 shadow-sm",
+                        feature.accentBorder
+                      )}
                     >
-                      <div className={`mb-4 inline-flex rounded-lg ${feature.iconBg} p-3`}>
-                        <feature.icon className={`h-6 w-6 ${feature.iconColor}`} />
+                      <div className={cn("mb-4 inline-flex rounded-lg p-2.5", feature.iconBg)}>
+                        <feature.icon className={cn("h-5 w-5", feature.iconColor)} />
                       </div>
-                      <h3 className="font-semibold text-foreground">{feature.title}</h3>
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        {feature.description}
-                      </p>
+                      <h3 className="font-semibold text-gray-900">{feature.title}</h3>
+                      <p className="mt-1.5 text-sm text-gray-500">{feature.description}</p>
                     </motion.div>
                   </Link>
                 </motion.div>
@@ -796,13 +689,13 @@ function LandingView() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.6 }}
-            className="mx-auto mt-16 text-center"
+            transition={{ duration: 0.5, delay: 0.5 }}
+            className="mx-auto mt-14 text-center"
           >
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-gray-400">
               Verified with{" "}
-              <span className="font-semibold text-foreground">@yorku.ca</span> or{" "}
-              <span className="font-semibold text-foreground">@my.yorku.ca</span> email
+              <span className="font-semibold text-gray-600">@yorku.ca</span> or{" "}
+              <span className="font-semibold text-gray-600">@my.yorku.ca</span> email
             </p>
           </motion.div>
         </div>
@@ -816,27 +709,21 @@ export default function Home() {
   const { isAuthenticated, isHydrated, setHydrated } = useAuthStore();
   const [mounted, setMounted] = useState(false);
 
-  // Ensure we're mounted on the client
   useEffect(() => {
     setMounted(true);
-
-    // Fallback: if not hydrated after a short delay, force hydration
-    // This handles cases where onRehydrateStorage doesn't fire
     const timeout = setTimeout(() => {
       if (!useAuthStore.getState().isHydrated) {
         setHydrated();
       }
     }, 100);
-
     return () => clearTimeout(timeout);
   }, [setHydrated]);
 
-  // Show loading state until both mounted and hydrated
   if (!mounted || !isHydrated) {
     return (
-      <main className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+      <main className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-pulse">
-          <div className="w-12 h-12 rounded-xl bg-purple-500/20" />
+          <div className="w-10 h-10 rounded-lg bg-[#E31837]/20" />
         </div>
       </main>
     );

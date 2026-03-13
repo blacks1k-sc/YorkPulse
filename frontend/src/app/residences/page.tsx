@@ -194,8 +194,8 @@ export default function ResidencesPage() {
     <div className="space-y-6">
       {/* My Residences */}
       {isAuthenticated && myResidences && myResidences.residences.length > 0 && (
-        <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-          <h3 className="text-sm font-medium text-zinc-400 mb-3">My Residences</h3>
+        <div className="p-4 rounded-xl bg-white border border-gray-100 shadow-sm">
+          <h3 className="text-sm font-medium text-gray-500 mb-3">My Residences</h3>
           <div className="flex flex-wrap gap-2">
             {myResidences.residences.map((membership) => (
               <motion.div
@@ -241,7 +241,7 @@ export default function ResidencesPage() {
                   "flex items-center justify-between p-4 rounded-xl cursor-pointer border transition-colors",
                   joined
                     ? "bg-purple-500/5 border-purple-500/30"
-                    : "bg-white/5 hover:bg-white/10 border-white/10"
+                    : "bg-white/5 hover:bg-white/10 border-gray-200"
                 )}
               >
                 <div className="flex items-center gap-3">
@@ -249,11 +249,11 @@ export default function ResidencesPage() {
                     "w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0",
                     joined ? "bg-purple-500/20" : "bg-white/5"
                   )}>
-                    <Building2 className={cn("w-4 h-4", joined ? "text-purple-400" : "text-zinc-400")} />
+                    <Building2 className={cn("w-4 h-4", joined ? "text-purple-400" : "text-gray-500")} />
                   </div>
                   <div>
                     <p className="font-medium text-sm">{residence.name}</p>
-                    <div className="flex items-center gap-1 mt-0.5 text-zinc-500">
+                    <div className="flex items-center gap-1 mt-0.5 text-gray-400">
                       <Users className="w-3 h-3" />
                       <span className="text-xs">{residence.member_count} members</span>
                     </div>
@@ -273,7 +273,7 @@ export default function ResidencesPage() {
   const renderChatView = () => (
     <div className="flex flex-col h-[calc(100vh-12rem)]">
       {/* Chat Header */}
-      <div className="flex items-center gap-3 p-4 bg-white/5 border-b border-white/10 rounded-t-xl">
+      <div className="flex items-center gap-3 p-4 bg-white/5 border-b border-gray-200 rounded-t-xl">
         <Button
           variant="ghost"
           size="sm"
@@ -293,20 +293,20 @@ export default function ResidencesPage() {
             <span className="font-medium text-sm">{selectedResidence?.name}</span>
             {showParticipants && (
               <>
-                <span className="text-zinc-500">/</span>
-                <Users className="w-4 h-4 text-zinc-400" />
-                <span className="text-sm text-zinc-400">Participants</span>
+                <span className="text-gray-400">/</span>
+                <Users className="w-4 h-4 text-gray-500" />
+                <span className="text-sm text-gray-500">Participants</span>
               </>
             )}
           </div>
-          <p className="text-xs text-zinc-500 mt-0.5">{selectedResidence?.campus} Campus</p>
+          <p className="text-xs text-gray-400 mt-0.5">{selectedResidence?.campus} Campus</p>
         </div>
 
         {/* Participants button */}
         <Button
           variant="ghost"
           size="sm"
-          className={cn(showParticipants ? "text-purple-400" : "text-zinc-400")}
+          className={cn(showParticipants ? "text-purple-400" : "text-gray-500")}
           onClick={() => setShowParticipants((v) => !v)}
         >
           <Users className="w-4 h-4" />
@@ -339,7 +339,7 @@ export default function ResidencesPage() {
               </div>
             ) : (
               <>
-                <p className="text-xs text-zinc-500 mb-3">
+                <p className="text-xs text-gray-400 mb-3">
                   {participantsData?.total ?? 0} residents
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -347,7 +347,7 @@ export default function ResidencesPage() {
                     <Link
                       key={p.id}
                       href={`/profile/${p.id}`}
-                      className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-colors"
+                      className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-gray-200 transition-colors"
                     >
                       <Avatar className="w-10 h-10 flex-shrink-0">
                         <AvatarImage src={p.avatar_url ?? undefined} />
@@ -355,7 +355,7 @@ export default function ResidencesPage() {
                           {p.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="text-sm text-zinc-300 truncate">{p.name}</span>
+                      <span className="text-sm text-gray-700 truncate">{p.name}</span>
                     </Link>
                   ))}
                 </div>
@@ -387,13 +387,13 @@ export default function ResidencesPage() {
                       <Building2 className="w-8 h-8 text-purple-400" />
                     </div>
                     <h2 className="text-xl font-bold text-white mb-1">{selectedResidence?.name}</h2>
-                    <p className="text-zinc-400 text-sm mb-6">{selectedResidence?.campus} Campus</p>
-                    <div className="p-4 rounded-xl bg-white/5 border border-white/10 text-left">
-                      <p className="text-sm text-zinc-400">
+                    <p className="text-gray-500 text-sm mb-6">{selectedResidence?.campus} Campus</p>
+                    <div className="p-4 rounded-xl bg-white border border-gray-100 shadow-sm text-left">
+                      <p className="text-sm text-gray-500">
                         This is the general chat for your residence. Say hi to your neighbours!
                       </p>
                     </div>
-                    <p className="text-zinc-500 text-sm mt-6">Be the first to start the conversation!</p>
+                    <p className="text-gray-400 text-sm mt-6">Be the first to start the conversation!</p>
                   </div>
                 </div>
               ) : (
@@ -420,7 +420,7 @@ export default function ResidencesPage() {
             </ScrollArea>
 
             {selectedChannel && (
-              <div className="p-4 border-t border-white/10">
+              <div className="p-4 border-t border-gray-200">
                 <ChatInput
                   placeholder="Message your neighbours..."
                   maxLength={500}
@@ -443,14 +443,14 @@ export default function ResidencesPage() {
       <div className="container mx-auto px-4 py-6 max-w-4xl">
         <div className="mb-8">
           <h1 className="text-2xl font-bold mb-1">Residence Chat</h1>
-          <p className="text-sm text-zinc-500">Connect with your on-campus neighbours</p>
+          <p className="text-sm text-gray-400">Connect with your on-campus neighbours</p>
         </div>
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="w-20 h-20 rounded-full bg-purple-500/10 flex items-center justify-center mb-6">
             <Building2 className="w-10 h-10 text-purple-400" />
           </div>
           <h2 className="text-xl font-semibold mb-2">Sign in to access Residence Chat</h2>
-          <p className="text-zinc-500 mb-6 max-w-md">
+          <p className="text-gray-400 mb-6 max-w-md">
             Join your residence chat room and connect with students living in the same building.
           </p>
           <Link href="/auth/login">
@@ -476,7 +476,7 @@ export default function ResidencesPage() {
         </div>
         <div>
           <h1 className="text-2xl font-bold mb-1">Residence Chat</h1>
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-gray-400">
             {viewMode === "browse"
               ? "Connect with on-campus neighbours"
               : `Chatting in ${selectedResidence?.name}`}
@@ -486,9 +486,9 @@ export default function ResidencesPage() {
 
       {/* Tab Switcher */}
       {viewMode === "browse" && (
-        <div className="flex gap-1 p-1 mb-5 bg-white/5 border border-white/10 rounded-xl w-fit">
+        <div className="flex gap-1 p-1 mb-5 bg-white border border-gray-100 shadow-sm rounded-xl w-fit">
           <Link href="/courses">
-            <button className="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors text-zinc-400 hover:text-zinc-200">
+            <button className="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors text-gray-500 hover:text-zinc-200">
               Courses
             </button>
           </Link>
@@ -526,10 +526,10 @@ export default function ResidencesPage() {
 
           {previewResidence && (
             <div className="py-4">
-              <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+              <div className="p-4 rounded-xl bg-white border border-gray-100 shadow-sm">
                 <p className="font-medium">{previewResidence.name}</p>
-                <p className="text-sm text-zinc-400 mt-1">{previewResidence.campus} Campus</p>
-                <div className="flex items-center gap-1 mt-2 text-zinc-500">
+                <p className="text-sm text-gray-500 mt-1">{previewResidence.campus} Campus</p>
+                <div className="flex items-center gap-1 mt-2 text-gray-400">
                   <Users className="w-3 h-3" />
                   <span className="text-xs">{previewResidence.member_count} members</span>
                 </div>

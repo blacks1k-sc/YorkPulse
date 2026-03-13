@@ -81,9 +81,9 @@ export function ChatMessage({
       {/* Avatar */}
       {showAvatar && (
         <Link href={`/profile/${authorId}`} className="flex-shrink-0">
-          <Avatar className="w-8 h-8 cursor-pointer hover:ring-2 hover:ring-purple-500/50 transition-all">
+          <Avatar className="w-8 h-8 cursor-pointer hover:ring-2 hover:ring-[#E31837]/30 transition-all">
             <AvatarImage src={authorAvatarUrl || undefined} />
-            <AvatarFallback className="text-xs bg-purple-500/20 text-purple-300">
+            <AvatarFallback className="text-xs bg-[#E31837]/10 text-[#E31837]">
               {authorName?.slice(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>
@@ -104,12 +104,12 @@ export function ChatMessage({
             href={`/profile/${authorId}`}
             className={cn(
               "text-sm font-medium hover:underline cursor-pointer",
-              isOwn ? "text-[#00ff88]" : "text-zinc-300"
+              isOwn ? "text-[#00ff88]" : "text-gray-700"
             )}
           >
             {authorName}
           </Link>
-          <span className="text-xs text-zinc-600">{formattedTime}</span>
+          <span className="text-xs text-gray-500">{formattedTime}</span>
           {/* Reply button */}
           {onReply && id && (
             <button
@@ -117,7 +117,7 @@ export function ChatMessage({
               className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-white/10 rounded"
               title="Reply"
             >
-              <Reply className="w-3 h-3 text-zinc-400" />
+              <Reply className="w-3 h-3 text-gray-500" />
             </button>
           )}
         </div>
@@ -127,13 +127,13 @@ export function ChatMessage({
           <button
             onClick={() => onScrollToMessage?.(replyTo.id)}
             className={cn(
-              "mb-2 px-2 py-1.5 rounded-lg border-l-2 border-purple-500/50 bg-white/5 text-xs w-full",
+              "mb-2 px-2 py-1.5 rounded-lg border-l-2 border-[#E31837]/30 bg-gray-50 text-xs w-full",
               "hover:bg-white/10 transition-colors cursor-pointer",
               isOwn ? "text-right" : "text-left"
             )}
           >
-            <p className="text-purple-400 font-medium mb-0.5">{replyAuthorName}</p>
-            <p className="text-zinc-400 line-clamp-1">
+            <p className="text-[#E31837] font-medium mb-0.5">{replyAuthorName}</p>
+            <p className="text-gray-500 line-clamp-1">
               {replyTo.image_url && !replyContent ? "Photo" : replyContent || "Message"}
             </p>
           </button>
@@ -146,7 +146,7 @@ export function ChatMessage({
             animate={{ opacity: imageLoaded ? 1 : 0, scale: 1 }}
             className={cn(
               "mb-2 rounded-lg overflow-hidden inline-block",
-              !imageLoaded && "bg-zinc-800 animate-pulse min-h-[100px] min-w-[100px]"
+              !imageLoaded && "bg-gray-100 animate-pulse min-h-[100px] min-w-[100px]"
             )}
           >
             <a href={imageUrl} target="_blank" rel="noopener noreferrer">
@@ -165,7 +165,7 @@ export function ChatMessage({
         {message && (
           <p
             className={cn(
-              "text-sm text-zinc-300 whitespace-pre-wrap break-words",
+              "text-sm text-gray-700 whitespace-pre-wrap break-words",
               isOwn && "text-right"
             )}
           >

@@ -10,10 +10,10 @@ export default function AuthLayout({
       {/* Auth Header */}
       <header className="p-4">
         <Link href="/" className="flex items-center gap-2 w-fit">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-coral-500 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-[#E31837] flex items-center justify-center">
             <span className="text-white font-bold text-sm">YP</span>
           </div>
-          <span className="font-semibold text-lg">YorkPulse</span>
+          <span className="font-semibold text-lg text-gray-900">YorkPulse</span>
         </Link>
       </header>
 
@@ -23,7 +23,7 @@ export default function AuthLayout({
       </main>
 
       {/* Footer */}
-      <footer className="p-4 text-center text-sm text-zinc-500">
+      <footer className="p-4 text-center text-sm text-gray-400">
         <p>Exclusively for York University students</p>
       </footer>
     </div>

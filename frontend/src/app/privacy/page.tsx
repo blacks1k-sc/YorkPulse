@@ -8,25 +8,25 @@ export default function PrivacyPage() {
       </div>
 
       <h1 className="text-3xl font-bold mb-2">Privacy Policy</h1>
-      <p className="text-zinc-500 text-sm mb-10">Last updated: March 2026</p>
+      <p className="text-gray-400 text-sm mb-10">Last updated: March 2026</p>
 
-      <div className="space-y-8 text-zinc-300 leading-relaxed">
+      <div className="space-y-8 text-gray-700 leading-relaxed">
 
         <section>
           <h2 className="text-lg font-semibold text-white mb-3">1. Information We Collect</h2>
           <p className="mb-3">When you use YorkPulse, we collect:</p>
-          <ul className="list-disc list-inside space-y-2 text-zinc-400">
-            <li><span className="text-zinc-300">Account information</span> — your York email address and display name</li>
-            <li><span className="text-zinc-300">Profile information</span> — program, bio, and avatar you choose to provide</li>
-            <li><span className="text-zinc-300">Content you post</span> — marketplace listings, Vault posts, Side Quest requests, messages, and gigs</li>
-            <li><span className="text-zinc-300">Usage data</span> — pages visited, features used, and approximate activity timestamps</li>
-            <li><span className="text-zinc-300">Location data</span> — only when you voluntarily add a location to a Side Quest post</li>
+          <ul className="list-disc list-inside space-y-2 text-gray-500">
+            <li><span className="text-gray-700">Account information</span> — your York email address and display name</li>
+            <li><span className="text-gray-700">Profile information</span> — program, bio, and avatar you choose to provide</li>
+            <li><span className="text-gray-700">Content you post</span> — marketplace listings, Vault posts, Side Quest requests, messages, and gigs</li>
+            <li><span className="text-gray-700">Usage data</span> — pages visited, features used, and approximate activity timestamps</li>
+            <li><span className="text-gray-700">Location data</span> — only when you voluntarily add a location to a Side Quest post</li>
           </ul>
         </section>
 
         <section>
           <h2 className="text-lg font-semibold text-white mb-3">2. How We Use Your Information</h2>
-          <ul className="list-disc list-inside space-y-2 text-zinc-400">
+          <ul className="list-disc list-inside space-y-2 text-gray-500">
             <li>To verify your York University affiliation via email OTP</li>
             <li>To display your profile and content to other verified users</li>
             <li>To enable platform features such as messaging, marketplace, and Side Quests</li>
@@ -43,11 +43,11 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-lg font-semibold text-white mb-3">4. Data Sharing</h2>
           <p className="mb-3">We do not sell your personal data. We share data only with:</p>
-          <ul className="list-disc list-inside space-y-2 text-zinc-400">
-            <li><span className="text-zinc-300">Supabase</span> — our database and authentication provider</li>
-            <li><span className="text-zinc-300">Resend</span> — used to send OTP verification emails</li>
-            <li><span className="text-zinc-300">Vercel</span> — our frontend hosting provider</li>
-            <li><span className="text-zinc-300">Law enforcement</span> — only when legally required</li>
+          <ul className="list-disc list-inside space-y-2 text-gray-500">
+            <li><span className="text-gray-700">Supabase</span> — our database and authentication provider</li>
+            <li><span className="text-gray-700">Resend</span> — used to send OTP verification emails</li>
+            <li><span className="text-gray-700">Vercel</span> — our frontend hosting provider</li>
+            <li><span className="text-gray-700">Law enforcement</span> — only when legally required</li>
           </ul>
         </section>
 
@@ -59,7 +59,7 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-lg font-semibold text-white mb-3">6. Your Rights</h2>
           <p className="mb-3">You have the right to:</p>
-          <ul className="list-disc list-inside space-y-2 text-zinc-400">
+          <ul className="list-disc list-inside space-y-2 text-gray-500">
             <li>Access the personal data we hold about you</li>
             <li>Request correction of inaccurate data</li>
             <li>Request deletion of your account and associated data</li>
@@ -90,7 +90,7 @@ export default function PrivacyPage() {
 
       </div>
 
-      <div className="mt-12 pt-8 border-t border-white/10 text-sm text-zinc-500">
+      <div className="mt-12 pt-8 border-t border-gray-200 text-sm text-gray-400">
         <Link href="/terms" className="text-purple-400 hover:underline">Terms of Service</Link>
       </div>
     </div>

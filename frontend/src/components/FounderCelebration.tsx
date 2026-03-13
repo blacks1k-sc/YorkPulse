@@ -98,7 +98,7 @@ export default function FounderCelebration() {
       {/* Popup */}
       <div className="fixed inset-0 flex items-center justify-center z-[9999] pointer-events-none">
         <div
-          className="founder-popup pointer-events-auto relative mx-4 rounded-2xl border border-white/10 bg-zinc-900/95 backdrop-blur-md shadow-2xl overflow-hidden"
+          className="founder-popup pointer-events-auto relative mx-4 rounded-2xl border border-gray-100 bg-white backdrop-blur-md shadow-2xl overflow-hidden"
           style={{ maxWidth: 360, width: "100%" }}
         >
           {/* Progress bar */}
@@ -123,14 +123,14 @@ export default function FounderCelebration() {
             </div>
 
             <h2 className="text-xl font-bold text-white mb-1">You earned a badge!</h2>
-            <p className="text-zinc-400 text-sm leading-relaxed">
+            <p className="text-gray-500 text-sm leading-relaxed">
               Thanks for being one of the{" "}
               <span className="text-violet-400 font-semibold">first members</span>{" "}
               of YorkPulse. This badge is yours forever.
             </p>
 
             <button
-              className="mt-5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+              className="mt-5 text-xs text-gray-400 hover:text-gray-700 transition-colors"
               onClick={() => setVisible(false)}
             >
               Dismiss

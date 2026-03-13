@@ -55,19 +55,21 @@ export function Header() {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 glass border-b border-white/10">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-[#E31837] shadow-md">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2" onClick={closeMobileMenu}>
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-coral-500 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">YP</span>
+          <Link href="/" className="flex items-center gap-2.5" onClick={closeMobileMenu}>
+            <div className="w-8 h-8 rounded-md bg-white flex items-center justify-center">
+              <span className="text-[#E31837] font-bold text-sm leading-none">YP</span>
             </div>
-            <span className="font-semibold text-lg hidden sm:block">YorkPulse</span>
+            <span className="font-semibold text-lg text-white hidden sm:block tracking-tight">
+              YorkPulse
+            </span>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden md:flex items-center gap-0.5">
             {navItems.map((item) => {
               const isActive = pathname.startsWith(item.href);
               return (
@@ -75,27 +77,30 @@ export function Header() {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-lg transition-colors",
+                    "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors",
                     isActive
-                      ? "bg-purple-500/20 text-purple-400"
-                      : "text-zinc-400 hover:text-white hover:bg-white/5"
+                      ? "bg-white/20 text-white"
+                      : "text-white/80 hover:text-white hover:bg-white/15"
                   )}
                 >
                   <item.icon className="w-4 h-4" />
-                  <span className="text-sm font-medium">{item.label}</span>
+                  <span>{item.label}</span>
                 </Link>
               );
             })}
           </nav>
 
           {/* Right Section */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {isAuthenticated ? (
               <>
                 {/* Create Button */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button size="sm" className="hidden sm:flex gap-2 bg-purple-600 hover:bg-purple-700">
+                    <Button
+                      size="sm"
+                      className="hidden sm:flex gap-2 bg-white text-[#E31837] hover:bg-white/90 font-semibold shadow-none"
+                    >
                       <Plus className="w-4 h-4" />
                       Create
                     </Button>
@@ -125,10 +130,14 @@ export function Header() {
                 {/* User Menu */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="rounded-full hover:bg-white/20 text-white"
+                    >
                       <Avatar className="w-8 h-8">
                         <AvatarImage src={user?.avatar_url || undefined} />
-                        <AvatarFallback className="bg-purple-500/20 text-purple-400 text-xs">
+                        <AvatarFallback className="bg-white/20 text-white text-xs font-semibold">
                           {user?.name ? getInitials(user.name) : "?"}
                         </AvatarFallback>
                       </Avatar>
@@ -136,8 +145,8 @@ export function Header() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
                     <div className="px-2 py-1.5">
-                      <p className="font-medium">{user?.name || "User"}</p>
-                      <p className="text-xs text-zinc-500">{user?.email}</p>
+                      <p className="font-medium text-sm">{user?.name || "User"}</p>
+                      <p className="text-xs text-gray-500">{user?.email}</p>
                     </div>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
@@ -147,7 +156,7 @@ export function Header() {
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={logout} className="text-red-400">
+                    <DropdownMenuItem onClick={logout} className="text-red-600">
                       <LogOut className="w-4 h-4 mr-2" />
                       Sign Out
                     </DropdownMenuItem>
@@ -156,10 +165,19 @@ export function Header() {
               </>
             ) : (
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-white hover:bg-white/20 hover:text-white"
+                  asChild
+                >
                   <Link href="/auth/login">Sign In</Link>
                 </Button>
-                <Button size="sm" className="bg-purple-600 hover:bg-purple-700" asChild>
+                <Button
+                  size="sm"
+                  className="bg-white text-[#E31837] hover:bg-white/90 font-semibold shadow-none"
+                  asChild
+                >
                   <Link href="/auth/signup">Get Started</Link>
                 </Button>
               </div>
@@ -169,7 +187,7 @@ export function Header() {
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden"
+              className="md:hidden text-white hover:bg-white/20"
               onClick={toggleMobileMenu}
             >
               {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -181,12 +199,13 @@ export function Header() {
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
         <motion.div
-          initial={{ opacity: 0, y: -10 }}
+          initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          className="md:hidden glass border-t border-white/10"
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.2 }}
+          className="md:hidden bg-[#C41230] border-t border-white/20"
         >
-          <nav className="container mx-auto px-4 py-4 flex flex-col gap-1">
+          <nav className="container mx-auto px-4 py-3 flex flex-col gap-0.5">
             {navItems.map((item) => {
               const isActive = pathname.startsWith(item.href);
               return (
@@ -195,14 +214,14 @@ export function Header() {
                   href={item.href}
                   onClick={closeMobileMenu}
                   className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
+                    "flex items-center gap-3 px-4 py-3 rounded-md transition-colors text-sm font-medium",
                     isActive
-                      ? "bg-purple-500/20 text-purple-400"
-                      : "text-zinc-400 hover:text-white hover:bg-white/5"
+                      ? "bg-white/20 text-white"
+                      : "text-white/80 hover:text-white hover:bg-white/15"
                   )}
                 >
                   <item.icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
+                  <span>{item.label}</span>
                 </Link>
               );
             })}

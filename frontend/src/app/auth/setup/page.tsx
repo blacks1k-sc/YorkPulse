@@ -52,7 +52,7 @@ export default function SetupPage() {
   if (isLoading || !user) {
     return (
       <div className="flex items-center justify-center min-h-[200px]">
-        <Loader2 className="w-6 h-6 animate-spin text-zinc-500" />
+        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
       </div>
     );
   }
@@ -64,11 +64,11 @@ export default function SetupPage() {
       className="space-y-6"
     >
       <div className="text-center space-y-2">
-        <div className="w-16 h-16 mx-auto rounded-full bg-purple-500/20 flex items-center justify-center mb-4">
-          <User className="w-8 h-8 text-purple-400" />
+        <div className="w-16 h-16 mx-auto rounded-full bg-[#E31837]/10 flex items-center justify-center mb-4">
+          <User className="w-8 h-8 text-[#E31837]" />
         </div>
         <h1 className="text-2xl font-bold">What's your name?</h1>
-        <p className="text-zinc-400">
+        <p className="text-gray-500">
           This is how other York students will see you on YorkPulse.
         </p>
       </div>
@@ -87,7 +87,7 @@ export default function SetupPage() {
 
         <Button
           type="submit"
-          className="w-full bg-purple-600 hover:bg-purple-700"
+          className="w-full bg-[#E31837] hover:bg-[#C41230]"
           disabled={!name.trim() || updateProfileMutation.isPending}
         >
           {updateProfileMutation.isPending ? (

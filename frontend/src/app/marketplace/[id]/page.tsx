@@ -99,7 +99,7 @@ export default function ListingDetailPage() {
           </div>
           <div>
             <h1 className="text-xl font-bold">Marketplace</h1>
-            <p className="text-sm text-zinc-500">Buy & sell with verified students</p>
+            <p className="text-sm text-gray-400">Buy & sell with verified students</p>
           </div>
         </div>
         <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -107,7 +107,7 @@ export default function ListingDetailPage() {
             <ShoppingBag className="w-10 h-10 text-red-400" />
           </div>
           <h2 className="text-xl font-semibold mb-2">Sign in to view this listing</h2>
-          <p className="text-zinc-500 mb-6 max-w-md">
+          <p className="text-gray-400 mb-6 max-w-md">
             Browse and buy from verified York University students.
           </p>
           <Link href="/auth/login">
@@ -283,7 +283,7 @@ export default function ListingDetailPage() {
   if (!listing) {
     return (
       <div className="container mx-auto px-4 py-6 max-w-4xl text-center">
-        <p className="text-zinc-500">Listing not found</p>
+        <p className="text-gray-400">Listing not found</p>
         <Button variant="link" asChild>
           <Link href="/marketplace">Back to Marketplace</Link>
         </Button>
@@ -308,7 +308,7 @@ export default function ListingDetailPage() {
       <div className="grid md:grid-cols-2 gap-6">
         {/* Images */}
         <div className="space-y-3">
-          <div className="aspect-square rounded-xl bg-zinc-900 overflow-hidden">
+          <div className="aspect-square rounded-xl bg-white overflow-hidden">
             {images.length > 0 ? (
               <img
                 src={images[selectedImage]}
@@ -317,7 +317,7 @@ export default function ListingDetailPage() {
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
-                <ShoppingBag className="w-16 h-16 text-zinc-700" />
+                <ShoppingBag className="w-16 h-16 text-gray-700" />
               </div>
             )}
           </div>
@@ -389,7 +389,7 @@ export default function ListingDetailPage() {
                 <Label>Photos (up to 5)</Label>
                 <div className="flex flex-wrap gap-2">
                   {editImages.map((url, i) => (
-                    <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-white/10">
+                    <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-100">
                       <img src={url} alt="" className="w-full h-full object-cover" />
                       <button
                         type="button"
@@ -406,16 +406,16 @@ export default function ListingDetailPage() {
                         type="button"
                         onClick={() => setShowPhotoMenu((v) => !v)}
                         disabled={isUploadingImage}
-                        className="w-20 h-20 rounded-lg border-2 border-dashed border-white/20 hover:border-red-500/50 transition-colors flex flex-col items-center justify-center gap-1 text-zinc-500 hover:text-red-400"
+                        className="w-20 h-20 rounded-lg border-2 border-dashed border-white/20 hover:border-red-500/50 transition-colors flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-red-400"
                       >
                         {isUploadingImage ? <Loader2 className="w-5 h-5 animate-spin" /> : <><ImagePlus className="w-5 h-5" /><span className="text-[10px]">Add</span></>}
                       </button>
                       {showPhotoMenu && (
-                        <div className="absolute bottom-full left-0 mb-2 w-40 rounded-xl bg-zinc-900 border border-white/10 shadow-xl overflow-hidden z-50">
-                          <button type="button" onClick={() => { setShowPhotoMenu(false); setIsCameraOpen(true); }} className="flex items-center gap-2 w-full px-4 py-3 text-sm text-white hover:bg-white/10">
+                        <div className="absolute bottom-full left-0 mb-2 w-40 rounded-xl bg-white border border-gray-100 shadow-xl overflow-hidden z-50">
+                          <button type="button" onClick={() => { setShowPhotoMenu(false); setIsCameraOpen(true); }} className="flex items-center gap-2 w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50">
                             <Camera className="w-4 h-4" /> Take Photo
                           </button>
-                          <button type="button" onClick={() => { setShowPhotoMenu(false); fileInputRef.current?.click(); }} className="flex items-center gap-2 w-full px-4 py-3 text-sm text-white hover:bg-white/10">
+                          <button type="button" onClick={() => { setShowPhotoMenu(false); fileInputRef.current?.click(); }} className="flex items-center gap-2 w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50">
                             <Upload className="w-4 h-4" /> Upload Photo
                           </button>
                         </div>
@@ -439,7 +439,7 @@ export default function ListingDetailPage() {
             <>
           {/* Status Badge */}
           {listing.status !== "active" && (
-            <Badge variant="secondary" className="bg-zinc-800">
+            <Badge variant="secondary" className="bg-gray-100">
               {listing.status === "sold" ? "Sold" : listing.status}
             </Badge>
           )}
@@ -463,12 +463,12 @@ export default function ListingDetailPage() {
           </div>
 
           {/* Description */}
-          <div className="p-4 rounded-lg bg-white/5 border border-white/10">
-            <p className="text-zinc-300 whitespace-pre-wrap">{listing.description}</p>
+          <div className="p-4 rounded-lg bg-white border border-gray-100 shadow-sm">
+            <p className="text-gray-700 whitespace-pre-wrap">{listing.description}</p>
           </div>
 
           {/* Posted Time */}
-          <div className="flex items-center gap-2 text-sm text-zinc-500">
+          <div className="flex items-center gap-2 text-sm text-gray-400">
             <Clock className="w-4 h-4" />
             Posted {timeAgo(listing.created_at)}
           </div>
@@ -518,7 +518,7 @@ export default function ListingDetailPage() {
           ))}
 
           {/* Seller Card */}
-          <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+          <div className="p-4 rounded-xl bg-white border border-gray-100 shadow-sm">
             <div className="flex items-center gap-3">
               <Avatar className="w-12 h-12">
                 <AvatarImage src={listing.seller.avatar_url || undefined} />
@@ -534,10 +534,10 @@ export default function ListingDetailPage() {
               <div className="flex-1">
                 <p className="font-medium">{listing.seller.name}</p>
                 {sellerRating?.marketplace_rating && (
-                  <div className="flex items-center gap-1 text-sm text-zinc-400">
+                  <div className="flex items-center gap-1 text-sm text-gray-500">
                     <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" />
                     {sellerRating.marketplace_rating.toFixed(1)}
-                    <span className="text-zinc-600">
+                    <span className="text-gray-500">
                       ({sellerRating.marketplace_count} reviews)
                     </span>
                   </div>

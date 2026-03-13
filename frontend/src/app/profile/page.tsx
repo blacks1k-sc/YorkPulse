@@ -131,24 +131,24 @@ export default function ProfilePage() {
     return (
       <div className="container mx-auto px-4 py-6 max-w-2xl">
         <div className="flex items-center gap-3 mb-8">
-          <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
-            <User className="w-5 h-5 text-purple-400" />
+          <div className="w-10 h-10 rounded-xl bg-[#E31837]/10 flex items-center justify-center">
+            <User className="w-5 h-5 text-[#E31837]" />
           </div>
           <div>
             <h1 className="text-xl font-bold">Profile</h1>
-            <p className="text-sm text-zinc-500">Your account</p>
+            <p className="text-sm text-gray-400">Your account</p>
           </div>
         </div>
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="w-20 h-20 rounded-full bg-purple-500/10 flex items-center justify-center mb-6">
-            <User className="w-10 h-10 text-purple-400" />
+          <div className="w-20 h-20 rounded-full bg-[#E31837]/10 flex items-center justify-center mb-6">
+            <User className="w-10 h-10 text-[#E31837]" />
           </div>
           <h2 className="text-xl font-semibold mb-2">Sign in to view your profile</h2>
-          <p className="text-zinc-500 mb-6 max-w-md">
+          <p className="text-gray-400 mb-6 max-w-md">
             Manage your account and view your activity on YorkPulse.
           </p>
           <Link href="/auth/login">
-            <Button className="bg-purple-600 hover:bg-purple-700">
+            <Button className="bg-[#E31837] hover:bg-[#C41230]">
               Sign In to Continue
             </Button>
           </Link>
@@ -314,9 +314,9 @@ export default function ProfilePage() {
   if (!isAuthenticated) {
     return (
       <div className="container mx-auto px-4 py-6 text-center">
-        <User className="w-12 h-12 mx-auto text-zinc-700 mb-4" />
-        <p className="text-zinc-500">Sign in to view your profile</p>
-        <Button variant="link" asChild className="text-purple-400">
+        <User className="w-12 h-12 mx-auto text-gray-700 mb-4" />
+        <p className="text-gray-400">Sign in to view your profile</p>
+        <Button variant="link" asChild className="text-[#E31837]">
           <Link href="/auth/login">Sign In</Link>
         </Button>
       </div>
@@ -344,13 +344,13 @@ export default function ProfilePage() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="p-6 rounded-xl bg-white/5 border border-white/10 mb-6"
+        className="p-6 rounded-xl bg-white border border-gray-100 shadow-sm mb-6"
       >
         <div className="flex items-start gap-4">
           <div className="relative group">
             <Avatar className="w-20 h-20">
               <AvatarImage src={user?.avatar_url || undefined} />
-              <AvatarFallback className="text-2xl bg-purple-500/20 text-purple-400">
+              <AvatarFallback className="text-2xl bg-[#E31837]/10 text-[#E31837]">
                 {user?.name
                   ?.split(" ")
                   .map((n) => n[0])
@@ -428,13 +428,13 @@ export default function ProfilePage() {
               )}
             </div>
 
-            <div className="flex items-center gap-2 text-sm text-zinc-400 mb-2">
+            <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
               <Mail className="w-4 h-4" />
               {user?.email}
             </div>
 
             {user?.program && (
-              <div className="flex items-center gap-2 text-sm text-zinc-400">
+              <div className="flex items-center gap-2 text-sm text-gray-500">
                 <GraduationCap className="w-4 h-4" />
                 {user.program}
               </div>
@@ -481,10 +481,10 @@ export default function ProfilePage() {
                 ))}
               </datalist>
               <div className="flex justify-between text-xs">
-                <span className={cn(programError && program.length > 0 ? "text-red-400" : "text-zinc-500")}>
+                <span className={cn(programError && program.length > 0 ? "text-red-400" : "text-gray-400")}>
                   {programError && program.length > 0 ? programError : `Min ${MIN_PROGRAM_LENGTH} characters`}
                 </span>
-                <span className="text-zinc-500">{program.trim().length} chars</span>
+                <span className="text-gray-400">{program.trim().length} chars</span>
               </div>
             </div>
 
@@ -500,10 +500,10 @@ export default function ProfilePage() {
                 className={cn("min-h-[100px]", bioError && bio.length > 0 && "border-red-500 focus-visible:ring-red-500")}
               />
               <div className="flex justify-between text-xs">
-                <span className={cn(bioError && bio.length > 0 ? "text-red-400" : "text-zinc-500")}>
+                <span className={cn(bioError && bio.length > 0 ? "text-red-400" : "text-gray-400")}>
                   {bioError && bio.length > 0 ? bioError : `Min ${MIN_BIO_LENGTH} characters`}
                 </span>
-                <span className="text-zinc-500">{bio.trim().length} chars</span>
+                <span className="text-gray-400">{bio.trim().length} chars</span>
               </div>
             </div>
 
@@ -523,7 +523,7 @@ export default function ProfilePage() {
               </Button>
               <Button
                 onClick={handleSave}
-                className="bg-purple-600 hover:bg-purple-700"
+                className="bg-[#E31837] hover:bg-[#C41230]"
                 disabled={updateProfileMutation.isPending || !isFormValid}
               >
                 {updateProfileMutation.isPending ? (
@@ -537,7 +537,7 @@ export default function ProfilePage() {
           </div>
         ) : (
           <div className="mt-4">
-            {user?.bio && <p className="text-zinc-300 mb-3 whitespace-pre-wrap">{user.bio}</p>}
+            {user?.bio && <p className="text-gray-700 mb-3 whitespace-pre-wrap">{user.bio}</p>}
             {user?.interests && user.interests.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {user.interests.map((interest) => (
@@ -553,15 +553,15 @@ export default function ProfilePage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="p-4 rounded-xl bg-white/5 border border-white/10 text-center">
+        <div className="p-4 rounded-xl bg-white border border-gray-100 shadow-sm text-center">
           <ShoppingBag className="w-5 h-5 mx-auto mb-2 text-coral-400" />
           <p className="text-2xl font-bold">{listings.length}</p>
-          <p className="text-xs text-zinc-500">Listings</p>
+          <p className="text-xs text-gray-400">Listings</p>
         </div>
-        <div className="p-4 rounded-xl bg-white/5 border border-white/10 text-center">
+        <div className="p-4 rounded-xl bg-white border border-gray-100 shadow-sm text-center">
           <Users className="w-5 h-5 mx-auto mb-2 text-green-400" />
           <p className="text-2xl font-bold">{quests.length}</p>
-          <p className="text-xs text-zinc-500">Quests</p>
+          <p className="text-xs text-gray-400">Quests</p>
         </div>
       </div>
 
@@ -578,13 +578,13 @@ export default function ProfilePage() {
 
         <TabsContent value="listings" className="mt-4 space-y-3">
           {listings.length === 0 ? (
-            <p className="text-center text-zinc-500 py-8">No listings yet</p>
+            <p className="text-center text-gray-400 py-8">No listings yet</p>
           ) : (
             listings.slice(0, 5).map((listing) => (
               <Link key={listing.id} href={`/marketplace/${listing.id}`}>
-                <div className="p-3 rounded-lg bg-white/5 border border-white/10 hover:border-white/20 transition-colors">
+                <div className="p-3 rounded-lg bg-white border border-gray-100 shadow-sm hover:border-gray-300 transition-colors">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-lg bg-zinc-900 flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-lg bg-white flex items-center justify-center">
                       {listing.images?.[0] ? (
                         <img
                           src={listing.images[0]}
@@ -592,7 +592,7 @@ export default function ProfilePage() {
                           className="w-full h-full object-cover rounded-lg"
                         />
                       ) : (
-                        <ShoppingBag className="w-5 h-5 text-zinc-700" />
+                        <ShoppingBag className="w-5 h-5 text-gray-700" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -609,18 +609,18 @@ export default function ProfilePage() {
 
         <TabsContent value="quests" className="mt-4 space-y-3">
           {quests.length === 0 ? (
-            <p className="text-center text-zinc-500 py-8">No quests yet</p>
+            <p className="text-center text-gray-400 py-8">No quests yet</p>
           ) : (
             quests.slice(0, 5).map((quest) => (
               <Link key={quest.id} href={`/quests/${quest.id}`}>
-                <div className="p-3 rounded-lg bg-white/5 border border-white/10 hover:border-white/20 transition-colors">
+                <div className="p-3 rounded-lg bg-white border border-gray-100 shadow-sm hover:border-gray-300 transition-colors">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-lg bg-green-500/20 flex items-center justify-center">
                       <Users className="w-5 h-5 text-green-400" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium truncate">{quest.activity}</p>
-                      <p className="text-sm text-zinc-500">
+                      <p className="text-sm text-gray-400">
                         {quest.current_participants}/{quest.max_participants} participants
                       </p>
                     </div>

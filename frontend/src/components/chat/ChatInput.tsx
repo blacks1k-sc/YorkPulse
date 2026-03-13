@@ -183,12 +183,12 @@ export function ChatInput({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="flex items-center gap-2 px-3 py-2 bg-purple-500/10 border border-purple-500/20 rounded-lg"
+            className="flex items-center gap-2 px-3 py-2 bg-[#E31837]/10 border border-[#E31837]/20 rounded-lg"
           >
-            <div className="w-1 h-8 bg-purple-500 rounded-full" />
+            <div className="w-1 h-8 bg-[#E31837] rounded-full" />
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-purple-400 font-medium">Replying to {replyTo.authorName}</p>
-              <p className="text-xs text-zinc-400 truncate">
+              <p className="text-xs text-[#E31837] font-medium">Replying to {replyTo.authorName}</p>
+              <p className="text-xs text-gray-500 truncate">
                 {replyTo.content || "Photo"}
               </p>
             </div>
@@ -196,7 +196,7 @@ export function ChatInput({
               onClick={onCancelReply}
               className="p-1 hover:bg-white/10 rounded transition-colors"
             >
-              <X className="w-4 h-4 text-zinc-400" />
+              <X className="w-4 h-4 text-gray-500" />
             </button>
           </motion.div>
         )}
@@ -211,7 +211,7 @@ export function ChatInput({
             exit={{ opacity: 0, height: 0 }}
             className="relative inline-block"
           >
-            <div className="relative rounded-lg overflow-hidden border border-white/10 bg-white/5">
+            <div className="relative rounded-lg overflow-hidden border border-gray-100 bg-gray-50">
               <img
                 src={imagePreview}
                 alt="Preview"
@@ -253,7 +253,7 @@ export function ChatInput({
           size="icon"
           onClick={() => fileInputRef.current?.click()}
           disabled={isDisabled}
-          className="flex-shrink-0 text-zinc-400 hover:text-zinc-200"
+          className="flex-shrink-0 text-gray-500 hover:text-zinc-200"
         >
           <ImagePlus className="w-5 h-5" />
         </Button>
@@ -266,7 +266,7 @@ export function ChatInput({
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
           disabled={isDisabled}
-          className="flex-1 bg-white/5 border-white/10"
+          className="flex-1 bg-white border-gray-100"
         />
 
         {/* Send button */}
@@ -278,7 +278,7 @@ export function ChatInput({
             "flex-shrink-0 transition-all",
             canSend
               ? "bg-[#00ff88] hover:bg-[#00ff88]/80 text-black"
-              : "bg-zinc-800 text-zinc-500"
+              : "bg-gray-100 text-gray-400"
           )}
         >
           {isSending ? (
@@ -291,7 +291,7 @@ export function ChatInput({
 
       {/* Character count */}
       {maxLength && (
-        <p className="text-xs text-zinc-600 text-right">
+        <p className="text-xs text-gray-500 text-right">
           {message.length}/{maxLength}
         </p>
       )}

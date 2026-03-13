@@ -89,7 +89,7 @@ function GigCard({ gig }: { gig: Gig }) {
       <motion.div
         whileHover={{ scale: 1.02 }}
         className={cn(
-          "h-full flex flex-col p-4 rounded-xl bg-white/5 border transition-colors cursor-pointer",
+          "h-full flex flex-col p-4 rounded-xl bg-white border transition-colors cursor-pointer",
           isOffering
             ? "border-green-500/20 hover:border-green-500/40"
             : "border-orange-500/20 hover:border-orange-500/40"
@@ -118,10 +118,10 @@ function GigCard({ gig }: { gig: Gig }) {
         <h3 className="font-semibold text-white mb-2 line-clamp-2">{gig.title}</h3>
 
         {/* Description */}
-        <p className="text-sm text-zinc-400 line-clamp-2 mb-3">{gig.description}</p>
+        <p className="text-sm text-gray-500 line-clamp-2 mb-3">{gig.description}</p>
 
         {/* Meta */}
-        <div className="flex items-center gap-3 text-xs text-zinc-500 mb-3">
+        <div className="flex items-center gap-3 text-xs text-gray-400 mb-3">
           {gig.location && (
             <span className="flex items-center gap-1">
               <MapPin className="w-3 h-3" />
@@ -149,13 +149,13 @@ function GigCard({ gig }: { gig: Gig }) {
           <div className="flex items-center gap-2">
             <Avatar className="w-6 h-6">
               <AvatarImage src={gig.poster.avatar_url || undefined} />
-              <AvatarFallback className="text-xs bg-zinc-800">
+              <AvatarFallback className="text-xs bg-gray-100 text-gray-600">
                 {gig.poster.name.charAt(0)}
               </AvatarFallback>
             </Avatar>
-            <span className="text-xs text-zinc-400">{gig.poster.name}</span>
+            <span className="text-xs text-gray-500">{gig.poster.name}</span>
           </div>
-          <span className="text-xs text-zinc-500 flex items-center gap-1">
+          <span className="text-xs text-gray-400 flex items-center gap-1">
             <Clock className="w-3 h-3" />
             {timeAgo(gig.created_at)}
           </span>
@@ -192,14 +192,14 @@ export default function GigsPage() {
       <div className="container mx-auto px-4 py-6 max-w-4xl">
         <div className="mb-8">
           <h1 className="text-2xl font-bold">Quick Gigs</h1>
-          <p className="text-zinc-400 text-sm">Find help or offer your services</p>
+          <p className="text-gray-500 text-sm">Find help or offer your services</p>
         </div>
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="w-20 h-20 rounded-full bg-yellow-500/10 flex items-center justify-center mb-6">
             <GraduationCap className="w-10 h-10 text-yellow-400" />
           </div>
           <h2 className="text-xl font-semibold mb-2">Sign in to access Quick Gigs</h2>
-          <p className="text-zinc-500 mb-6 max-w-md">
+          <p className="text-gray-400 mb-6 max-w-md">
             Find help or offer your services to verified York University students.
           </p>
           <Link href="/auth/login">
@@ -222,7 +222,7 @@ export default function GigsPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold">Quick Gigs</h1>
-            <p className="text-zinc-400 text-sm">Find help or offer your services</p>
+            <p className="text-gray-500 text-sm">Find help or offer your services</p>
           </div>
         </div>
         <Button asChild className="bg-yellow-500 hover:bg-yellow-600 text-black">
@@ -270,7 +270,7 @@ export default function GigsPage() {
               "h-9 px-3 rounded-md text-xs font-medium whitespace-nowrap transition-all",
               category === undefined
                 ? "bg-yellow-500 text-black"
-                : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white border border-white/10"
+                : "bg-white text-gray-500 hover:bg-gray-50 hover:text-gray-700 border border-gray-100"
             )}
           >
             All
@@ -283,7 +283,7 @@ export default function GigsPage() {
                 "h-9 px-3 rounded-md text-xs font-medium whitespace-nowrap transition-all",
                 category === key
                   ? "bg-yellow-500 text-black"
-                  : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white border border-white/10"
+                  : "bg-white text-gray-500 hover:bg-gray-50 hover:text-gray-700 border border-gray-100"
               )}
             >
               {config.label}
@@ -295,12 +295,12 @@ export default function GigsPage() {
       {/* Search and Filters */}
       <div className="flex gap-2 mb-6">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input
             placeholder="Search gigs..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 bg-white/5 border-white/10"
+            className="pl-10 bg-white border-gray-100"
           />
         </div>
 
@@ -370,7 +370,7 @@ export default function GigsPage() {
         </div>
       ) : allGigs.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-zinc-500 mb-4">No gigs found</p>
+          <p className="text-gray-400 mb-4">No gigs found</p>
           {isAuthenticated && (
             <Button asChild>
               <Link href="/gigs/create">Post the first gig</Link>

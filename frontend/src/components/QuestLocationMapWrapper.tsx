@@ -23,8 +23,8 @@ export function QuestLocationMapWrapper(props: QuestLocationMapWrapperProps) {
 
   if (!MapComponent) {
     return (
-      <div className="h-40 bg-zinc-800 rounded-lg animate-pulse flex items-center justify-center">
-        <Loader2 className="w-5 h-5 animate-spin text-zinc-500" />
+      <div className="h-40 bg-gray-100 rounded-lg animate-pulse flex items-center justify-center">
+        <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
       </div>
     );
   }

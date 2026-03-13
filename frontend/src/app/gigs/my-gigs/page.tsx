@@ -73,7 +73,7 @@ function GigCard({ gig }: { gig: Gig }) {
       <motion.div
         whileHover={{ scale: 1.02 }}
         className={cn(
-          "p-4 rounded-xl bg-white/5 border transition-colors cursor-pointer",
+          "p-4 rounded-xl bg-white border border-gray-100 shadow-sm transition-colors cursor-pointer",
           isOffering
             ? "border-green-500/20 hover:border-green-500/40"
             : "border-orange-500/20 hover:border-orange-500/40"
@@ -97,7 +97,7 @@ function GigCard({ gig }: { gig: Gig }) {
                 "text-xs",
                 gig.status === "active" && "bg-green-500/20 text-green-400",
                 gig.status === "in_progress" && "bg-blue-500/20 text-blue-400",
-                gig.status === "completed" && "bg-zinc-500/20 text-zinc-400"
+                gig.status === "completed" && "bg-zinc-500/20 text-gray-500"
               )}
             >
               {gig.status.replace("_", " ")}
@@ -115,7 +115,7 @@ function GigCard({ gig }: { gig: Gig }) {
         <h3 className="font-semibold text-white mb-2 line-clamp-2">{gig.title}</h3>
 
         {/* Meta */}
-        <div className="flex items-center gap-3 text-xs text-zinc-500">
+        <div className="flex items-center gap-3 text-xs text-gray-400">
           {gig.response_count > 0 && (
             <span>{gig.response_count} response{gig.response_count !== 1 ? "s" : ""}</span>
           )}
@@ -134,7 +134,7 @@ function ResponseCard({ response }: { response: GigResponse }) {
   return (
     <div
       className={cn(
-        "p-4 rounded-xl bg-white/5 border",
+        "p-4 rounded-xl bg-white border border-gray-100 shadow-sm",
         response.status === "pending"
           ? "border-yellow-500/20"
           : response.status === "accepted"
@@ -144,7 +144,7 @@ function ResponseCard({ response }: { response: GigResponse }) {
     >
       <div className="flex items-start justify-between mb-3">
         <div>
-          <p className="text-xs text-zinc-500 mb-1">Responded to</p>
+          <p className="text-xs text-gray-400 mb-1">Responded to</p>
           <Link href={`/gigs/${response.gig_id}`} className="font-medium hover:text-purple-400 transition-colors">
             View Gig →
           </Link>
@@ -156,7 +156,7 @@ function ResponseCard({ response }: { response: GigResponse }) {
             response.status === "pending" && "bg-yellow-500/20 text-yellow-400",
             response.status === "accepted" && "bg-green-500/20 text-green-400",
             response.status === "rejected" && "bg-red-500/20 text-red-400",
-            response.status === "completed" && "bg-zinc-500/20 text-zinc-400"
+            response.status === "completed" && "bg-zinc-500/20 text-gray-500"
           )}
         >
           {response.status}
@@ -164,7 +164,7 @@ function ResponseCard({ response }: { response: GigResponse }) {
       </div>
 
       {response.message && (
-        <p className="text-sm text-zinc-400 line-clamp-2 mb-2">{response.message}</p>
+        <p className="text-sm text-gray-500 line-clamp-2 mb-2">{response.message}</p>
       )}
 
       {response.proposed_price && (
@@ -173,7 +173,7 @@ function ResponseCard({ response }: { response: GigResponse }) {
         </p>
       )}
 
-      <p className="text-xs text-zinc-500 flex items-center gap-1">
+      <p className="text-xs text-gray-400 flex items-center gap-1">
         <Clock className="w-3 h-3" />
         {timeAgo(response.created_at)}
       </p>
@@ -195,14 +195,14 @@ export default function MyGigsPage() {
       <div className="container mx-auto px-4 py-6 max-w-2xl">
         <div className="mb-8">
           <h1 className="text-2xl font-bold">My Gigs</h1>
-          <p className="text-zinc-400 text-sm">Manage your gigs and responses</p>
+          <p className="text-gray-500 text-sm">Manage your gigs and responses</p>
         </div>
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="w-20 h-20 rounded-full bg-yellow-500/10 flex items-center justify-center mb-6">
             <GraduationCap className="w-10 h-10 text-yellow-400" />
           </div>
           <h2 className="text-xl font-semibold mb-2">Sign in to view your gigs</h2>
-          <p className="text-zinc-500 mb-6 max-w-md">
+          <p className="text-gray-400 mb-6 max-w-md">
             Manage your gig postings and responses.
           </p>
           <Link href="/auth/login">
@@ -229,7 +229,7 @@ export default function MyGigsPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold">My Gigs</h1>
-          <p className="text-zinc-400 text-sm">Manage your gigs and responses</p>
+          <p className="text-gray-500 text-sm">Manage your gigs and responses</p>
         </div>
         <Button asChild className="bg-green-600 hover:bg-green-700">
           <Link href="/gigs/create">
@@ -259,7 +259,7 @@ export default function MyGigsPage() {
             </div>
           ) : postedGigs.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-zinc-500 mb-4">You haven&apos;t posted any gigs yet</p>
+              <p className="text-gray-400 mb-4">You haven&apos;t posted any gigs yet</p>
               <Button asChild>
                 <Link href="/gigs/create">Post your first gig</Link>
               </Button>
@@ -282,7 +282,7 @@ export default function MyGigsPage() {
             </div>
           ) : respondedGigs.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-zinc-500 mb-4">You haven&apos;t responded to any gigs yet</p>
+              <p className="text-gray-400 mb-4">You haven&apos;t responded to any gigs yet</p>
               <Button asChild variant="outline">
                 <Link href="/gigs">Browse gigs</Link>
               </Button>

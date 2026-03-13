@@ -38,7 +38,7 @@ const categories: { value: QuestCategory; label: string; icon: typeof Dumbbell; 
   { value: "study", label: "Study", icon: BookOpen, color: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
   { value: "game", label: "Game", icon: Gamepad2, color: "bg-purple-500/20 text-purple-400 border-purple-500/30" },
   { value: "commute", label: "Commute", icon: Car, color: "bg-green-500/20 text-green-400 border-green-500/30" },
-  { value: "custom", label: "Custom", icon: Plus, color: "bg-zinc-500/20 text-zinc-400 border-zinc-500/30" },
+  { value: "custom", label: "Custom", icon: Plus, color: "bg-zinc-500/20 text-gray-500 border-zinc-500/30" },
 ];
 
 const vibeLevels: { value: VibeLevel; label: string; emoji: string }[] = [
@@ -69,7 +69,7 @@ export default function EditQuestPage() {
           </div>
           <div>
             <h1 className="text-xl font-bold">Edit Quest</h1>
-            <p className="text-sm text-zinc-500">Update your quest details</p>
+            <p className="text-sm text-gray-400">Update your quest details</p>
           </div>
         </div>
         <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -77,7 +77,7 @@ export default function EditQuestPage() {
             <Users className="w-10 h-10 text-green-400" />
           </div>
           <h2 className="text-xl font-semibold mb-2">Sign in to edit quests</h2>
-          <p className="text-zinc-500 mb-6 max-w-md">
+          <p className="text-gray-400 mb-6 max-w-md">
             You need to be signed in to edit your quests.
           </p>
           <Link href="/auth/login">
@@ -211,7 +211,7 @@ export default function EditQuestPage() {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
         <h1 className="text-xl font-semibold mb-2">Quest not found</h1>
-        <p className="text-zinc-500 mb-4">This quest may have been deleted or doesn't exist.</p>
+        <p className="text-gray-400 mb-4">This quest may have been deleted or doesn't exist.</p>
         <Link href="/quests">
           <Button variant="outline">Back to Quests</Button>
         </Link>
@@ -223,7 +223,7 @@ export default function EditQuestPage() {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
         <h1 className="text-xl font-semibold mb-2">Not authorized</h1>
-        <p className="text-zinc-500 mb-4">Only the host can edit this quest.</p>
+        <p className="text-gray-400 mb-4">Only the host can edit this quest.</p>
         <Link href={`/quests/${questId}`}>
           <Button variant="outline">Back to Quest</Button>
         </Link>
@@ -244,7 +244,7 @@ export default function EditQuestPage() {
         </Link>
         <div>
           <h1 className="text-2xl font-bold">Edit Quest</h1>
-          <p className="text-sm text-zinc-500">Update your quest details</p>
+          <p className="text-sm text-gray-400">Update your quest details</p>
         </div>
       </div>
 
@@ -256,21 +256,21 @@ export default function EditQuestPage() {
       >
         {/* Category (read-only) */}
         <div className="space-y-2">
-          <Label className="text-zinc-400">Category</Label>
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-white/5 border border-white/10">
+          <Label className="text-gray-500">Category</Label>
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-white border border-gray-100 shadow-sm">
             {catConfig && (
               <>
                 <div className={cn("p-2 rounded-lg", catConfig.color)}>
                   <catConfig.icon className="w-4 h-4" />
                 </div>
-                <span className="text-zinc-300">{catConfig.label}</span>
+                <span className="text-gray-700">{catConfig.label}</span>
                 {quest.custom_category && (
-                  <span className="text-zinc-500">- {quest.custom_category}</span>
+                  <span className="text-gray-400">- {quest.custom_category}</span>
                 )}
               </>
             )}
           </div>
-          <p className="text-xs text-zinc-600">Category cannot be changed after creation</p>
+          <p className="text-xs text-gray-500">Category cannot be changed after creation</p>
         </div>
 
         {/* Activity */}
@@ -284,7 +284,7 @@ export default function EditQuestPage() {
             placeholder="e.g., Leg day at the gym, Coffee and study session..."
             value={activity}
             onChange={(e) => setActivity(e.target.value)}
-            className="bg-white/5 border-white/10"
+            className="bg-white border-gray-100"
           />
         </div>
 
@@ -296,7 +296,7 @@ export default function EditQuestPage() {
             placeholder="Add more details about your quest..."
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="bg-white/5 border-white/10 min-h-[80px]"
+            className="bg-white border-gray-100 min-h-[80px]"
           />
         </div>
 
@@ -320,21 +320,21 @@ export default function EditQuestPage() {
           </Label>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs text-zinc-500 mb-1">Start Time</Label>
+              <Label className="text-xs text-gray-400 mb-1">Start Time</Label>
               <Input
                 type="datetime-local"
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
-                className="bg-white/5 border-white/10"
+                className="bg-white border-gray-100"
               />
             </div>
             <div>
-              <Label className="text-xs text-zinc-500 mb-1">End Time (optional)</Label>
+              <Label className="text-xs text-gray-400 mb-1">End Time (optional)</Label>
               <Input
                 type="datetime-local"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
-                className="bg-white/5 border-white/10"
+                className="bg-white border-gray-100"
               />
             </div>
           </div>
@@ -356,11 +356,11 @@ export default function EditQuestPage() {
                   "p-2 rounded-lg border text-center transition-all",
                   vibeLevel === vibe.value
                     ? "border-purple-500 bg-purple-500/20"
-                    : "border-white/10 bg-white/5 hover:border-white/20"
+                    : "border-gray-200 bg-gray-50 hover:border-gray-300"
                 )}
               >
                 <span className="text-lg">{vibe.emoji}</span>
-                <p className="text-[10px] text-zinc-400 mt-1">{vibe.label}</p>
+                <p className="text-[10px] text-gray-500 mt-1">{vibe.label}</p>
               </button>
             ))}
           </div>
@@ -369,7 +369,7 @@ export default function EditQuestPage() {
               placeholder="Describe your vibe..."
               value={customVibeLevel}
               onChange={(e) => setCustomVibeLevel(e.target.value)}
-              className="mt-2 bg-white/5 border-white/10"
+              className="mt-2 bg-white border-gray-100"
             />
           )}
         </div>
@@ -404,10 +404,10 @@ export default function EditQuestPage() {
         </div>
 
         {/* Requires Approval */}
-        <div className="flex items-center justify-between p-4 rounded-lg bg-white/5 border border-white/10">
+        <div className="flex items-center justify-between p-4 rounded-lg bg-white border border-gray-100 shadow-sm">
           <div>
             <Label>Require Approval</Label>
-            <p className="text-xs text-zinc-500">Review requests before they can join</p>
+            <p className="text-xs text-gray-400">Review requests before they can join</p>
           </div>
           <Switch
             checked={requiresApproval}

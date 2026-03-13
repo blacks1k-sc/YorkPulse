@@ -151,8 +151,8 @@ export default function LoginPage() {
           className="space-y-6"
         >
           <div className="text-center space-y-2">
-            <h1 className="text-2xl font-bold">Welcome back</h1>
-            <p className="text-zinc-400">
+            <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>
+            <p className="text-gray-500">
               Sign in to your YorkPulse account
             </p>
           </div>
@@ -161,7 +161,7 @@ export default function LoginPage() {
             <div className="space-y-2">
               <Label htmlFor="email">York Email</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
                   id="email"
                   type="email"
@@ -177,9 +177,9 @@ export default function LoginPage() {
                 />
               </div>
               {emailError ? (
-                <p className="text-xs text-red-400">{emailError}</p>
+                <p className="text-xs text-red-600">{emailError}</p>
               ) : (
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-gray-400">
                   We&apos;ll send you a 6-digit verification code
                 </p>
               )}
@@ -187,7 +187,7 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              className="w-full bg-purple-600 hover:bg-purple-700"
+              className="w-full bg-[#E31837] hover:bg-[#C41230]"
               disabled={loginMutation.isPending || !!emailError}
             >
               {loginMutation.isPending ? (
@@ -206,16 +206,16 @@ export default function LoginPage() {
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-zinc-800" />
+              <div className="w-full border-t border-gray-200" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-zinc-500">or</span>
+              <span className="bg-white px-2 text-gray-400">or</span>
             </div>
           </div>
 
-          <p className="text-center text-sm text-zinc-400">
+          <p className="text-center text-sm text-gray-500">
             New to YorkPulse?{" "}
-            <Link href="/auth/signup" className="text-purple-400 hover:underline">
+            <Link href="/auth/signup" className="text-[#E31837] hover:underline font-medium">
               Create an account
             </Link>
           </p>
@@ -240,14 +240,14 @@ export default function LoginPage() {
           </Button>
 
           <div className="text-center space-y-2">
-            <div className="w-16 h-16 mx-auto rounded-full bg-purple-500/20 flex items-center justify-center mb-4">
-              <Mail className="w-8 h-8 text-purple-400" />
+            <div className="w-16 h-16 mx-auto rounded-full bg-[#E31837]/10 flex items-center justify-center mb-4">
+              <Mail className="w-8 h-8 text-[#E31837]" />
             </div>
-            <h1 className="text-2xl font-bold">Check your email</h1>
-            <p className="text-zinc-400">
+            <h1 className="text-2xl font-bold text-gray-900">Check your email</h1>
+            <p className="text-gray-500">
               We sent a verification code to
             </p>
-            <p className="text-purple-400 font-medium">{email}</p>
+            <p className="text-[#E31837] font-medium">{email}</p>
           </div>
 
           <form onSubmit={handleOTPSubmit} className="space-y-6">
@@ -263,7 +263,7 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              className="w-full bg-purple-600 hover:bg-purple-700"
+              className="w-full bg-[#E31837] hover:bg-[#C41230]"
               disabled={verifyOTPMutation.isPending || otp.length !== 6}
             >
               {verifyOTPMutation.isPending ? (
@@ -282,7 +282,7 @@ export default function LoginPage() {
 
           {/* Resend section */}
           <div className="text-center space-y-2">
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-gray-500">
               Didn&apos;t receive the code?
             </p>
             <Button
@@ -290,7 +290,7 @@ export default function LoginPage() {
               size="sm"
               onClick={handleResend}
               disabled={cooldown > 0 || resendOTPMutation.isPending}
-              className="text-purple-400 hover:text-purple-300"
+              className="text-[#E31837] hover:text-[#C41230] hover:bg-[#E31837]/5"
             >
               {resendOTPMutation.isPending ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -301,7 +301,7 @@ export default function LoginPage() {
             </Button>
           </div>
 
-          <p className="text-xs text-center text-zinc-600">
+          <p className="text-xs text-center text-gray-400">
             The code expires in 10 minutes
           </p>
         </motion.div>

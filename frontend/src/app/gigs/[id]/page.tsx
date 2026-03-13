@@ -112,14 +112,14 @@ export default function GigDetailPage() {
       <div className="container mx-auto px-4 py-6 max-w-2xl">
         <div className="mb-8">
           <h1 className="text-2xl font-bold">Quick Gigs</h1>
-          <p className="text-zinc-400 text-sm">Find help or offer your services</p>
+          <p className="text-gray-500 text-sm">Find help or offer your services</p>
         </div>
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="w-20 h-20 rounded-full bg-yellow-500/10 flex items-center justify-center mb-6">
             <GraduationCap className="w-10 h-10 text-yellow-400" />
           </div>
           <h2 className="text-xl font-semibold mb-2">Sign in to view this gig</h2>
-          <p className="text-zinc-500 mb-6 max-w-md">
+          <p className="text-gray-400 mb-6 max-w-md">
             Find help or offer your services to verified York University students.
           </p>
           <Link href="/auth/login">
@@ -263,7 +263,7 @@ export default function GigDetailPage() {
   if (!gig) {
     return (
       <div className="container mx-auto px-4 py-6 max-w-2xl text-center">
-        <p className="text-zinc-500">Gig not found</p>
+        <p className="text-gray-400">Gig not found</p>
         <Button variant="link" asChild>
           <Link href="/gigs">Back to Gigs</Link>
         </Button>
@@ -288,7 +288,7 @@ export default function GigDetailPage() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         className={cn(
-          "p-6 rounded-xl bg-white/5 border mb-6",
+          "p-6 rounded-xl bg-white border border-gray-100 shadow-sm mb-6",
           isOffering ? "border-green-500/20" : "border-orange-500/20"
         )}
       >
@@ -305,7 +305,7 @@ export default function GigDetailPage() {
               >
                 {isOffering ? "Offering" : "Need Help"}
               </Badge>
-              <Badge variant="outline" className="text-sm border-white/10">
+              <Badge variant="outline" className="text-sm border-gray-200">
                 {cat.emoji} {cat.label}
               </Badge>
             </div>
@@ -315,7 +315,7 @@ export default function GigDetailPage() {
                 "text-xs",
                 gig.status === "active" && "bg-green-500/20 text-green-400",
                 gig.status === "in_progress" && "bg-blue-500/20 text-blue-400",
-                gig.status === "completed" && "bg-zinc-500/20 text-zinc-400"
+                gig.status === "completed" && "bg-zinc-500/20 text-gray-500"
               )}
             >
               {gig.status.replace("_", " ")}
@@ -357,16 +357,16 @@ export default function GigDetailPage() {
         </div>
 
         {/* Description */}
-        <p className="text-zinc-300 whitespace-pre-wrap mb-4">{gig.description}</p>
+        <p className="text-gray-700 whitespace-pre-wrap mb-4">{gig.description}</p>
 
         {/* Meta */}
-        <div className="space-y-2 text-sm text-zinc-400 mb-4">
+        <div className="space-y-2 text-sm text-gray-500 mb-4">
           {gig.location && (
             <div className="flex items-center gap-2">
               <MapPin className="w-4 h-4 text-green-400" />
               <span>{locationLabels[gig.location]}</span>
               {gig.location_details && (
-                <span className="text-zinc-500">- {gig.location_details}</span>
+                <span className="text-gray-400">- {gig.location_details}</span>
               )}
             </div>
           )}
@@ -377,7 +377,7 @@ export default function GigDetailPage() {
             </div>
           )}
           <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-zinc-500" />
+            <Clock className="w-4 h-4 text-gray-400" />
             <span>Posted {timeAgo(gig.created_at)}</span>
           </div>
         </div>
@@ -404,21 +404,21 @@ export default function GigDetailPage() {
                   </DialogHeader>
                   <div className="space-y-4">
                     <div>
-                      <label className="text-sm text-zinc-400 mb-1 block">Message</label>
+                      <label className="text-sm text-gray-500 mb-1 block">Message</label>
                       <Textarea
                         placeholder="Introduce yourself and explain why you're a good fit..."
                         value={responseMessage}
                         onChange={(e) => setResponseMessage(e.target.value)}
                         maxLength={500}
                         rows={4}
-                        className="bg-white/5 border-white/10"
+                        className="bg-white border-gray-100"
                       />
                     </div>
                     {gig.price_type === "negotiable" && (
                       <div>
-                        <label className="text-sm text-zinc-400 mb-1 block">Proposed Price (optional)</label>
+                        <label className="text-sm text-gray-500 mb-1 block">Proposed Price (optional)</label>
                         <div className="relative">
-                          <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                          <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                           <Input
                             type="number"
                             placeholder="Your price"
@@ -426,7 +426,7 @@ export default function GigDetailPage() {
                             onChange={(e) => setProposedPrice(e.target.value)}
                             min="0"
                             step="0.01"
-                            className="pl-8 bg-white/5 border-white/10"
+                            className="pl-8 bg-white border-gray-100"
                           />
                         </div>
                       </div>
@@ -460,18 +460,18 @@ export default function GigDetailPage() {
       </motion.div>
 
       {/* Poster Card */}
-      <div className="p-4 rounded-xl bg-white/5 border border-white/10 mb-6">
-        <p className="text-xs text-zinc-500 mb-3">Posted by</p>
+      <div className="p-4 rounded-xl bg-white border border-gray-100 shadow-sm mb-6">
+        <p className="text-xs text-gray-400 mb-3">Posted by</p>
         <Link href={`/profile/${gig.poster_id}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
           <Avatar className="w-12 h-12">
             <AvatarImage src={gig.poster.avatar_url || undefined} />
-            <AvatarFallback className="bg-zinc-800">
+            <AvatarFallback className="bg-gray-100">
               {gig.poster.name.charAt(0)}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
             <p className="font-medium">{gig.poster.name}</p>
-            <div className="flex items-center gap-3 text-sm text-zinc-400">
+            <div className="flex items-center gap-3 text-sm text-gray-500">
               {gig.poster.gig_rating_avg > 0 && (
                 <span className="flex items-center gap-1">
                   <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" />
@@ -497,7 +497,7 @@ export default function GigDetailPage() {
             <div
               key={response.id}
               className={cn(
-                "p-4 rounded-xl bg-white/5 border",
+                "p-4 rounded-xl bg-white border border-gray-100 shadow-sm",
                 response.status === "pending"
                   ? "border-yellow-500/20"
                   : response.status === "accepted"
@@ -509,13 +509,13 @@ export default function GigDetailPage() {
                 <Link href={`/profile/${response.responder_id}`} className="flex items-center gap-2">
                   <Avatar className="w-8 h-8">
                     <AvatarImage src={response.responder.avatar_url || undefined} />
-                    <AvatarFallback className="text-xs bg-zinc-800">
+                    <AvatarFallback className="text-xs bg-gray-100 text-gray-600">
                       {response.responder.name.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
                   <div>
                     <p className="font-medium text-sm">{response.responder.name}</p>
-                    <p className="text-xs text-zinc-500">{timeAgo(response.created_at)}</p>
+                    <p className="text-xs text-gray-400">{timeAgo(response.created_at)}</p>
                   </div>
                 </Link>
                 <Badge
@@ -532,7 +532,7 @@ export default function GigDetailPage() {
               </div>
 
               {response.message && (
-                <p className="text-sm text-zinc-300 mb-3">{response.message}</p>
+                <p className="text-sm text-gray-700 mb-3">{response.message}</p>
               )}
 
               {response.proposed_price && (

@@ -323,12 +323,12 @@ export default function CoursesPage() {
     <div className="space-y-6">
       {/* Search Bar */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <Input
           placeholder="Search courses by code or name..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 bg-white/5 border-white/10"
+          className="pl-10 bg-white border-gray-100"
         />
       </div>
 
@@ -337,9 +337,9 @@ export default function CoursesPage() {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="p-4 rounded-xl bg-white/5 border border-white/10"
+          className="p-4 rounded-xl bg-white border border-gray-100 shadow-sm"
         >
-          <h3 className="text-sm font-medium text-zinc-400 mb-3">Search Results</h3>
+          <h3 className="text-sm font-medium text-gray-500 mb-3">Search Results</h3>
           {searchLoading ? (
             <div className="space-y-2">
               {[...Array(3)].map((_, i) => (
@@ -347,7 +347,7 @@ export default function CoursesPage() {
               ))}
             </div>
           ) : searchResults?.results.length === 0 ? (
-            <p className="text-sm text-zinc-500">No courses found</p>
+            <p className="text-sm text-gray-400">No courses found</p>
           ) : (
             <div className="space-y-2">
               {searchResults?.results.map((course) => (
@@ -358,7 +358,7 @@ export default function CoursesPage() {
                   onClick={() => handleCourseClick(course as Course)}
                   className={cn(
                     "p-3 rounded-lg cursor-pointer transition-colors",
-                    "bg-white/5 hover:bg-white/10 border border-white/5",
+                    "bg-white hover:bg-gray-50 border border-gray-100 shadow-sm",
                     isCourseMember(course.id) && "border-[#00ff88]/30"
                   )}
                 >
@@ -372,9 +372,9 @@ export default function CoursesPage() {
                           </Badge>
                         )}
                       </div>
-                      <p className="text-sm text-zinc-300 mt-1">{course.name}</p>
+                      <p className="text-sm text-gray-700 mt-1">{course.name}</p>
                     </div>
-                    <div className="flex items-center gap-2 text-zinc-500">
+                    <div className="flex items-center gap-2 text-gray-400">
                       <Users className="w-4 h-4" />
                       <span className="text-xs">{course.member_count}</span>
                     </div>
@@ -388,8 +388,8 @@ export default function CoursesPage() {
 
       {/* Popular Courses */}
       {!searchQuery && popularCourses.length > 0 && (
-        <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-          <h3 className="text-sm font-medium text-zinc-400 mb-3 flex items-center gap-2">
+        <div className="p-4 rounded-xl bg-white border border-gray-100 shadow-sm">
+          <h3 className="text-sm font-medium text-gray-500 mb-3 flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-[#00ff88]" />
             Popular Courses
           </h3>
@@ -403,12 +403,12 @@ export default function CoursesPage() {
                   "flex-shrink-0 w-40 p-3 rounded-xl cursor-pointer border transition-colors",
                   isCourseMember(course.id)
                     ? "bg-[#00ff88]/5 border-[#00ff88]/30"
-                    : "bg-white/5 hover:bg-white/10 border-white/10"
+                    : "bg-white hover:bg-gray-50 border-gray-200"
                 )}
               >
                 <p className="font-mono text-sm text-[#00ff88] font-bold truncate">{course.code}</p>
-                <p className="text-xs text-zinc-400 mt-1 truncate">{course.name}</p>
-                <div className="flex items-center gap-1 mt-2 text-zinc-500">
+                <p className="text-xs text-gray-500 mt-1 truncate">{course.name}</p>
+                <div className="flex items-center gap-1 mt-2 text-gray-400">
                   <Users className="w-3 h-3" />
                   <span className="text-xs">{course.member_count}</span>
                   {isCourseMember(course.id) && (
@@ -423,8 +423,8 @@ export default function CoursesPage() {
 
       {/* My Courses */}
       {isAuthenticated && myCourses && myCourses.courses.length > 0 && (
-        <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-          <h3 className="text-sm font-medium text-zinc-400 mb-3">My Courses</h3>
+        <div className="p-4 rounded-xl bg-white border border-gray-100 shadow-sm">
+          <h3 className="text-sm font-medium text-gray-500 mb-3">My Courses</h3>
           <div className="flex flex-wrap gap-2">
             {myCourses.courses.map((membership) => (
               <motion.div
@@ -463,23 +463,23 @@ export default function CoursesPage() {
               key={faculty.name}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="rounded-xl bg-white/5 border border-white/10 overflow-hidden"
+              className="rounded-xl bg-white border border-gray-100 shadow-sm overflow-hidden"
             >
               {/* Faculty Header */}
               <button
                 onClick={() => toggleFaculty(faculty.name)}
-                className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/5 transition-colors"
+                className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <GraduationCap className="w-5 h-5 text-cyan-400" />
                   <span className="font-medium">{faculty.name}</span>
-                  <span className="text-xs text-zinc-500">
+                  <span className="text-xs text-gray-400">
                     ({faculty.programs.reduce((sum, p) => sum + p.years.reduce((s, y) => s + y.courses.length, 0), 0)})
                   </span>
                 </div>
                 <ChevronRight
                   className={cn(
-                    "w-5 h-5 text-zinc-500 transition-transform",
+                    "w-5 h-5 text-gray-400 transition-transform",
                     expandedFaculties.has(faculty.name) && "rotate-90"
                   )}
                 />
@@ -493,7 +493,7 @@ export default function CoursesPage() {
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.2 }}
-                    className="border-t border-white/10"
+                    className="border-t border-gray-200"
                   >
                     {faculty.programs.map((program) => {
                       const programKey = `${faculty.name}-${program.name}`;
@@ -502,17 +502,17 @@ export default function CoursesPage() {
                           {/* Program Header */}
                           <button
                             onClick={() => toggleProgram(programKey)}
-                            className="w-full px-6 py-2 flex items-center justify-between hover:bg-white/5 transition-colors"
+                            className="w-full px-6 py-2 flex items-center justify-between hover:bg-gray-50 transition-colors"
                           >
-                            <span className="text-sm text-zinc-300">
+                            <span className="text-sm text-gray-700">
                               {program.name}
-                              <span className="text-xs text-zinc-500 ml-1.5">
+                              <span className="text-xs text-gray-400 ml-1.5">
                                 ({program.years.reduce((sum, y) => sum + y.courses.length, 0)})
                               </span>
                             </span>
                             <ChevronDown
                               className={cn(
-                                "w-4 h-4 text-zinc-500 transition-transform",
+                                "w-4 h-4 text-gray-400 transition-transform",
                                 expandedPrograms.has(programKey) && "rotate-180"
                               )}
                             />
@@ -529,7 +529,7 @@ export default function CoursesPage() {
                               >
                                 {program.years.map((yearGroup) => (
                                   <div key={yearGroup.year} className="mt-2">
-                                    <p className="text-xs text-zinc-500 mb-2">Year {yearGroup.year}</p>
+                                    <p className="text-xs text-gray-400 mb-2">Year {yearGroup.year}</p>
                                     <div className="flex flex-wrap gap-2">
                                       {yearGroup.courses.map((course) => (
                                         <motion.button
@@ -539,12 +539,12 @@ export default function CoursesPage() {
                                           onClick={() => handleCourseClick(course as Course)}
                                           className={cn(
                                             "px-3 py-1.5 rounded-lg text-xs font-mono transition-colors",
-                                            "bg-white/5 hover:bg-white/10 border border-white/10",
+                                            "bg-white hover:bg-white/10 border border-gray-100",
                                             isCourseMember(course.id) && "border-[#00ff88]/50 bg-[#00ff88]/10"
                                           )}
                                         >
                                           <span className="text-[#00ff88]">{course.code}</span>
-                                          <span className="ml-2 text-zinc-500">{course.member_count}</span>
+                                          <span className="ml-2 text-gray-400">{course.member_count}</span>
                                         </motion.button>
                                       ))}
                                     </div>
@@ -570,7 +570,7 @@ export default function CoursesPage() {
   const renderChatView = () => (
     <div className="flex flex-col h-[calc(100vh-12rem)]">
       {/* Chat Header */}
-      <div className="flex items-center gap-3 p-4 bg-white/5 border-b border-white/10 rounded-t-xl">
+      <div className="flex items-center gap-3 p-4 bg-white border-b border-gray-200 rounded-t-xl">
         <Button
           variant="ghost"
           size="sm"
@@ -598,19 +598,19 @@ export default function CoursesPage() {
             <span className="font-mono text-[#00ff88]">{selectedCourse?.code}</span>
             {showParticipants ? (
               <>
-                <ChevronRight className="w-4 h-4 text-zinc-500" />
-                <Users className="w-4 h-4 text-zinc-400" />
+                <ChevronRight className="w-4 h-4 text-gray-400" />
+                <Users className="w-4 h-4 text-gray-500" />
                 <span className="text-sm">Participants</span>
               </>
             ) : selectedChannel ? (
               <>
-                <ChevronRight className="w-4 h-4 text-zinc-500" />
-                <Hash className="w-4 h-4 text-zinc-400" />
+                <ChevronRight className="w-4 h-4 text-gray-400" />
+                <Hash className="w-4 h-4 text-gray-500" />
                 <span className="text-sm">{selectedChannel.name}</span>
               </>
             ) : null}
           </div>
-          <p className="text-xs text-zinc-500 mt-0.5">{selectedCourse?.name}</p>
+          <p className="text-xs text-gray-400 mt-0.5">{selectedCourse?.name}</p>
         </div>
         <Button
           variant="ghost"
@@ -634,11 +634,11 @@ export default function CoursesPage() {
         <div className={cn(
           "flex flex-col bg-white/[0.02] transition-all duration-200",
           "absolute md:relative z-10 h-full",
-          sidebarOpen ? "w-48 border-r border-white/10" : "w-0 overflow-hidden",
-          "md:w-48 md:overflow-visible md:border-r md:border-white/10"
+          sidebarOpen ? "w-48 border-r border-gray-200" : "w-0 overflow-hidden",
+          "md:w-48 md:overflow-visible md:border-r md:border-gray-200"
         )}>
-          <div className="p-2 border-b border-white/10">
-            <p className="text-xs text-zinc-500 px-2">Channels</p>
+          <div className="p-2 border-b border-gray-200">
+            <p className="text-xs text-gray-400 px-2">Channels</p>
           </div>
           <ScrollArea className="flex-1">
             <div className="p-2 space-y-1">
@@ -653,7 +653,7 @@ export default function CoursesPage() {
                   "w-full px-2 py-1.5 rounded flex items-center gap-2 text-sm transition-colors",
                   showParticipants
                     ? "bg-[#00ff88]/20 text-[#00ff88]"
-                    : "hover:bg-white/5 text-zinc-400"
+                    : "hover:bg-gray-50 text-gray-500"
                 )}
               >
                 <Users className="w-4 h-4 flex-shrink-0" />
@@ -668,7 +668,7 @@ export default function CoursesPage() {
                     "w-full px-2 py-1.5 rounded flex items-center gap-2 text-sm transition-colors",
                     selectedChannel?.id === channel.id
                       ? "bg-[#00ff88]/20 text-[#00ff88]"
-                      : "hover:bg-white/5 text-zinc-400"
+                      : "hover:bg-gray-50 text-gray-500"
                   )}
                 >
                   <Hash className="w-4 h-4 flex-shrink-0" />
@@ -684,7 +684,7 @@ export default function CoursesPage() {
           </ScrollArea>
 
           {/* Vote Button */}
-          <div className="p-2 border-t border-white/10">
+          <div className="p-2 border-t border-gray-200">
             <Button
               variant="outline"
               size="sm"
@@ -705,7 +705,7 @@ export default function CoursesPage() {
               {participantsLoading ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {[...Array(6)].map((_, i) => (
-                    <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-white/5">
+                    <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-white">
                       <Skeleton className="w-10 h-10 rounded-full flex-shrink-0" />
                       <Skeleton className="h-4 flex-1" />
                     </div>
@@ -713,7 +713,7 @@ export default function CoursesPage() {
                 </div>
               ) : (
                 <>
-                  <p className="text-xs text-zinc-500 mb-3">
+                  <p className="text-xs text-gray-400 mb-3">
                     {participantsData?.total ?? 0} enrolled
                   </p>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -721,7 +721,7 @@ export default function CoursesPage() {
                       <Link
                         key={p.id}
                         href={`/profile/${p.id}`}
-                        className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-colors"
+                        className="flex items-center gap-3 p-3 rounded-xl bg-white border border-white/5 hover:bg-white/10 hover:border-gray-200 transition-colors"
                       >
                         <Avatar className="w-10 h-10 flex-shrink-0">
                           <AvatarImage src={p.avatar_url ?? undefined} />
@@ -729,7 +729,7 @@ export default function CoursesPage() {
                             {p.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
-                        <span className="text-sm text-zinc-300 truncate">{p.name}</span>
+                        <span className="text-sm text-gray-700 truncate">{p.name}</span>
                       </Link>
                     ))}
                   </div>
@@ -788,20 +788,20 @@ export default function CoursesPage() {
                     <h2 className="text-xl font-bold text-white mb-1">
                       Welcome to {selectedCourse?.code}
                     </h2>
-                    <p className="text-zinc-400 text-sm">{selectedCourse?.name}</p>
+                    <p className="text-gray-500 text-sm">{selectedCourse?.name}</p>
                   </div>
 
                   {/* Info Cards */}
                   <div className="space-y-3">
                     {/* General Channel Info */}
-                    <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                    <div className="p-4 rounded-xl bg-white border border-gray-100 shadow-sm">
                       <div className="flex items-start gap-3">
                         <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center flex-shrink-0">
                           <Hash className="w-4 h-4 text-purple-400" />
                         </div>
                         <div>
                           <p className="font-medium text-sm text-white">General Channel</p>
-                          <p className="text-xs text-zinc-400 mt-1">
+                          <p className="text-xs text-gray-500 mt-1">
                             This is the main discussion channel for all students in {selectedCourse?.code}.
                             Ask questions, share resources, and connect with your classmates!
                           </p>
@@ -810,14 +810,14 @@ export default function CoursesPage() {
                     </div>
 
                     {/* Professor Channel Voting */}
-                    <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                    <div className="p-4 rounded-xl bg-white border border-gray-100 shadow-sm">
                       <div className="flex items-start gap-3">
                         <div className="w-8 h-8 rounded-lg bg-[#00ff88]/20 flex items-center justify-center flex-shrink-0">
                           <Vote className="w-4 h-4 text-[#00ff88]" />
                         </div>
                         <div>
                           <p className="font-medium text-sm text-white">Professor Channels</p>
-                          <p className="text-xs text-zinc-400 mt-1">
+                          <p className="text-xs text-gray-500 mt-1">
                             Want a dedicated channel for your professor's section? Use the
                             <span className="text-[#00ff88] font-medium"> "Request Prof Channel" </span>
                             button. When <span className="text-white font-medium">5 students</span> vote
@@ -837,7 +837,7 @@ export default function CoursesPage() {
                         </div>
                         <div>
                           <p className="font-medium text-sm text-yellow-400">Auto-Cleanup</p>
-                          <p className="text-xs text-zinc-400 mt-1">
+                          <p className="text-xs text-gray-500 mt-1">
                             Professor section channels are automatically archived after
                             <span className="text-yellow-400 font-medium"> 6 months </span>
                             to keep things fresh each semester. The general channel stays forever.
@@ -849,7 +849,7 @@ export default function CoursesPage() {
 
                   {/* CTA */}
                   <div className="mt-6 text-center">
-                    <p className="text-zinc-500 text-sm">Be the first to start the conversation!</p>
+                    <p className="text-gray-400 text-sm">Be the first to start the conversation!</p>
                   </div>
                 </div>
               </div>
@@ -878,7 +878,7 @@ export default function CoursesPage() {
 
           {/* Message Input — only shown inside a channel */}
           {selectedChannel && (
-            <div className="p-4 border-t border-white/10">
+            <div className="p-4 border-t border-gray-200">
               <ChatInput
                 placeholder={`Message #${selectedChannel.name}`}
                 maxLength={500}
@@ -913,14 +913,14 @@ export default function CoursesPage() {
             />
             {voteStatus && voteStatus.votes.length > 0 && (
               <div className="mt-4">
-                <p className="text-xs text-zinc-500 mb-2">Current votes this semester:</p>
+                <p className="text-xs text-gray-400 mb-2">Current votes this semester:</p>
                 <div className="space-y-1">
                   {voteStatus.votes.map((vote) => (
                     <div
                       key={vote.prof_name_normalized}
                       className="flex items-center justify-between text-sm"
                     >
-                      <span className="text-zinc-300">{vote.prof_name}</span>
+                      <span className="text-gray-700">{vote.prof_name}</span>
                       <Badge variant="secondary">
                         {vote.vote_count}/{vote.threshold}
                       </Badge>
@@ -964,14 +964,14 @@ export default function CoursesPage() {
       <div className="container mx-auto px-4 py-6 max-w-4xl">
         <div className="mb-8">
           <h1 className="text-2xl font-bold mb-1">Course Chat</h1>
-          <p className="text-sm text-zinc-500">Browse and join course chat rooms</p>
+          <p className="text-sm text-gray-400">Browse and join course chat rooms</p>
         </div>
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="w-20 h-20 rounded-full bg-cyan-500/10 flex items-center justify-center mb-6">
             <GraduationCap className="w-10 h-10 text-cyan-400" />
           </div>
           <h2 className="text-xl font-semibold mb-2">Sign in to access Course Chat</h2>
-          <p className="text-zinc-500 mb-6 max-w-md">
+          <p className="text-gray-400 mb-6 max-w-md">
             Join course chat rooms and connect with classmates at York University.
           </p>
           <Link href="/auth/login">
@@ -997,7 +997,7 @@ export default function CoursesPage() {
         </div>
         <div>
           <h1 className="text-2xl font-bold mb-1">Course Chat</h1>
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-gray-400">
             {viewMode === "browse"
               ? "Browse and join across 7,706 course chat rooms"
               : `Chatting in ${selectedCourse?.code}`}
@@ -1007,12 +1007,12 @@ export default function CoursesPage() {
 
       {/* Tab Switcher */}
       {viewMode === "browse" && (
-        <div className="flex gap-1 p-1 mb-5 bg-white/5 border border-white/10 rounded-xl w-fit">
+        <div className="flex gap-1 p-1 mb-5 bg-white border border-gray-100 shadow-sm rounded-xl w-fit">
           <button className="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors bg-cyan-500/20 text-cyan-300">
             Courses
           </button>
           <Link href="/residences">
-            <button className="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors text-zinc-400 hover:text-zinc-200">
+            <button className="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors text-gray-500 hover:text-zinc-200">
               Residence
             </button>
           </Link>
@@ -1021,11 +1021,11 @@ export default function CoursesPage() {
 
       {/* Disclaimer Banner */}
       {viewMode === "browse" && (
-        <div className="mb-5 p-4 rounded-xl bg-blue-500/5 border border-blue-500/20 text-sm text-zinc-400 leading-relaxed">
+        <div className="mb-5 p-4 rounded-xl bg-blue-500/5 border border-blue-500/20 text-sm text-gray-500 leading-relaxed">
           <span className="font-medium text-blue-300">How courses are organised:</span> Courses are grouped by{" "}
-          <span className="text-zinc-300">Faculty → Program → Course</span>. Expand a faculty to find your program,
+          <span className="text-gray-700">Faculty → Program → Course</span>. Expand a faculty to find your program,
           then select a course to join its chat.{" "}
-          <span className="text-zinc-300">Can&apos;t find your course?</span> Use the search bar above to look it up
+          <span className="text-gray-700">Can&apos;t find your course?</span> Use the search bar above to look it up
           by name or course code. If it&apos;s still missing,{" "}
           <Link href="/#send-feedback" className="text-blue-400 underline underline-offset-2 hover:text-blue-300 transition-colors">
             report it here
@@ -1062,28 +1062,28 @@ export default function CoursesPage() {
 
           {previewCourse && (
             <div className="py-4">
-              <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+              <div className="p-4 rounded-xl bg-white border border-gray-100 shadow-sm">
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="font-mono text-lg text-[#00ff88] font-bold">
                       {previewCourse.code}
                     </p>
-                    <p className="text-sm text-zinc-300 mt-1">
+                    <p className="text-sm text-gray-700 mt-1">
                       {previewCourse.name}
                     </p>
                   </div>
-                  <div className="flex items-center gap-1.5 text-zinc-500">
+                  <div className="flex items-center gap-1.5 text-gray-400">
                     <Users className="w-4 h-4" />
                     <span className="text-sm">{previewCourse.member_count}</span>
                   </div>
                 </div>
 
-                <div className="mt-4 pt-4 border-t border-white/10 space-y-2">
-                  <div className="flex items-center gap-2 text-xs text-zinc-400">
+                <div className="mt-4 pt-4 border-t border-gray-200 space-y-2">
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
                     <Hash className="w-3.5 h-3.5" />
                     <span>General discussion channel</span>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-zinc-400">
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
                     <Vote className="w-3.5 h-3.5" />
                     <span>Vote to create professor section channels</span>
                   </div>

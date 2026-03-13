@@ -78,12 +78,12 @@ function VerifyContent() {
     >
       {status === "loading" && (
         <>
-          <div className="w-16 h-16 mx-auto rounded-full bg-purple-500/20 flex items-center justify-center">
-            <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
+          <div className="w-16 h-16 mx-auto rounded-full bg-[#E31837]/10 flex items-center justify-center">
+            <Loader2 className="w-8 h-8 text-[#E31837] animate-spin" />
           </div>
           <div className="space-y-2">
             <h1 className="text-2xl font-bold">Verifying your email...</h1>
-            <p className="text-zinc-400">Please wait while we verify your account.</p>
+            <p className="text-gray-500">Please wait while we verify your account.</p>
           </div>
         </>
       )}
@@ -95,7 +95,7 @@ function VerifyContent() {
           </div>
           <div className="space-y-2">
             <h1 className="text-2xl font-bold">Email verified!</h1>
-            <p className="text-zinc-400">
+            <p className="text-gray-500">
               Redirecting you to YorkPulse...
             </p>
           </div>
@@ -109,14 +109,14 @@ function VerifyContent() {
           </div>
           <div className="space-y-2">
             <h1 className="text-2xl font-bold">Taking longer than expected</h1>
-            <p className="text-zinc-400">
+            <p className="text-gray-500">
               The verification is taking too long. Please try again.
             </p>
           </div>
           <div className="flex gap-3 justify-center">
             <Button
               onClick={handleRetry}
-              className="bg-purple-600 hover:bg-purple-700"
+              className="bg-[#E31837] hover:bg-[#C41230]"
             >
               <RefreshCw className="w-4 h-4 mr-2" />
               Retry
@@ -138,14 +138,14 @@ function VerifyContent() {
           </div>
           <div className="space-y-2">
             <h1 className="text-2xl font-bold">Verification failed</h1>
-            <p className="text-zinc-400">
+            <p className="text-gray-500">
               The link may have expired or is invalid. Please try signing in again.
             </p>
           </div>
           <div className="flex gap-3 justify-center">
             <Button
               onClick={handleRetry}
-              className="bg-purple-600 hover:bg-purple-700"
+              className="bg-[#E31837] hover:bg-[#C41230]"
             >
               <RefreshCw className="w-4 h-4 mr-2" />
               Retry
@@ -168,7 +168,7 @@ export default function VerifyPage() {
     <Suspense
       fallback={
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
+          <Loader2 className="w-8 h-8 text-[#E31837] animate-spin" />
         </div>
       }
     >

@@ -55,14 +55,14 @@ export default function CreateGigPage() {
       <div className="container mx-auto px-4 py-6 max-w-2xl">
         <div className="mb-8">
           <h1 className="text-2xl font-bold">Post a Gig</h1>
-          <p className="text-zinc-400 text-sm">Offer your services or request help</p>
+          <p className="text-gray-500 text-sm">Offer your services or request help</p>
         </div>
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="w-20 h-20 rounded-full bg-yellow-500/10 flex items-center justify-center mb-6">
             <GraduationCap className="w-10 h-10 text-yellow-400" />
           </div>
           <h2 className="text-xl font-semibold mb-2">Sign in to post a gig</h2>
-          <p className="text-zinc-500 mb-6 max-w-md">
+          <p className="text-gray-400 mb-6 max-w-md">
             You need to be signed in to create a gig posting.
           </p>
           <Link href="/auth/login">
@@ -140,7 +140,7 @@ export default function CreateGigPage() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="p-6 rounded-xl bg-white/5 border border-white/10"
+        className="p-6 rounded-xl bg-white border border-gray-100 shadow-sm"
       >
         <h1 className="text-2xl font-bold mb-6">Post a Gig</h1>
 
@@ -172,7 +172,7 @@ export default function CreateGigPage() {
                 I Need Help
               </Button>
             </div>
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-gray-400">
               {gigType === "offering"
                 ? "You're offering a service to others"
                 : "You're looking for someone to help you"}
@@ -210,9 +210,9 @@ export default function CreateGigPage() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               maxLength={100}
-              className="bg-white/5 border-white/10 focus-visible:ring-yellow-500 focus-visible:border-yellow-500"
+              className="bg-white border-gray-100 focus-visible:ring-yellow-500 focus-visible:border-yellow-500"
             />
-            <p className="text-xs text-zinc-500">{title.length}/100</p>
+            <p className="text-xs text-gray-400">{title.length}/100</p>
           </div>
 
           {/* Description */}
@@ -225,9 +225,9 @@ export default function CreateGigPage() {
               onChange={(e) => setDescription(e.target.value)}
               maxLength={1000}
               rows={4}
-              className="bg-white/5 border-white/10 resize-none focus-visible:ring-yellow-500 focus-visible:border-yellow-500"
+              className="bg-white border-gray-100 resize-none focus-visible:ring-yellow-500 focus-visible:border-yellow-500"
             />
-            <p className="text-xs text-zinc-500">{description.length}/1000</p>
+            <p className="text-xs text-gray-400">{description.length}/1000</p>
           </div>
 
           {/* Pricing */}
@@ -265,7 +265,7 @@ export default function CreateGigPage() {
             {priceType !== "negotiable" && (
               <div className="flex gap-2">
                 <div className="relative flex-1">
-                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <Input
                     type="number"
                     placeholder="Min"
@@ -273,11 +273,11 @@ export default function CreateGigPage() {
                     onChange={(e) => setPriceMin(e.target.value)}
                     min="0"
                     step="0.01"
-                    className="pl-8 bg-white/5 border-white/10 focus-visible:ring-yellow-500 focus-visible:border-yellow-500"
+                    className="pl-8 bg-white border-gray-100 focus-visible:ring-yellow-500 focus-visible:border-yellow-500"
                   />
                 </div>
                 <div className="relative flex-1">
-                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <Input
                     type="number"
                     placeholder="Max (optional)"
@@ -285,7 +285,7 @@ export default function CreateGigPage() {
                     onChange={(e) => setPriceMax(e.target.value)}
                     min="0"
                     step="0.01"
-                    className="pl-8 bg-white/5 border-white/10 focus-visible:ring-yellow-500 focus-visible:border-yellow-500"
+                    className="pl-8 bg-white border-gray-100 focus-visible:ring-yellow-500 focus-visible:border-yellow-500"
                   />
                 </div>
               </div>
@@ -342,7 +342,7 @@ export default function CreateGigPage() {
               value={locationDetails}
               onChange={(e) => setLocationDetails(e.target.value)}
               maxLength={200}
-              className="bg-white/5 border-white/10 focus-visible:ring-yellow-500 focus-visible:border-yellow-500"
+              className="bg-white border-gray-100 focus-visible:ring-yellow-500 focus-visible:border-yellow-500"
             />
           </div>
 
@@ -351,13 +351,13 @@ export default function CreateGigPage() {
             <div className="space-y-2">
               <Label htmlFor="deadline">Deadline (optional)</Label>
               <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
                   id="deadline"
                   type="datetime-local"
                   value={deadline}
                   onChange={(e) => setDeadline(e.target.value)}
-                  className="pl-10 bg-white/5 border-white/10 focus-visible:ring-yellow-500 focus-visible:border-yellow-500"
+                  className="pl-10 bg-white border-gray-100 focus-visible:ring-yellow-500 focus-visible:border-yellow-500"
                 />
               </div>
             </div>

@@ -26,7 +26,7 @@ export function BottomNav() {
   }
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden glass border-t border-white/10 safe-area-bottom">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white border-t border-gray-200 safe-area-bottom">
       <div className="flex items-center justify-around h-16 px-1">
         {navItems.map((item) => {
           const isActive =
@@ -38,7 +38,7 @@ export function BottomNav() {
               href={item.href}
               className={cn(
                 "flex flex-col items-center justify-center gap-1 flex-1 h-full transition-colors",
-                isActive ? "text-purple-400" : "text-zinc-500"
+                isActive ? "text-[#E31837]" : "text-gray-400"
               )}
             >
               <div className="relative">
@@ -46,7 +46,7 @@ export function BottomNav() {
                 {isActive && (
                   <motion.div
                     layoutId="bottomNavIndicator"
-                    className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-purple-400"
+                    className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#E31837]"
                   />
                 )}
               </div>

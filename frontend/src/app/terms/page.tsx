@@ -8,9 +8,9 @@ export default function TermsPage() {
       </div>
 
       <h1 className="text-3xl font-bold mb-2">Terms of Service</h1>
-      <p className="text-zinc-500 text-sm mb-10">Last updated: March 2026</p>
+      <p className="text-gray-400 text-sm mb-10">Last updated: March 2026</p>
 
-      <div className="space-y-8 text-zinc-300 leading-relaxed">
+      <div className="space-y-8 text-gray-700 leading-relaxed">
 
         <section>
           <h2 className="text-lg font-semibold text-white mb-3">1. Acceptance of Terms</h2>
@@ -25,7 +25,7 @@ export default function TermsPage() {
         <section>
           <h2 className="text-lg font-semibold text-white mb-3">3. User Conduct</h2>
           <p className="mb-3">You agree not to use YorkPulse to:</p>
-          <ul className="list-disc list-inside space-y-2 text-zinc-400">
+          <ul className="list-disc list-inside space-y-2 text-gray-500">
             <li>Post false, misleading, or fraudulent content</li>
             <li>Harass, threaten, or abuse other users</li>
             <li>Share personal information of others without consent</li>
@@ -72,7 +72,7 @@ export default function TermsPage() {
 
       </div>
 
-      <div className="mt-12 pt-8 border-t border-white/10 text-sm text-zinc-500">
+      <div className="mt-12 pt-8 border-t border-gray-200 text-sm text-gray-400">
         <Link href="/privacy" className="text-purple-400 hover:underline">Privacy Policy</Link>
       </div>
     </div>

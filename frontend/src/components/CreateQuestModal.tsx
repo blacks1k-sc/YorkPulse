@@ -34,7 +34,7 @@ const categories: { value: QuestCategory; label: string; icon: typeof Dumbbell; 
   { value: "study", label: "Study", icon: BookOpen, color: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
   { value: "game", label: "Game", icon: Gamepad2, color: "bg-purple-500/20 text-purple-400 border-purple-500/30" },
   { value: "commute", label: "Commute", icon: Car, color: "bg-green-500/20 text-green-400 border-green-500/30" },
-  { value: "custom", label: "Custom", icon: Plus, color: "bg-zinc-500/20 text-zinc-400 border-zinc-500/30" },
+  { value: "custom", label: "Custom", icon: Plus, color: "bg-zinc-500/20 text-gray-500 border-zinc-500/30" },
 ];
 
 const vibeLevels: { value: VibeLevel; label: string; emoji: string }[] = [
@@ -224,10 +224,10 @@ export function CreateQuestModal() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 100 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed inset-x-0 bottom-0 z-[10000] max-h-[90vh] overflow-y-auto rounded-t-3xl bg-zinc-900 border-t border-white/10 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:max-w-lg md:w-full md:rounded-2xl md:border"
+            className="fixed inset-x-0 bottom-0 z-[10000] max-h-[90vh] overflow-y-auto rounded-t-3xl bg-white border-t border-gray-200 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:max-w-lg md:w-full md:rounded-2xl md:border"
           >
             {/* Header */}
-            <div className="sticky top-0 z-[10001] flex items-center justify-between p-4 bg-zinc-900/95 backdrop-blur border-b border-white/10">
+            <div className="sticky top-0 z-[10001] flex items-center justify-between p-4 bg-white backdrop-blur border-b border-gray-200">
               <h2 className="text-lg font-semibold">Create Side Quest</h2>
               <Button
                 variant="ghost"
@@ -254,7 +254,7 @@ export function CreateQuestModal() {
                         "flex items-center gap-2 px-3 py-2 rounded-full border transition-all text-sm",
                         category === cat.value
                           ? cat.color
-                          : "bg-white/5 text-zinc-400 border-white/10 hover:bg-white/10"
+                          : "bg-white/5 text-gray-500 border-gray-200 hover:bg-white/10"
                       )}
                     >
                       <cat.icon className="w-4 h-4" />
@@ -320,7 +320,7 @@ export function CreateQuestModal() {
                         "px-3 py-1.5 rounded-full text-sm border transition-all",
                         selectedTimeOption === option.label
                           ? "bg-green-500/20 text-green-400 border-green-500/30"
-                          : "bg-white/5 text-zinc-400 border-white/10 hover:bg-white/10"
+                          : "bg-white/5 text-gray-500 border-gray-200 hover:bg-white/10"
                       )}
                     >
                       {option.label}
@@ -336,7 +336,7 @@ export function CreateQuestModal() {
                   >
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <Label htmlFor="startTime" className="text-xs text-zinc-500">Start Time</Label>
+                        <Label htmlFor="startTime" className="text-xs text-gray-400">Start Time</Label>
                         <Input
                           id="startTime"
                           type="datetime-local"
@@ -345,7 +345,7 @@ export function CreateQuestModal() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="endTime" className="text-xs text-zinc-500">End Time (Optional)</Label>
+                        <Label htmlFor="endTime" className="text-xs text-gray-400">End Time (Optional)</Label>
                         <Input
                           id="endTime"
                           type="datetime-local"
@@ -374,7 +374,7 @@ export function CreateQuestModal() {
                         "px-3 py-2 rounded-full text-sm border transition-all flex items-center gap-1.5",
                         vibeLevel === level.value
                           ? "bg-green-500/20 text-green-400 border-green-500/30"
-                          : "bg-white/5 text-zinc-400 border-white/10 hover:bg-white/10"
+                          : "bg-white/5 text-gray-500 border-gray-200 hover:bg-white/10"
                       )}
                     >
                       <span>{level.emoji}</span>
@@ -418,7 +418,7 @@ export function CreateQuestModal() {
                       onChange={(e) => setMaxParticipants(parseInt(e.target.value))}
                       className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-green-500"
                     />
-                    <div className="flex justify-between text-xs text-zinc-500">
+                    <div className="flex justify-between text-xs text-gray-400">
                       <span>1</span>
                       <span>10</span>
                     </div>
@@ -444,7 +444,7 @@ export function CreateQuestModal() {
                     <button
                       type="button"
                       onClick={() => setMaxParticipants(10)}
-                      className="text-xs text-zinc-400 hover:text-zinc-300 transition-colors"
+                      className="text-xs text-gray-500 hover:text-gray-700 transition-colors"
                     >
                       Back to slider (1-10)
                     </button>
@@ -453,12 +453,12 @@ export function CreateQuestModal() {
               </div>
 
               {/* Requires Approval */}
-              <div className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10">
+              <div className="flex items-center justify-between p-4 rounded-xl bg-white border border-gray-100 shadow-sm">
                 <div>
                   <p className="font-medium text-sm">
                     {requiresApproval ? "Manually approve participants" : "Auto-accept (first-come-first-served)"}
                   </p>
-                  <p className="text-xs text-zinc-500 mt-0.5">
+                  <p className="text-xs text-gray-400 mt-0.5">
                     {requiresApproval
                       ? "Review who joins your quest"
                       : "Anyone can join immediately"}

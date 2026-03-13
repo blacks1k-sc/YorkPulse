@@ -23,7 +23,7 @@ export default function Error({
         </div>
         <div className="space-y-2">
           <h2 className="text-2xl font-bold">Something went wrong</h2>
-          <p className="text-zinc-400">
+          <p className="text-gray-500">
             An unexpected error occurred. Please try again.
           </p>
         </div>

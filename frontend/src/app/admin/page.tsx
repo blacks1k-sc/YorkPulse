@@ -97,10 +97,10 @@ function StatusBadge({ status }: { status: string }) {
     hidden: "bg-orange-500/20 text-orange-400",
     pending: "bg-yellow-500/20 text-yellow-400",
     resolved: "bg-green-500/20 text-green-400",
-    dismissed: "bg-zinc-500/20 text-zinc-400",
+    dismissed: "bg-zinc-500/20 text-gray-500",
   };
   return (
-    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${color[status] ?? "bg-zinc-500/20 text-zinc-400"}`}>
+    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${color[status] ?? "bg-zinc-500/20 text-gray-500"}`}>
       {status}
     </span>
   );
@@ -126,7 +126,7 @@ function Pagination({
   const from = (page - 1) * perPage + 1;
   const to = Math.min(page * perPage, total);
   return (
-    <div className="flex items-center justify-between mt-4 text-sm text-zinc-400">
+    <div className="flex items-center justify-between mt-4 text-sm text-gray-500">
       <span>{total > 0 ? `${from}–${to} of ${total}` : "0 results"}</span>
       <div className="flex gap-2">
         <Button size="sm" variant="ghost" disabled={page <= 1} onClick={onPrev}>
@@ -205,23 +205,23 @@ function UsersTab() {
   return (
     <div>
       <div className="mb-4 relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <input
           type="text"
           placeholder="Search by name or email…"
           value={search}
           onChange={(e) => handleSearchChange(e.target.value)}
-          className="w-full pl-9 pr-4 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-500"
+          className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-500"
         />
       </div>
       {loading ? (
-        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-zinc-500" /></div>
+        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
       ) : !data ? null : (
         <>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-zinc-800 text-zinc-500 text-left">
+                <tr className="border-b border-gray-200 text-gray-400 text-left">
                   <th className="pb-2 pr-4 font-medium">Name</th>
                   <th className="pb-2 pr-4 font-medium">Email</th>
                   <th className="pb-2 pr-4 font-medium">Last Login</th>
@@ -232,14 +232,14 @@ function UsersTab() {
               </thead>
               <tbody>
                 {data.items.map((u) => (
-                  <tr key={u.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
+                  <tr key={u.id} className="border-b border-gray-200/50 hover:bg-gray-100/30">
                     <td className="py-2 pr-4">
                       <span className="font-medium">{u.name}</span>
                       {u.is_admin && <span className="ml-2 text-xs bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded-full">admin</span>}
                     </td>
-                    <td className="py-2 pr-4 text-zinc-400">{u.email}</td>
-                    <td className="py-2 pr-4 text-zinc-400 whitespace-nowrap">{fmtDateTime(u.last_login_at)}</td>
-                    <td className="py-2 pr-4 text-zinc-500">{fmtDate(u.created_at)}</td>
+                    <td className="py-2 pr-4 text-gray-500">{u.email}</td>
+                    <td className="py-2 pr-4 text-gray-500 whitespace-nowrap">{fmtDateTime(u.last_login_at)}</td>
+                    <td className="py-2 pr-4 text-gray-400">{fmtDate(u.created_at)}</td>
                     <td className="py-2 pr-4">
                       {u.is_banned && <StatusBadge status="banned" />}
                     </td>
@@ -284,7 +284,7 @@ function ListingsTab() {
     await load(page);
   }
 
-  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-zinc-500" /></div>;
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>;
   if (!data) return null;
 
   return (
@@ -292,7 +292,7 @@ function ListingsTab() {
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-zinc-800 text-zinc-500 text-left">
+            <tr className="border-b border-gray-200 text-gray-400 text-left">
               <th className="pb-2 pr-4 font-medium">Title</th>
               <th className="pb-2 pr-4 font-medium">Seller</th>
               <th className="pb-2 pr-4 font-medium">Price</th>
@@ -303,12 +303,12 @@ function ListingsTab() {
           </thead>
           <tbody>
             {data.items.map((l) => (
-              <tr key={l.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
+              <tr key={l.id} className="border-b border-gray-200/50 hover:bg-gray-100/30">
                 <td className="py-2 pr-4 font-medium max-w-[200px] truncate">{l.title}</td>
-                <td className="py-2 pr-4 text-zinc-400">{l.seller?.name ?? "—"}</td>
+                <td className="py-2 pr-4 text-gray-500">{l.seller?.name ?? "—"}</td>
                 <td className="py-2 pr-4">${l.price.toFixed(2)}</td>
                 <td className="py-2 pr-4"><StatusBadge status={l.status} /></td>
-                <td className="py-2 pr-4 text-zinc-500">{fmtDate(l.created_at)}</td>
+                <td className="py-2 pr-4 text-gray-400">{fmtDate(l.created_at)}</td>
                 <td className="py-2 text-right">
                   {l.status !== "deleted" && (
                     <DeleteButton onDelete={() => handleDelete(l.id)} label="Delete listing" />
@@ -348,7 +348,7 @@ function VaultTab() {
     await load(page);
   }
 
-  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-zinc-500" /></div>;
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>;
   if (!data) return null;
 
   return (
@@ -356,7 +356,7 @@ function VaultTab() {
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-zinc-800 text-zinc-500 text-left">
+            <tr className="border-b border-gray-200 text-gray-400 text-left">
               <th className="pb-2 pr-4 font-medium">Title</th>
               <th className="pb-2 pr-4 font-medium">Author</th>
               <th className="pb-2 pr-4 font-medium">Category</th>
@@ -368,12 +368,12 @@ function VaultTab() {
           </thead>
           <tbody>
             {data.items.map((p) => (
-              <tr key={p.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
+              <tr key={p.id} className="border-b border-gray-200/50 hover:bg-gray-100/30">
                 <td className="py-2 pr-4 font-medium max-w-[200px] truncate">{p.title}</td>
-                <td className="py-2 pr-4 text-zinc-400">
-                  {p.is_anonymous ? <span className="text-zinc-500 italic">Anonymous</span> : (p.author?.name ?? "—")}
+                <td className="py-2 pr-4 text-gray-500">
+                  {p.is_anonymous ? <span className="text-gray-400 italic">Anonymous</span> : (p.author?.name ?? "—")}
                 </td>
-                <td className="py-2 pr-4 text-zinc-400">{p.category}</td>
+                <td className="py-2 pr-4 text-gray-500">{p.category}</td>
                 <td className="py-2 pr-4"><StatusBadge status={p.status} /></td>
                 <td className="py-2 pr-4">
                   {p.flag_count > 0 && (
@@ -382,7 +382,7 @@ function VaultTab() {
                     </span>
                   )}
                 </td>
-                <td className="py-2 pr-4 text-zinc-500">{fmtDate(p.created_at)}</td>
+                <td className="py-2 pr-4 text-gray-400">{fmtDate(p.created_at)}</td>
                 <td className="py-2 text-right">
                   {p.status !== "deleted" && (
                     <DeleteButton onDelete={() => handleDelete(p.id)} label="Delete post" />
@@ -437,13 +437,13 @@ function FeedbackTab() {
     await load(page);
   }
 
-  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-zinc-500" /></div>;
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>;
 
   return (
     <div>
       <div className="space-y-3">
         {items.map((f) => (
-          <div key={f.id} className="rounded-lg border border-zinc-800 p-4 bg-zinc-900/50">
+          <div key={f.id} className="rounded-lg border border-gray-200 p-4 bg-white/50">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -451,13 +451,13 @@ function FeedbackTab() {
                   <Badge variant="outline" className="text-xs">{f.type}</Badge>
                   <StatusBadge status={f.status} />
                 </div>
-                <p className="text-sm text-zinc-400 mb-2">{f.message}</p>
-                <p className="text-xs text-zinc-500">
-                  From <span className="text-zinc-400">{f.user.name}</span> ({f.user.email}) · {fmtDate(f.created_at)}
+                <p className="text-sm text-gray-500 mb-2">{f.message}</p>
+                <p className="text-xs text-gray-400">
+                  From <span className="text-gray-500">{f.user.name}</span> ({f.user.email}) · {fmtDate(f.created_at)}
                 </p>
                 {f.admin_response && (
-                  <div className="mt-2 text-xs bg-zinc-800 rounded p-2 text-zinc-300">
-                    <span className="text-zinc-500">Admin response: </span>{f.admin_response}
+                  <div className="mt-2 text-xs bg-gray-100 rounded p-2 text-gray-700">
+                    <span className="text-gray-400">Admin response: </span>{f.admin_response}
                   </div>
                 )}
               </div>
@@ -509,30 +509,30 @@ function ReportsTab() {
 
   useEffect(() => { load(page); }, [load, page]);
 
-  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-zinc-500" /></div>;
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>;
   if (!data) return null;
 
   return (
     <div>
       <div className="space-y-3">
         {data.items.map((r) => (
-          <div key={r.id} className="rounded-lg border border-zinc-800 p-4 bg-zinc-900/50">
+          <div key={r.id} className="rounded-lg border border-gray-200 p-4 bg-white/50">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
                   <Badge variant="outline" className="text-xs">{r.reason}</Badge>
                   <StatusBadge status={r.status} />
-                  <span className="text-xs text-zinc-500">{fmtDate(r.created_at)}</span>
+                  <span className="text-xs text-gray-400">{fmtDate(r.created_at)}</span>
                 </div>
-                <p className="text-sm text-zinc-400 mb-2">{r.explanation}</p>
-                <p className="text-xs text-zinc-500">
-                  Reporter: <span className="text-zinc-400">{r.reporter.name}</span>
+                <p className="text-sm text-gray-500 mb-2">{r.explanation}</p>
+                <p className="text-xs text-gray-400">
+                  Reporter: <span className="text-gray-500">{r.reporter.name}</span>
                   {" · "}
-                  Reported: <span className="text-zinc-400">{r.reported_user.name}</span>
+                  Reported: <span className="text-gray-500">{r.reported_user.name}</span>
                 </p>
                 {r.admin_notes && (
-                  <div className="mt-2 text-xs bg-zinc-800 rounded p-2 text-zinc-300">
-                    <span className="text-zinc-500">Admin notes: </span>{r.admin_notes}
+                  <div className="mt-2 text-xs bg-gray-100 rounded p-2 text-gray-700">
+                    <span className="text-gray-400">Admin notes: </span>{r.admin_notes}
                   </div>
                 )}
               </div>
@@ -588,18 +588,18 @@ function CourseMonitorTab() {
     await loadMessages(msgPage);
   }
 
-  if (loading && !overview) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-zinc-500" /></div>;
+  if (loading && !overview) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>;
 
   return (
     <div>
       {/* Sub-nav */}
-      <div className="flex gap-2 mb-6 border-b border-zinc-800 pb-3">
+      <div className="flex gap-2 mb-6 border-b border-gray-200 pb-3">
         {(["courses", "messages", "votes"] as const).map((s) => (
           <button
             key={s}
             onClick={() => setSection(s)}
             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              section === s ? "bg-zinc-800 text-white" : "text-zinc-500 hover:text-zinc-300"
+              section === s ? "bg-gray-100 text-white" : "text-gray-400 hover:text-gray-700"
             }`}
           >
             {s === "courses" ? "Enrollments" : s === "messages" ? "Messages" : "Prof Votes"}
@@ -616,16 +616,16 @@ function CourseMonitorTab() {
               { label: "Total Members", value: overview.total_members },
               { label: "Total Messages", value: overview.total_messages },
             ].map((s) => (
-              <div key={s.label} className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 text-center">
+              <div key={s.label} className="rounded-xl border border-gray-200 bg-white/50 p-4 text-center">
                 <p className="text-2xl font-bold">{s.value.toLocaleString()}</p>
-                <p className="text-xs text-zinc-500 mt-1">{s.label}</p>
+                <p className="text-xs text-gray-400 mt-1">{s.label}</p>
               </div>
             ))}
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-zinc-800 text-zinc-500 text-left">
+                <tr className="border-b border-gray-200 text-gray-400 text-left">
                   <th className="pb-2 pr-4 font-medium">Course</th>
                   <th className="pb-2 pr-4 font-medium">Faculty</th>
                   <th className="pb-2 pr-4 font-medium text-right">Members</th>
@@ -635,15 +635,15 @@ function CourseMonitorTab() {
               </thead>
               <tbody>
                 {overview.top_courses.map((c) => (
-                  <tr key={c.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
+                  <tr key={c.id} className="border-b border-gray-200/50 hover:bg-gray-100/30">
                     <td className="py-2 pr-4">
                       <span className="font-mono text-purple-400 text-xs mr-2">{c.code}</span>
-                      <span className="text-zinc-300 truncate max-w-[200px] inline-block align-middle">{c.name}</span>
+                      <span className="text-gray-700 truncate max-w-[200px] inline-block align-middle">{c.name}</span>
                     </td>
-                    <td className="py-2 pr-4 text-zinc-500 text-xs">{c.faculty}</td>
+                    <td className="py-2 pr-4 text-gray-400 text-xs">{c.faculty}</td>
                     <td className="py-2 pr-4 text-right font-medium">{c.member_count}</td>
-                    <td className="py-2 pr-4 text-right text-zinc-400">{c.message_count}</td>
-                    <td className="py-2 text-right text-zinc-400">{c.channel_count}</td>
+                    <td className="py-2 pr-4 text-right text-gray-500">{c.message_count}</td>
+                    <td className="py-2 text-right text-gray-500">{c.channel_count}</td>
                   </tr>
                 ))}
               </tbody>
@@ -656,23 +656,23 @@ function CourseMonitorTab() {
       {section === "messages" && (
         <div>
           {loading ? (
-            <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-zinc-500" /></div>
+            <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
           ) : messages && (
             <>
               <div className="space-y-2">
                 {messages.items.map((m) => (
-                  <div key={m.id} className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-3 flex items-start gap-3">
+                  <div key={m.id} className="rounded-lg border border-gray-200 bg-white/50 p-3 flex items-start gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <span className="font-medium text-sm">{m.user_name}</span>
-                        <span className="text-xs text-zinc-500">{m.user_email}</span>
-                        <span className="text-xs bg-zinc-800 rounded px-1.5 py-0.5 font-mono text-purple-400">{m.course_code}</span>
-                        <span className="text-xs text-zinc-500">#{m.channel_name}</span>
-                        <span className="text-xs text-zinc-600 ml-auto">{fmtDate(m.created_at)}</span>
+                        <span className="text-xs text-gray-400">{m.user_email}</span>
+                        <span className="text-xs bg-gray-100 rounded px-1.5 py-0.5 font-mono text-purple-400">{m.course_code}</span>
+                        <span className="text-xs text-gray-400">#{m.channel_name}</span>
+                        <span className="text-xs text-gray-500 ml-auto">{fmtDate(m.created_at)}</span>
                       </div>
-                      {m.message && <p className="text-sm text-zinc-300">{m.message}</p>}
+                      {m.message && <p className="text-sm text-gray-700">{m.message}</p>}
                       {m.image_url && (
-                        <span className="inline-flex items-center gap-1 text-xs text-zinc-500 mt-1">
+                        <span className="inline-flex items-center gap-1 text-xs text-gray-400 mt-1">
                           <Image className="w-3 h-3" /> Image attachment
                         </span>
                       )}
@@ -698,12 +698,12 @@ function CourseMonitorTab() {
       {section === "votes" && votes && (
         <div>
           {votes.votes.length === 0 ? (
-            <p className="text-zinc-500 text-sm text-center py-8">No professor votes yet.</p>
+            <p className="text-gray-400 text-sm text-center py-8">No professor votes yet.</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-zinc-800 text-zinc-500 text-left">
+                  <tr className="border-b border-gray-200 text-gray-400 text-left">
                     <th className="pb-2 pr-4 font-medium">Course</th>
                     <th className="pb-2 pr-4 font-medium">Professor</th>
                     <th className="pb-2 pr-4 font-medium">Semester</th>
@@ -712,15 +712,15 @@ function CourseMonitorTab() {
                 </thead>
                 <tbody>
                   {votes.votes.map((v, i) => (
-                    <tr key={i} className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
+                    <tr key={i} className="border-b border-gray-200/50 hover:bg-gray-100/30">
                       <td className="py-2 pr-4">
                         <span className="font-mono text-purple-400 text-xs mr-2">{v.course_code}</span>
-                        <span className="text-zinc-400 text-xs">{v.course_name}</span>
+                        <span className="text-gray-500 text-xs">{v.course_name}</span>
                       </td>
                       <td className="py-2 pr-4 font-medium">{v.prof_name}</td>
-                      <td className="py-2 pr-4 text-zinc-400">{v.semester}</td>
+                      <td className="py-2 pr-4 text-gray-500">{v.semester}</td>
                       <td className="py-2 text-right">
-                        <span className={`font-medium ${v.vote_count >= v.threshold ? "text-green-400" : "text-zinc-300"}`}>
+                        <span className={`font-medium ${v.vote_count >= v.threshold ? "text-green-400" : "text-gray-700"}`}>
                           {v.vote_count}/{v.threshold}
                         </span>
                       </td>
@@ -760,7 +760,7 @@ export default function AdminPage() {
   if (!isHydrated || isLoading || !isAuthenticated || !isAdmin(user)) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-6 h-6 animate-spin text-zinc-500" />
+        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
       </div>
     );
   }
@@ -773,7 +773,7 @@ export default function AdminPage() {
         </div>
         <div>
           <h1 className="text-xl font-bold">Admin Panel</h1>
-          <p className="text-sm text-zinc-500">Manage YorkPulse content and users</p>
+          <p className="text-sm text-gray-400">Manage YorkPulse content and users</p>
         </div>
       </div>
 

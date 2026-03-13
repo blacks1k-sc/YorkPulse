@@ -180,7 +180,7 @@ export default function SignupPage() {
         >
           <div className="text-center space-y-2">
             <h1 className="text-2xl font-bold">Join YorkPulse</h1>
-            <p className="text-zinc-400">
+            <p className="text-gray-500">
               The community platform for York University students
             </p>
           </div>
@@ -190,14 +190,14 @@ export default function SignupPage() {
             {features.map((feature) => (
               <div
                 key={feature.title}
-                className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10"
+                className="flex items-center gap-3 p-3 rounded-lg bg-white border border-gray-100 shadow-sm"
               >
-                <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                  <feature.icon className="w-5 h-5 text-purple-400" />
+                <div className="w-10 h-10 rounded-lg bg-[#E31837]/10 flex items-center justify-center">
+                  <feature.icon className="w-5 h-5 text-[#E31837]" />
                 </div>
                 <div>
                   <p className="font-medium text-sm">{feature.title}</p>
-                  <p className="text-xs text-zinc-500">{feature.description}</p>
+                  <p className="text-xs text-gray-400">{feature.description}</p>
                 </div>
               </div>
             ))}
@@ -207,7 +207,7 @@ export default function SignupPage() {
             <div className="space-y-2">
               <Label htmlFor="email">York Email</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
                   id="email"
                   type="email"
@@ -225,7 +225,7 @@ export default function SignupPage() {
               {emailError ? (
                 <p className="text-xs text-red-400">{emailError}</p>
               ) : (
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-gray-400">
                   We&apos;ll send you a 6-digit verification code
                 </p>
               )}
@@ -233,7 +233,7 @@ export default function SignupPage() {
 
             <Button
               type="submit"
-              className="w-full bg-purple-600 hover:bg-purple-700"
+              className="w-full bg-[#E31837] hover:bg-[#C41230]"
               disabled={signupMutation.isPending || !!emailError}
             >
               {signupMutation.isPending ? (
@@ -250,20 +250,20 @@ export default function SignupPage() {
             </Button>
           </form>
 
-          <p className="text-center text-sm text-zinc-400">
+          <p className="text-center text-sm text-gray-500">
             Already have an account?{" "}
-            <Link href="/auth/login" className="text-purple-400 hover:underline">
+            <Link href="/auth/login" className="text-[#E31837] hover:underline">
               Sign in
             </Link>
           </p>
 
-          <p className="text-center text-xs text-zinc-500">
+          <p className="text-center text-xs text-gray-400">
             By signing up, you agree to our{" "}
-            <Link href="/terms" className="underline hover:text-zinc-400">
+            <Link href="/terms" className="underline hover:text-gray-500">
               Terms of Service
             </Link>{" "}
             and{" "}
-            <Link href="/privacy" className="underline hover:text-zinc-400">
+            <Link href="/privacy" className="underline hover:text-gray-500">
               Privacy Policy
             </Link>
           </p>
@@ -288,14 +288,14 @@ export default function SignupPage() {
           </Button>
 
           <div className="text-center space-y-2">
-            <div className="w-16 h-16 mx-auto rounded-full bg-purple-500/20 flex items-center justify-center mb-4">
-              <Mail className="w-8 h-8 text-purple-400" />
+            <div className="w-16 h-16 mx-auto rounded-full bg-[#E31837]/10 flex items-center justify-center mb-4">
+              <Mail className="w-8 h-8 text-[#E31837]" />
             </div>
             <h1 className="text-2xl font-bold">Verify your email</h1>
-            <p className="text-zinc-400">
+            <p className="text-gray-500">
               We sent a verification code to
             </p>
-            <p className="text-purple-400 font-medium">{email}</p>
+            <p className="text-[#E31837] font-medium">{email}</p>
           </div>
 
           <form onSubmit={handleOTPSubmit} className="space-y-6">
@@ -311,7 +311,7 @@ export default function SignupPage() {
 
             <Button
               type="submit"
-              className="w-full bg-purple-600 hover:bg-purple-700"
+              className="w-full bg-[#E31837] hover:bg-[#C41230]"
               disabled={verifyOTPMutation.isPending || otp.length !== 6}
             >
               {verifyOTPMutation.isPending ? (
@@ -330,7 +330,7 @@ export default function SignupPage() {
 
           {/* Resend section */}
           <div className="text-center space-y-2">
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-gray-400">
               Didn&apos;t receive the code?
             </p>
             <Button
@@ -338,7 +338,7 @@ export default function SignupPage() {
               size="sm"
               onClick={handleResend}
               disabled={cooldown > 0 || resendOTPMutation.isPending}
-              className="text-purple-400 hover:text-purple-300"
+              className="text-[#E31837] hover:text-[#E31837]"
             >
               {resendOTPMutation.isPending ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -349,7 +349,7 @@ export default function SignupPage() {
             </Button>
           </div>
 
-          <p className="text-xs text-center text-zinc-600">
+          <p className="text-xs text-center text-gray-400">
             The code expires in 10 minutes
           </p>
         </motion.div>

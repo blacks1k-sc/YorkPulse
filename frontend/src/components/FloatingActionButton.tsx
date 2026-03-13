@@ -59,7 +59,7 @@ export function FloatingActionButton() {
         <motion.span
           initial={{ opacity: 0, x: 10 }}
           whileHover={{ opacity: 1, x: 0 }}
-          className="absolute right-full mr-3 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg bg-zinc-900/90 backdrop-blur-sm text-white text-sm font-medium whitespace-nowrap border border-white/10 pointer-events-none"
+          className="absolute right-full mr-3 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg bg-white backdrop-blur-sm text-white text-sm font-medium whitespace-nowrap border border-gray-100 pointer-events-none"
         >
           {config.label}
         </motion.span>

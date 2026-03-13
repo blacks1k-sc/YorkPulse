@@ -73,8 +73,8 @@ export function QuestLocationMap({
 
   if (!mounted) {
     return (
-      <div className="h-44 bg-zinc-800/50 rounded-2xl flex items-center justify-center border border-white/10">
-        <div className="text-zinc-500 text-sm">Loading map...</div>
+      <div className="h-44 bg-gray-50 rounded-2xl flex items-center justify-center border border-gray-100">
+        <div className="text-gray-400 text-sm">Loading map...</div>
       </div>
     );
   }
@@ -86,7 +86,7 @@ export function QuestLocationMap({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="relative rounded-2xl overflow-hidden border border-white/10 shadow-[0_0_40px_-15px_rgba(168,85,247,0.3)]"
+      className="relative rounded-2xl overflow-hidden border border-gray-100 shadow-[0_0_40px_-15px_rgba(168,85,247,0.3)]"
     >
       <div className="h-44">
         <MapContainer
@@ -113,12 +113,12 @@ export function QuestLocationMap({
       <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
 
       {/* Location badge */}
-      <div className="absolute top-3 left-3 backdrop-blur-xl bg-black/50 border border-white/10 rounded-lg px-3 py-1.5 flex items-center gap-2">
+      <div className="absolute top-3 left-3 backdrop-blur-xl bg-black/50 border border-gray-100 rounded-lg px-3 py-1.5 flex items-center gap-2">
         <div
           className="w-2 h-2 rounded-full"
           style={{ background: config.gradient }}
         />
-        <span className="text-xs text-zinc-300 font-medium">{locationName}</span>
+        <span className="text-xs text-gray-700 font-medium">{locationName}</span>
       </div>
 
       {/* Directions button */}

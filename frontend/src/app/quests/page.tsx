@@ -70,7 +70,7 @@ const categoryConfig: Record<QuestCategory, { label: string; icon: typeof Dumbbe
   study: { label: "Study", icon: BookOpen, color: "bg-blue-500/20 text-blue-400" },
   game: { label: "Game", icon: Gamepad2, color: "bg-purple-500/20 text-purple-400" },
   commute: { label: "Commute", icon: Car, color: "bg-green-500/20 text-green-400" },
-  custom: { label: "Custom", icon: Sparkles, color: "bg-zinc-500/20 text-zinc-400" },
+  custom: { label: "Custom", icon: Sparkles, color: "bg-zinc-500/20 text-gray-500" },
 };
 
 const vibeLevelLabels: Record<VibeLevel, { label: string; emoji: string }> = {
@@ -85,7 +85,7 @@ const statusLabels: Record<QuestStatus, { label: string; color: string }> = {
   open: { label: "Open", color: "bg-green-500/20 text-green-400" },
   in_progress: { label: "In Progress", color: "bg-blue-500/20 text-blue-400" },
   full: { label: "Full", color: "bg-yellow-500/20 text-yellow-400" },
-  completed: { label: "Completed", color: "bg-zinc-500/20 text-zinc-400" },
+  completed: { label: "Completed", color: "bg-zinc-500/20 text-gray-500" },
   cancelled: { label: "Cancelled", color: "bg-red-500/20 text-red-400" },
 };
 
@@ -154,7 +154,7 @@ function QuestCard({ quest, joinedQuestIds, pendingQuestIds }: { quest: SideQues
       className="h-full"
     >
       <Link href={`/quests/${quest.id}`} className="h-full block">
-        <div className="h-full flex flex-col p-4 rounded-xl bg-white/5 border border-white/10 hover:border-green-500/30 transition-all hover:shadow-lg hover:shadow-green-500/5">
+        <div className="h-full flex flex-col p-4 rounded-xl bg-white border border-gray-100 shadow-sm hover:border-green-500/30 transition-all hover:shadow-lg hover:shadow-green-500/5">
           {/* Top Row: Category Badge + Vibe */}
           <div className="flex items-center justify-between mb-3">
             <Badge variant="secondary" className={cn("text-xs", catConfig.color)}>
@@ -163,7 +163,7 @@ function QuestCard({ quest, joinedQuestIds, pendingQuestIds }: { quest: SideQues
                 ? quest.custom_category
                 : catConfig.label}
             </Badge>
-            <Badge variant="outline" className="text-xs border-white/10">
+            <Badge variant="outline" className="text-xs border-gray-200">
               {vibeInfo.emoji} {quest.vibe_level === "custom" && quest.custom_vibe_level
                 ? quest.custom_vibe_level
                 : vibeInfo.label}
@@ -175,16 +175,16 @@ function QuestCard({ quest, joinedQuestIds, pendingQuestIds }: { quest: SideQues
 
           {/* Description if available */}
           {quest.description && (
-            <p className="text-sm text-zinc-400 line-clamp-2 mb-3">{quest.description}</p>
+            <p className="text-sm text-gray-500 line-clamp-2 mb-3">{quest.description}</p>
           )}
 
           {/* Meta Info */}
           <div className="space-y-2 mb-4">
-            <div className="flex items-center gap-2 text-sm text-zinc-400">
+            <div className="flex items-center gap-2 text-sm text-gray-500">
               <MapPin className="w-4 h-4 text-green-400 flex-shrink-0" />
               <span className="truncate">{quest.location}</span>
             </div>
-            <div className="flex items-center gap-2 text-sm text-zinc-400">
+            <div className="flex items-center gap-2 text-sm text-gray-500">
               <Calendar className="w-4 h-4 text-green-400 flex-shrink-0" />
               <span>{formatTime(quest.start_time)}</span>
             </div>
@@ -202,7 +202,7 @@ function QuestCard({ quest, joinedQuestIds, pendingQuestIds }: { quest: SideQues
                   {quest.host.name.charAt(0)}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-xs text-zinc-500 truncate max-w-[100px]">
+              <span className="text-xs text-gray-400 truncate max-w-[100px]">
                 {quest.host.name}
               </span>
               {quest.status === "open" && quest.host.avatar_url && (
@@ -218,16 +218,16 @@ function QuestCard({ quest, joinedQuestIds, pendingQuestIds }: { quest: SideQues
                     {Array.from({ length: Math.min(quest.current_participants, 3) }).map((_, i) => (
                       <div
                         key={i}
-                        className="w-5 h-5 rounded-full bg-zinc-700 border border-zinc-800"
+                        className="w-5 h-5 rounded-full bg-zinc-700 border border-gray-200"
                       />
                     ))}
                     {quest.current_participants > 3 && (
-                      <div className="w-5 h-5 rounded-full bg-zinc-600 border border-zinc-800 flex items-center justify-center text-[8px]">
+                      <div className="w-5 h-5 rounded-full bg-zinc-600 border border-gray-200 flex items-center justify-center text-[8px]">
                         +{quest.current_participants - 3}
                       </div>
                     )}
                   </div>
-                  <span className="text-xs text-zinc-400">
+                  <span className="text-xs text-gray-500">
                     {spotsAvailable > 0 ? `${spotsAvailable} spot${spotsAvailable !== 1 ? "s" : ""} left` : "Full"}
                   </span>
                 </>
@@ -294,7 +294,7 @@ function QuestCard({ quest, joinedQuestIds, pendingQuestIds }: { quest: SideQues
 
 function QuestSkeleton() {
   return (
-    <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+    <div className="p-4 rounded-xl bg-white border border-gray-100 shadow-sm">
       <div className="flex items-center justify-between mb-3">
         <Skeleton className="w-16 h-5 rounded-full" />
         <Skeleton className="w-20 h-5 rounded-full" />
@@ -379,17 +379,17 @@ function QuestChatDialog({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-lg md:max-w-xl lg:max-w-2xl h-[80vh] max-h-[600px] flex flex-col p-0 gap-0">
         {/* Header */}
-        <DialogHeader className="px-4 py-3 border-b border-white/10 shrink-0">
+        <DialogHeader className="px-4 py-3 border-b border-gray-200 shrink-0">
           <DialogTitle className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
               <Icon className="w-5 h-5 text-green-400" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-semibold truncate">{quest.activity}</p>
-              <div className="flex items-center gap-2 text-xs text-zinc-500">
+              <div className="flex items-center gap-2 text-xs text-gray-400">
                 <Users className="w-3 h-3" />
                 <span>{quest.current_participants} participants</span>
-                <span className="text-zinc-600">•</span>
+                <span className="text-gray-500">•</span>
                 <Badge variant="secondary" className={cn("text-[10px] px-1.5 py-0", catConfig.color)}>
                   {quest.category === "custom" && quest.custom_category
                     ? quest.custom_category
@@ -426,8 +426,8 @@ function QuestChatDialog({
           {allMessages.length === 0 ? (
             <div className="h-full flex items-center justify-center">
               <div className="text-center">
-                <MessageCircle className="w-12 h-12 mx-auto text-zinc-700 mb-3" />
-                <p className="text-zinc-500 text-sm">
+                <MessageCircle className="w-12 h-12 mx-auto text-gray-700 mb-3" />
+                <p className="text-gray-400 text-sm">
                   No messages yet. Start the conversation!
                 </p>
               </div>
@@ -447,7 +447,7 @@ function QuestChatDialog({
                     <Link href={`/profile/${message.sender.id}`}>
                       <Avatar className="w-8 h-8 shrink-0">
                         <AvatarImage src={message.sender.avatar_url || undefined} />
-                        <AvatarFallback className="text-xs bg-zinc-800">
+                        <AvatarFallback className="text-xs bg-gray-100 text-gray-600">
                           {message.sender.name.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
@@ -458,11 +458,11 @@ function QuestChatDialog({
                       "max-w-[70%] rounded-lg px-3 py-2 relative",
                       isOwnMessage
                         ? "bg-green-600 text-white"
-                        : "bg-white/10"
+                        : "bg-gray-100"
                     )}
                   >
                     {!isOwnMessage && (
-                      <p className="text-xs text-zinc-400 mb-0.5">
+                      <p className="text-xs text-gray-500 mb-0.5">
                         {message.sender.name}
                         {message.sender.id === quest.host.id && (
                           <span className="ml-1 text-green-400">(Host)</span>
@@ -473,12 +473,12 @@ function QuestChatDialog({
                     {message.reply_to && !message.is_deleted && (
                       <div className="mb-1.5 px-2 py-1 rounded border-l-2 border-green-400/50 bg-black/20 text-xs">
                         <p className="text-green-300 font-medium">{message.reply_to.sender.name}</p>
-                        <p className="text-zinc-400 line-clamp-1">{message.reply_to.content}</p>
+                        <p className="text-gray-500 line-clamp-1">{message.reply_to.content}</p>
                       </div>
                     )}
                     <p className="text-sm whitespace-pre-wrap break-words">
                       {message.is_deleted ? (
-                        <span className="italic text-zinc-500">Message deleted</span>
+                        <span className="italic text-gray-400">Message deleted</span>
                       ) : (
                         message.content
                       )}
@@ -486,7 +486,7 @@ function QuestChatDialog({
                     <p
                       className={cn(
                         "text-xs mt-1",
-                        isOwnMessage ? "text-green-200" : "text-zinc-500"
+                        isOwnMessage ? "text-green-200" : "text-gray-400"
                       )}
                     >
                       {timeAgo(message.created_at)}
@@ -495,10 +495,10 @@ function QuestChatDialog({
                     {!message.is_deleted && (
                       <button
                         onClick={() => setReplyTo({ id: message.id, senderName: message.sender.name, content: message.content })}
-                        className="absolute -top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full bg-zinc-800/80 hover:bg-zinc-700 border border-white/10"
+                        className="absolute -top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full bg-white/90 hover:bg-white shadow-sm border border-gray-100"
                         title="Reply"
                       >
-                        <Reply className="w-3 h-3 text-zinc-300" />
+                        <Reply className="w-3 h-3 text-gray-700" />
                       </button>
                     )}
                   </div>
@@ -511,7 +511,7 @@ function QuestChatDialog({
         {/* Message Input */}
         <form
           onSubmit={handleSendMessage}
-          className="p-4 border-t border-white/10 shrink-0"
+          className="p-4 border-t border-gray-200 shrink-0"
         >
           {/* Reply Preview */}
           {replyTo && (
@@ -519,14 +519,14 @@ function QuestChatDialog({
               <Reply className="w-4 h-4 text-green-400 shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-green-400">Replying to {replyTo.senderName}</p>
-                <p className="text-xs text-zinc-400 truncate">{replyTo.content}</p>
+                <p className="text-xs text-gray-500 truncate">{replyTo.content}</p>
               </div>
               <button
                 type="button"
                 onClick={() => setReplyTo(null)}
-                className="p-1 hover:bg-white/10 rounded"
+                className="p-1 hover:bg-gray-100 rounded"
               >
-                <X className="w-4 h-4 text-zinc-400" />
+                <X className="w-4 h-4 text-gray-500" />
               </button>
             </div>
           )}
@@ -535,7 +535,7 @@ function QuestChatDialog({
               value={messageInput}
               onChange={(e) => setMessageInput(e.target.value)}
               placeholder="Type a message..."
-              className="flex-1 bg-white/5 border-white/10"
+              className="flex-1 bg-white border-gray-100"
               disabled={sendMessageMutation.isPending}
             />
             <Button
@@ -582,7 +582,7 @@ function QuestSheetItem({
         "p-3 rounded-lg border transition-all",
         isPending
           ? "bg-amber-500/5 border-amber-500/20 hover:border-amber-500/40"
-          : "bg-white/5 border-white/10 hover:border-green-500/30"
+          : "bg-white border-gray-100 hover:border-green-500/30"
       )}
     >
       <div className="flex items-start gap-2">
@@ -610,7 +610,7 @@ function QuestSheetItem({
             )}
           </div>
           <p className="font-medium truncate">{quest.activity}</p>
-          <div className="flex items-center gap-3 text-xs text-zinc-500 mt-1">
+          <div className="flex items-center gap-3 text-xs text-gray-400 mt-1">
             <span className="flex items-center gap-1">
               <Calendar className="w-3 h-3" />
               {formatTime(quest.start_time)}
@@ -645,8 +645,8 @@ function QuestSheetItem({
             className={cn(
               "p-2 rounded-lg transition-colors",
               isPending
-                ? "hover:bg-amber-500/20 text-zinc-500 hover:text-amber-400"
-                : "hover:bg-white/10 text-zinc-500 hover:text-white"
+                ? "hover:bg-amber-500/20 text-gray-400 hover:text-amber-400"
+                : "hover:bg-gray-100 text-gray-400 hover:text-gray-700"
             )}
             title="View details"
           >
@@ -744,7 +744,7 @@ function MyQuestsSheet() {
           {isLoading ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="p-3 rounded-lg bg-white/5 border border-white/10">
+                <div key={i} className="p-3 rounded-lg bg-white border border-gray-100 shadow-sm">
                   <Skeleton className="w-3/4 h-5 mb-2" />
                   <Skeleton className="w-1/2 h-4" />
                 </div>
@@ -752,9 +752,9 @@ function MyQuestsSheet() {
             </div>
           ) : totalQuests === 0 ? (
             <div className="text-center py-8">
-              <Users className="w-12 h-12 mx-auto text-zinc-700 mb-3" />
-              <p className="text-zinc-500 mb-1">No quests yet</p>
-              <p className="text-sm text-zinc-600">
+              <Users className="w-12 h-12 mx-auto text-gray-700 mb-3" />
+              <p className="text-gray-400 mb-1">No quests yet</p>
+              <p className="text-sm text-gray-500">
                 Create or join a quest to get started!
               </p>
             </div>
@@ -763,7 +763,7 @@ function MyQuestsSheet() {
               {/* Hosted Quests */}
               {hostedQuests.length > 0 && (
                 <div>
-                  <h3 className="text-sm font-semibold text-zinc-400 mb-2 flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-gray-500 mb-2 flex items-center gap-2">
                     <Crown className="w-4 h-4 text-yellow-400" />
                     Hosting ({hostedQuests.length})
                   </h3>
@@ -785,7 +785,7 @@ function MyQuestsSheet() {
               {/* Joined Quests */}
               {joinedQuests.length > 0 && (
                 <div>
-                  <h3 className="text-sm font-semibold text-zinc-400 mb-2 flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-gray-500 mb-2 flex items-center gap-2">
                     <CheckCircle className="w-4 h-4 text-green-400" />
                     Joined ({joinedQuests.length})
                   </h3>
@@ -806,7 +806,7 @@ function MyQuestsSheet() {
               {/* Pending Requests */}
               {pendingQuests.length > 0 && (
                 <div>
-                  <h3 className="text-sm font-semibold text-zinc-400 mb-2 flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-gray-500 mb-2 flex items-center gap-2">
                     <Clock className="w-4 h-4 text-amber-400" />
                     Pending ({pendingQuests.length})
                   </h3>
@@ -880,7 +880,7 @@ export default function QuestsPage() {
           </div>
           <div>
             <h1 className="text-xl font-bold">Side Quests</h1>
-            <p className="text-sm text-zinc-500">Find buddies for any activity</p>
+            <p className="text-sm text-gray-400">Find buddies for any activity</p>
           </div>
         </div>
         <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -888,7 +888,7 @@ export default function QuestsPage() {
             <Users className="w-10 h-10 text-green-400" />
           </div>
           <h2 className="text-xl font-semibold mb-2">Sign in to access Side Quests</h2>
-          <p className="text-zinc-500 mb-6 max-w-md">
+          <p className="text-gray-400 mb-6 max-w-md">
             Find gym partners, study buddies, and more with verified York students.
           </p>
           <Link href="/auth/login">
@@ -911,7 +911,7 @@ export default function QuestsPage() {
           </div>
           <div>
             <h1 className="text-xl font-bold">Side Quests</h1>
-            <p className="text-sm text-zinc-500">Find buddies for any activity</p>
+            <p className="text-sm text-gray-400">Find buddies for any activity</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -931,7 +931,7 @@ export default function QuestsPage() {
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-zinc-500" />
+            <Filter className="w-4 h-4 text-gray-400" />
           </div>
 
           {/* Category Filter */}
@@ -982,14 +982,14 @@ export default function QuestsPage() {
         </div>
 
         {/* View Mode Toggle */}
-        <div className="flex items-center gap-1 p-1 rounded-lg bg-white/5 border border-white/10">
+        <div className="flex items-center gap-1 p-1 rounded-lg bg-white border border-gray-100 shadow-sm">
           <button
             onClick={() => setViewMode("list")}
             className={cn(
               "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-all",
               viewMode === "list"
                 ? "bg-green-500/20 text-green-400"
-                : "text-zinc-400 hover:text-zinc-300"
+                : "text-gray-500 hover:text-gray-700"
             )}
           >
             <List className="w-4 h-4" />
@@ -1001,7 +1001,7 @@ export default function QuestsPage() {
               "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-all",
               viewMode === "map"
                 ? "bg-green-500/20 text-green-400"
-                : "text-zinc-400 hover:text-zinc-300"
+                : "text-gray-500 hover:text-gray-700"
             )}
           >
             <Map className="w-4 h-4" />
@@ -1012,9 +1012,9 @@ export default function QuestsPage() {
 
       {/* Map View */}
       {viewMode === "map" && (
-        <div className="relative h-[calc(100vh-280px)] min-h-[400px] rounded-xl overflow-hidden border border-white/10">
+        <div className="relative h-[calc(100vh-280px)] min-h-[400px] rounded-xl overflow-hidden border border-gray-100">
           {isLoading ? (
-            <div className="w-full h-full bg-zinc-900 flex items-center justify-center">
+            <div className="w-full h-full bg-white flex items-center justify-center">
               <Loader2 className="w-8 h-8 animate-spin text-green-400" />
             </div>
           ) : (
@@ -1022,14 +1022,14 @@ export default function QuestsPage() {
           )}
 
           {/* Quest count overlay */}
-          <div className="absolute top-3 left-3 bg-zinc-900/90 backdrop-blur rounded-lg px-3 py-1.5 border border-white/10">
+          <div className="absolute top-3 left-3 bg-white shadow-sm rounded-lg px-3 py-1.5 border border-gray-100">
             <p className="text-sm">
               <span className="text-green-400 font-semibold">
                 {quests.filter((q) => q.latitude && q.longitude).length}
               </span>
-              <span className="text-zinc-400"> quests on map</span>
+              <span className="text-gray-500"> quests on map</span>
               {quests.some((q) => !q.latitude || !q.longitude) && (
-                <span className="text-zinc-500 ml-1">
+                <span className="text-gray-400 ml-1">
                   ({quests.filter((q) => !q.latitude || !q.longitude).length} without location)
                 </span>
               )}
@@ -1040,8 +1040,8 @@ export default function QuestsPage() {
           {quests.length === 0 && !isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm">
               <div className="text-center">
-                <MapPin className="w-12 h-12 mx-auto text-zinc-600 mb-3" />
-                <p className="text-zinc-400 mb-2">No quests on the map yet</p>
+                <MapPin className="w-12 h-12 mx-auto text-gray-500 mb-3" />
+                <p className="text-gray-500 mb-2">No quests on the map yet</p>
                 <Button
                   onClick={() => openCreateModal("quest")}
                   className="bg-green-600 hover:bg-green-700"
@@ -1067,9 +1067,9 @@ export default function QuestsPage() {
             </>
           ) : quests.length === 0 ? (
             <div className="col-span-full text-center py-12">
-              <Users className="w-12 h-12 mx-auto text-zinc-700 mb-4" />
-              <p className="text-zinc-500 mb-2">No quests found</p>
-              <p className="text-sm text-zinc-600 mb-4">Be the first to start a side quest!</p>
+              <Users className="w-12 h-12 mx-auto text-gray-700 mb-4" />
+              <p className="text-gray-400 mb-2">No quests found</p>
+              <p className="text-sm text-gray-500 mb-4">Be the first to start a side quest!</p>
               <Button
                 onClick={() => openCreateModal("quest")}
                 className="bg-green-600 hover:bg-green-700"

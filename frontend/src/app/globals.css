@@ -45,81 +45,81 @@
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
 
-  /* YorkPulse Brand Colors */
-  --color-purple: #7C3AED;
-  --color-coral: #FF6B6B;
-  --color-blue: #3B82F6;
+  /* YorkPulse Brand Colors — York University Theme */
+  --color-york-red: #E31837;
+  --color-york-red-dark: #C41230;
+  --color-york-red-light: rgba(227, 24, 55, 0.1);
 }
 
-/* Light mode (rarely used - dark mode first) */
+/* Light mode — York University theme (default) */
 :root {
-  --radius: 0.75rem;
+  --radius: 0.5rem;
   --background: #ffffff;
-  --foreground: #0A0A0A;
+  --foreground: #1a1a1a;
   --card: #ffffff;
-  --card-foreground: #0A0A0A;
+  --card-foreground: #1a1a1a;
   --popover: #ffffff;
-  --popover-foreground: #0A0A0A;
-  --primary: #7C3AED;
+  --popover-foreground: #1a1a1a;
+  --primary: #E31837;
   --primary-foreground: #ffffff;
-  --secondary: #f4f4f5;
-  --secondary-foreground: #18181b;
-  --muted: #f4f4f5;
-  --muted-foreground: #71717a;
-  --accent: #FF6B6B;
-  --accent-foreground: #ffffff;
-  --destructive: #ef4444;
-  --border: #e4e4e7;
-  --input: #e4e4e7;
-  --ring: #7C3AED;
-  --chart-1: #7C3AED;
-  --chart-2: #FF6B6B;
-  --chart-3: #3B82F6;
-  --chart-4: #10b981;
-  --chart-5: #f59e0b;
-  --sidebar: #fafafa;
-  --sidebar-foreground: #0A0A0A;
-  --sidebar-primary: #7C3AED;
+  --secondary: #f5f5f5;
+  --secondary-foreground: #1a1a1a;
+  --muted: #f5f5f5;
+  --muted-foreground: #6b7280;
+  --accent: #f5f5f5;
+  --accent-foreground: #1a1a1a;
+  --destructive: #dc2626;
+  --border: #e5e7eb;
+  --input: #e5e7eb;
+  --ring: #E31837;
+  --chart-1: #E31837;
+  --chart-2: #3B82F6;
+  --chart-3: #10b981;
+  --chart-4: #f59e0b;
+  --chart-5: #8b5cf6;
+  --sidebar: #f9fafb;
+  --sidebar-foreground: #1a1a1a;
+  --sidebar-primary: #E31837;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f4f4f5;
-  --sidebar-accent-foreground: #18181b;
-  --sidebar-border: #e4e4e7;
-  --sidebar-ring: #7C3AED;
+  --sidebar-accent: #f5f5f5;
+  --sidebar-accent-foreground: #1a1a1a;
+  --sidebar-border: #e5e7eb;
+  --sidebar-ring: #E31837;
 }
 
-/* Dark mode - YorkPulse default theme */
+/* Dark mode — York University theme (red primary on dark) */
 .dark {
-  --background: #0A0A0A;
-  --foreground: #fafafa;
-  --card: #141414;
-  --card-foreground: #fafafa;
-  --popover: #141414;
-  --popover-foreground: #fafafa;
-  --primary: #7C3AED;
+  --background: #0f0f0f;
+  --foreground: #f9fafb;
+  --card: #1a1a1a;
+  --card-foreground: #f9fafb;
+  --popover: #1a1a1a;
+  --popover-foreground: #f9fafb;
+  --primary: #E31837;
   --primary-foreground: #ffffff;
-  --secondary: #1f1f1f;
-  --secondary-foreground: #fafafa;
+  --secondary: #262626;
+  --secondary-foreground: #f9fafb;
   --muted: #262626;
-  --muted-foreground: #a1a1aa;
-  --accent: #FF6B6B;
-  --accent-foreground: #ffffff;
+  --muted-foreground: #9ca3af;
+  --accent: #262626;
+  --accent-foreground: #f9fafb;
   --destructive: #dc2626;
   --border: rgba(255, 255, 255, 0.1);
-  --input: rgba(255, 255, 255, 0.15);
-  --ring: #7C3AED;
-  --chart-1: #7C3AED;
-  --chart-2: #FF6B6B;
-  --chart-3: #3B82F6;
-  --chart-4: #10b981;
-  --chart-5: #f59e0b;
-  --sidebar: #141414;
-  --sidebar-foreground: #fafafa;
-  --sidebar-primary: #7C3AED;
+  --input: rgba(255, 255, 255, 0.12);
+  --ring: #E31837;
+  --chart-1: #E31837;
+  --chart-2: #3B82F6;
+  --chart-3: #10b981;
+  --chart-4: #f59e0b;
+  --chart-5: #8b5cf6;
+  --sidebar: #1a1a1a;
+  --sidebar-foreground: #f9fafb;
+  --sidebar-primary: #E31837;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #1f1f1f;
-  --sidebar-accent-foreground: #fafafa;
+  --sidebar-accent: #262626;
+  --sidebar-accent-foreground: #f9fafb;
   --sidebar-border: rgba(255, 255, 255, 0.1);
-  --sidebar-ring: #7C3AED;
+  --sidebar-ring: #E31837;
 }
 
 @layer base {
@@ -131,39 +131,40 @@
   }
 }
 
-/* Glassmorphism utility classes */
+/* Clean card utility (replaces glassmorphism) */
 @layer utilities {
   .glass {
-    @apply backdrop-blur-xl bg-white/5 border border-white/10;
+    @apply bg-white border border-gray-200 shadow-sm;
   }
 
   .glass-card {
-    @apply backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl;
+    @apply bg-white border border-gray-100 shadow-sm rounded-xl;
   }
 
-  .gradient-purple {
-    background: linear-gradient(135deg, #7C3AED 0%, #a855f7 100%);
+  .gradient-primary {
+    background: linear-gradient(135deg, #E31837 0%, #C41230 100%);
   }
 
   .gradient-coral {
-    background: linear-gradient(135deg, #FF6B6B 0%, #ff8a8a 100%);
+    background: linear-gradient(135deg, #E31837 0%, #ff6b6b 100%);
   }
 
   .gradient-blue {
     background: linear-gradient(135deg, #3B82F6 0%, #60a5fa 100%);
   }
 
+  /* Subtle background texture for hero sections */
   .gradient-mesh {
     background:
-      radial-gradient(at 40% 20%, rgba(124, 58, 237, 0.3) 0px, transparent 50%),
-      radial-gradient(at 80% 0%, rgba(59, 130, 246, 0.2) 0px, transparent 50%),
-      radial-gradient(at 0% 50%, rgba(255, 107, 107, 0.2) 0px, transparent 50%);
+      radial-gradient(at 40% 20%, rgba(227, 24, 55, 0.06) 0px, transparent 50%),
+      radial-gradient(at 80% 0%, rgba(59, 130, 246, 0.04) 0px, transparent 50%),
+      radial-gradient(at 0% 50%, rgba(227, 24, 55, 0.04) 0px, transparent 50%);
   }
 }
 
-/* Leaflet Map Dark Theme Styling */
+/* Leaflet Map Styling */
 .leaflet-container {
-  background: #0A0A0A;
+  background: #f9fafb;
   font-family: inherit;
   z-index: 1 !important;
 }
@@ -195,8 +196,8 @@
 /* Popup styling */
 .leaflet-popup-content-wrapper {
   background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
   padding: 0;
   overflow: hidden;
 }
@@ -211,13 +212,13 @@
 }
 
 .leaflet-popup-close-button {
-  color: #666 !important;
+  color: #6b7280 !important;
   font-size: 20px !important;
   padding: 8px 8px 0 0 !important;
 }
 
 .leaflet-popup-close-button:hover {
-  color: #333 !important;
+  color: #1a1a1a !important;
 }
 
 /* Custom marker styling */
@@ -229,16 +230,16 @@
   border: none !important;
 }
 
-/* Zoom controls - Purple gradient theme */
+/* Zoom controls — York U red theme */
 .leaflet-control-zoom {
   border: none !important;
-  border-radius: 12px !important;
+  border-radius: 8px !important;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .leaflet-control-zoom a {
-  background: linear-gradient(135deg, #a855f7, #ec4899) !important;
+  background: #E31837 !important;
   color: white !important;
   border: none !important;
   width: 36px !important;
@@ -249,15 +250,15 @@
 }
 
 .leaflet-control-zoom a:first-child {
-  border-radius: 12px 12px 0 0 !important;
+  border-radius: 8px 8px 0 0 !important;
 }
 
 .leaflet-control-zoom a:last-child {
-  border-radius: 0 0 12px 12px !important;
+  border-radius: 0 0 8px 8px !important;
 }
 
 .leaflet-control-zoom a:hover {
-  background: linear-gradient(135deg, #9333ea, #db2777) !important;
+  background: #C41230 !important;
 }
 
 .leaflet-control-zoom-in,
@@ -265,17 +266,17 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
 }
 
-/* Attribution dark theme */
+/* Attribution */
 .leaflet-control-attribution {
-  background: rgba(0, 0, 0, 0.6) !important;
-  color: rgba(255, 255, 255, 0.5) !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  color: #6b7280 !important;
   font-size: 10px;
   padding: 2px 8px;
   border-radius: 8px 0 0 0;
 }
 
 .leaflet-control-attribution a {
-  color: rgba(255, 255, 255, 0.7) !important;
+  color: #E31837 !important;
 }
 
 /* Touch-friendly controls for mobile */
@@ -295,15 +296,14 @@
     margin: 10px;
   }
 
-  /* Larger touch targets on mobile */
   .leaflet-marker-icon {
     touch-action: manipulation;
   }
 }
 
-/* Scale control dark theme */
+/* Scale control */
 .leaflet-control-scale-line {
-  background: rgba(0, 0, 0, 0.6) !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
-  color: rgba(255, 255, 255, 0.7) !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  border-color: #e5e7eb !important;
+  color: #6b7280 !important;
 }

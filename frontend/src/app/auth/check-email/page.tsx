@@ -19,19 +19,19 @@ function CheckEmailContent() {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6 text-center"
     >
-      <div className="w-16 h-16 mx-auto rounded-full bg-purple-500/20 flex items-center justify-center">
-        <Mail className="w-8 h-8 text-purple-400" />
+      <div className="w-16 h-16 mx-auto rounded-full bg-[#E31837]/10 flex items-center justify-center">
+        <Mail className="w-8 h-8 text-[#E31837]" />
       </div>
 
       <div className="space-y-2">
         <h1 className="text-2xl font-bold">Check your email</h1>
-        <p className="text-zinc-400">
+        <p className="text-gray-500">
           We sent a magic link to{" "}
           <span className="text-white font-medium">{email}</span>
         </p>
       </div>
 
-      <div className="p-4 rounded-lg bg-white/5 border border-white/10 text-sm text-zinc-400">
+      <div className="p-4 rounded-lg bg-white border border-gray-100 shadow-sm text-sm text-gray-500">
         <p>
           Click the link in the email to {isSignup ? "complete your signup" : "sign in"}.
           The link will expire in 15 minutes.
@@ -42,7 +42,7 @@ function CheckEmailContent() {
       {devToken && (
         <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
           <p className="text-sm text-yellow-400 font-medium mb-2">Development Mode</p>
-          <p className="text-xs text-zinc-400 mb-3">
+          <p className="text-xs text-gray-500 mb-3">
             Email sending is not configured. Use the link below to verify:
           </p>
           <Button asChild className="w-full bg-yellow-600 hover:bg-yellow-700">
@@ -54,7 +54,7 @@ function CheckEmailContent() {
       )}
 
       <div className="space-y-3">
-        <p className="text-sm text-zinc-500">
+        <p className="text-sm text-gray-400">
           Did not receive the email? Check your spam folder or try again.
         </p>
         <Button variant="outline" asChild>
@@ -73,7 +73,7 @@ export default function CheckEmailPage() {
     <Suspense
       fallback={
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
+          <Loader2 className="w-8 h-8 text-[#E31837] animate-spin" />
         </div>
       }
     >

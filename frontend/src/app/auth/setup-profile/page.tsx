@@ -156,7 +156,7 @@ export default function SetupProfilePage() {
                   ? "bg-purple-500 text-white"
                   : step === "success" || (s === "name" && step !== "name")
                   ? "bg-green-500 text-white"
-                  : "bg-zinc-800 text-zinc-500"
+                  : "bg-gray-100 text-gray-400"
               )}
             >
               {(s === "name" && step !== "name") || step === "success" ? (
@@ -171,7 +171,7 @@ export default function SetupProfilePage() {
                   "w-8 h-0.5 transition-colors",
                   (s === "name" && step !== "name") || step === "success"
                     ? "bg-green-500"
-                    : "bg-zinc-800"
+                    : "bg-gray-100"
                 )}
               />
             )}
@@ -189,11 +189,11 @@ export default function SetupProfilePage() {
             className="space-y-6"
           >
             <div className="text-center space-y-2">
-              <div className="w-16 h-16 mx-auto rounded-full bg-purple-500/20 flex items-center justify-center">
-                <User className="w-8 h-8 text-purple-400" />
+              <div className="w-16 h-16 mx-auto rounded-full bg-[#E31837]/10 flex items-center justify-center">
+                <User className="w-8 h-8 text-[#E31837]" />
               </div>
               <h1 className="text-2xl font-bold">What is your name?</h1>
-              <p className="text-zinc-400">
+              <p className="text-gray-500">
                 Enter your full name as it appears on your student ID
               </p>
             </div>
@@ -212,7 +212,7 @@ export default function SetupProfilePage() {
 
               <Button
                 type="submit"
-                className="w-full bg-purple-600 hover:bg-purple-700"
+                className="w-full bg-[#E31837] hover:bg-[#C41230]"
                 disabled={verifyNameMutation.isPending}
               >
                 {verifyNameMutation.isPending ? (
@@ -249,11 +249,11 @@ export default function SetupProfilePage() {
             className="space-y-6"
           >
             <div className="text-center space-y-2">
-              <div className="w-16 h-16 mx-auto rounded-full bg-purple-500/20 flex items-center justify-center">
-                <Camera className="w-8 h-8 text-purple-400" />
+              <div className="w-16 h-16 mx-auto rounded-full bg-[#E31837]/10 flex items-center justify-center">
+                <Camera className="w-8 h-8 text-[#E31837]" />
               </div>
               <h1 className="text-2xl font-bold">Verify your identity</h1>
-              <p className="text-zinc-400">
+              <p className="text-gray-500">
                 Upload a photo of your York student ID to verify your name
               </p>
             </div>
@@ -263,8 +263,8 @@ export default function SetupProfilePage() {
               className={cn(
                 "border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors",
                 isUploading
-                  ? "border-purple-500/50 bg-purple-500/10"
-                  : "border-zinc-700 hover:border-purple-500/50 hover:bg-white/5"
+                  ? "border-[#E31837]/30 bg-[#E31837]/10"
+                  : "border-gray-200 hover:border-[#E31837]/30 hover:bg-gray-50"
               )}
             >
               <input
@@ -278,19 +278,19 @@ export default function SetupProfilePage() {
 
               {isUploading ? (
                 <div className="space-y-2">
-                  <Loader2 className="w-8 h-8 mx-auto text-purple-400 animate-spin" />
-                  <p className="text-sm text-zinc-400">Uploading...</p>
+                  <Loader2 className="w-8 h-8 mx-auto text-[#E31837] animate-spin" />
+                  <p className="text-sm text-gray-500">Uploading...</p>
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <Upload className="w-8 h-8 mx-auto text-zinc-500" />
+                  <Upload className="w-8 h-8 mx-auto text-gray-400" />
                   <p className="text-sm font-medium">Click to upload your student ID</p>
-                  <p className="text-xs text-zinc-500">JPG, PNG up to 10MB</p>
+                  <p className="text-xs text-gray-400">JPG, PNG up to 10MB</p>
                 </div>
               )}
             </div>
 
-            <div className="space-y-2 text-xs text-zinc-500">
+            <div className="space-y-2 text-xs text-gray-400">
               <p>Make sure your photo clearly shows:</p>
               <ul className="list-disc list-inside space-y-1">
                 <li>Your full name</li>
@@ -317,12 +317,12 @@ export default function SetupProfilePage() {
             exit={{ opacity: 0, x: -20 }}
             className="space-y-6 text-center"
           >
-            <div className="w-16 h-16 mx-auto rounded-full bg-purple-500/20 flex items-center justify-center">
-              <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
+            <div className="w-16 h-16 mx-auto rounded-full bg-[#E31837]/10 flex items-center justify-center">
+              <Loader2 className="w-8 h-8 text-[#E31837] animate-spin" />
             </div>
             <div className="space-y-2">
               <h1 className="text-2xl font-bold">Verifying your ID...</h1>
-              <p className="text-zinc-400">
+              <p className="text-gray-500">
                 Our AI is checking your student ID. This usually takes a few seconds.
               </p>
             </div>
@@ -341,11 +341,11 @@ export default function SetupProfilePage() {
             </div>
             <div className="space-y-2">
               <h1 className="text-2xl font-bold">Name Verified!</h1>
-              <p className="text-zinc-400">
+              <p className="text-gray-500">
                 Great, <span className="text-white font-medium">{name}</span>! Just one more step...
               </p>
             </div>
-            <p className="text-sm text-zinc-500">Setting up your profile...</p>
+            <p className="text-sm text-gray-400">Setting up your profile...</p>
           </motion.div>
         )}
       </AnimatePresence>
