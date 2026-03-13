@@ -343,7 +343,7 @@ function StatsOverlay({
       animate={{ opacity: 1, x: 0 }}
       className="absolute top-3 left-3 z-[1000] pointer-events-auto"
     >
-      <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-lg shadow-gray-200/60">
+      <div className="backdrop-blur-md bg-white/70 border border-white/60 rounded-2xl p-4 shadow-lg shadow-gray-200/40">
         {/* Live indicator */}
         <div className="flex items-center gap-2 mb-3">
           <div className="relative">
