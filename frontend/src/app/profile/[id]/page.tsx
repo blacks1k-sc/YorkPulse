@@ -226,7 +226,7 @@ export default function PublicProfilePage() {
           <div className="relative shrink-0">
             <Avatar className="w-20 h-20">
               <AvatarImage src={profile.avatar_url || undefined} />
-              <AvatarFallback className="text-2xl bg-purple-500/20 text-purple-400">
+              <AvatarFallback className="text-2xl bg-red-50 text-[#E31837]">
                 {profile.name
                   ?.split(" ")
                   .map((n) => n[0])
@@ -292,7 +292,7 @@ export default function PublicProfilePage() {
         <div className="mt-6 flex gap-3">
           <Button
             onClick={handleStartConversation}
-            className="flex-1 bg-blue-600 hover:bg-blue-700"
+            className="flex-1 bg-[#E31837] hover:bg-[#C41230]"
             disabled={startConversationMutation.isPending}
           >
             {startConversationMutation.isPending ? (
