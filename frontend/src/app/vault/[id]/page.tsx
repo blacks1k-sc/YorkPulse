@@ -6,6 +6,8 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
   Shield,
   User,
   Clock,
@@ -15,6 +17,7 @@ import {
   Loader2,
   MoreHorizontal,
   Trash2,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -59,6 +62,7 @@ export default function VaultPostPage() {
 
   const [comment, setComment] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(true);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const { data: post, isLoading: postLoading } = useVaultPost(postId);
 
@@ -257,7 +261,12 @@ export default function VaultPostPage() {
             style={{ scrollSnapType: "x mandatory" }}
           >
             {post.images.map((url, i) => (
-              <div key={i} className="relative flex-shrink-0" style={{ scrollSnapAlign: "start" }}>
+              <div
+                key={i}
+                className="relative flex-shrink-0 cursor-pointer"
+                style={{ scrollSnapAlign: "start" }}
+                onClick={() => setLightboxIndex(i)}
+              >
                 <img
                   src={url}
                   alt={`Image ${i + 1}`}
@@ -322,6 +331,57 @@ export default function VaultPostPage() {
             </Button>
           </div>
         </form>
+      )}
+
+      {/* Lightbox */}
+      {lightboxIndex !== null && post.images && (
+        <div
+          className="fixed inset-0 z-50 bg-black flex items-center justify-center"
+          onClick={() => setLightboxIndex(null)}
+        >
+          {/* Exit button */}
+          <button
+            className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+            onClick={() => setLightboxIndex(null)}
+          >
+            <X className="w-5 h-5 text-white" />
+          </button>
+
+          {/* Counter */}
+          {post.images.length > 1 && (
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/60 text-white text-sm font-semibold px-3 py-1 rounded-full">
+              {lightboxIndex + 1} / {post.images.length}
+            </div>
+          )}
+
+          {/* Image */}
+          <img
+            src={post.images[lightboxIndex]}
+            alt={`Image ${lightboxIndex + 1}`}
+            className="max-w-full max-h-full object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+
+          {/* Prev */}
+          {lightboxIndex > 0 && (
+            <button
+              className="absolute left-3 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+              onClick={(e) => { e.stopPropagation(); setLightboxIndex(lightboxIndex - 1); }}
+            >
+              <ChevronLeft className="w-6 h-6 text-white" />
+            </button>
+          )}
+
+          {/* Next */}
+          {lightboxIndex < post.images.length - 1 && (
+            <button
+              className="absolute right-3 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+              onClick={(e) => { e.stopPropagation(); setLightboxIndex(lightboxIndex + 1); }}
+            >
+              <ChevronRight className="w-6 h-6 text-white" />
+            </button>
+          )}
+        </div>
       )}
 
       {/* Comments */}
