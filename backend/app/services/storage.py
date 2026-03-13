@@ -17,6 +17,7 @@ class StorageService:
             "avatars": "avatars",
             "chat-images": "chat-images",
             "marketplace": "marketplace",
+            "vault": "marketplace",
             "student-ids": "student-ids",
         }
 

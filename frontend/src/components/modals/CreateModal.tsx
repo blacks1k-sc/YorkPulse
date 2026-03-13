@@ -195,15 +195,15 @@ export function CreateModal() {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    if (vaultImages.length >= 5) {
-      toast({ title: "Maximum 5 images", description: "You can only upload up to 5 images per post", variant: "destructive" });
+    if (vaultImages.length >= 10) {
+      toast({ title: "Maximum 10 images", description: "You can only upload up to 10 images per post", variant: "destructive" });
       return;
     }
 
     setIsUploadingVaultImage(true);
     try {
       for (const file of Array.from(files)) {
-        if (vaultImages.length >= 5) break;
+        if (vaultImages.length >= 10) break;
 
         if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
           toast({ title: "Invalid file type", description: "Only JPEG, PNG, and WebP are allowed", variant: "destructive" });
@@ -359,7 +359,7 @@ export function CreateModal() {
           {createModalType === "vault" && (
             <>
               <div className="space-y-2">
-                <Label>Photos (up to 5)</Label>
+                <Label>Photos (up to 10)</Label>
                 <input
                   ref={vaultFileInputRef}
                   type="file"
@@ -381,7 +381,7 @@ export function CreateModal() {
                       </button>
                     </div>
                   ))}
-                  {vaultImages.length < 5 && (
+                  {vaultImages.length < 10 && (
                     <button
                       type="button"
                       onClick={() => vaultFileInputRef.current?.click()}

@@ -16,7 +16,7 @@ class VaultPostCreate(BaseModel):
     content: Annotated[str, Field(min_length=10, max_length=10000)]
     category: VaultCategory
     is_anonymous: bool = True
-    images: list[Annotated[str, Field(max_length=500)]] | None = None
+    images: Annotated[list[Annotated[str, Field(max_length=500)]], Field(max_length=10)] | None = None
 
 
 class VaultPostUpdate(BaseModel):
