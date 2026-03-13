@@ -96,7 +96,7 @@ function RecenterControl() {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={handleRecenter}
-          className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/30 border border-white/20"
+          className="w-10 h-10 rounded-full bg-[#E31837] flex items-center justify-center shadow-md shadow-red-200 border border-white/30"
           title="Recenter to York Campus"
         >
           <Navigation className="w-5 h-5 text-white" />
@@ -137,10 +137,10 @@ function UserLocationControl() {
             whileTap={{ scale: 0.95 }}
             onClick={handleLocate}
             disabled={loading}
-            className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/30 border border-white/20 disabled:opacity-50"
+            className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-md shadow-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50"
             title="My Location"
           >
-            <Locate className={cn("w-5 h-5 text-white", loading && "animate-pulse")} />
+            <Locate className={cn("w-5 h-5 text-gray-600", loading && "animate-pulse")} />
           </motion.button>
         </div>
       </div>
@@ -343,7 +343,7 @@ function StatsOverlay({
       animate={{ opacity: 1, x: 0 }}
       className="absolute top-3 left-3 z-[1000] pointer-events-auto"
     >
-      <div className="backdrop-blur-xl bg-black/40 border border-gray-100 rounded-2xl p-4 shadow-xl shadow-purple-500/10">
+      <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-lg shadow-gray-200/60">
         {/* Live indicator */}
         <div className="flex items-center gap-2 mb-3">
           <div className="relative">
@@ -356,7 +356,7 @@ function StatsOverlay({
         {/* Quest count */}
         <div className="mb-4">
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+            <span className="text-3xl font-bold text-[#E31837]">
               {questsWithCoords.length}
             </span>
             <span className="text-sm text-gray-500">active quests</span>
@@ -385,7 +385,7 @@ function StatsOverlay({
         </div>
 
         {/* Divider */}
-        <div className="h-px bg-white/10 my-3" />
+        <div className="h-px bg-gray-200 my-3" />
 
         {/* Buildings toggle */}
         <button
@@ -393,23 +393,23 @@ function StatsOverlay({
           className={cn(
             "w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg transition-all text-sm",
             showBuildings
-              ? "bg-purple-500/20 border border-purple-500/30"
-              : "bg-white border border-gray-100 shadow-sm hover:bg-white/10"
+              ? "bg-red-50 border border-red-200"
+              : "bg-gray-50 border border-gray-200 hover:bg-gray-100"
           )}
         >
           <div className="flex items-center gap-2">
-            <Building2 className="w-4 h-4 text-purple-400" />
-            <span className={showBuildings ? "text-purple-300" : "text-gray-500"}>
+            <Building2 className={showBuildings ? "w-4 h-4 text-[#E31837]" : "w-4 h-4 text-gray-500"} />
+            <span className={showBuildings ? "text-[#E31837]" : "text-gray-500"}>
               Buildings
             </span>
             {buildingsLoading ? (
-              <Loader2 className="w-3 h-3 text-purple-400 animate-spin" />
+              <Loader2 className="w-3 h-3 text-[#E31837] animate-spin" />
             ) : (
               <span className="text-xs text-gray-400">({buildingCount})</span>
             )}
           </div>
           {showBuildings ? (
-            <Eye className="w-4 h-4 text-purple-400" />
+            <Eye className="w-4 h-4 text-[#E31837]" />
           ) : (
             <EyeOff className="w-4 h-4 text-gray-400" />
           )}
@@ -519,7 +519,7 @@ function MobileQuestSheet({
             <div className="flex items-center gap-3">
               <Avatar className="w-10 h-10 border-2 border-white/20">
                 <AvatarImage src={quest.host.avatar_url || undefined} />
-                <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
+                <AvatarFallback className="bg-[#E31837] text-white">
                   {quest.host.name.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
@@ -539,7 +539,7 @@ function MobileQuestSheet({
           {/* Action button */}
           <Button
             onClick={() => onViewDetails(quest.id)}
-            className="w-full h-12 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold rounded-xl"
+            className="w-full h-12 bg-[#E31837] hover:bg-[#C41230] text-white font-semibold rounded-xl"
           >
             View Quest Details
           </Button>
@@ -597,7 +597,7 @@ function QuestPopupContent({
       {/* Host & spots */}
       <div className="flex items-center justify-between mb-3 pb-3 border-b border-zinc-200">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-medium">
+          <div className="w-6 h-6 rounded-full bg-[#E31837] flex items-center justify-center text-white text-xs font-medium">
             {quest.host.name.charAt(0).toUpperCase()}
           </div>
           <span className="text-xs text-gray-500">{quest.host.name}</span>
@@ -613,8 +613,7 @@ function QuestPopupContent({
       {/* Action button */}
       <button
         onClick={onViewDetails}
-        className="w-full py-2 rounded-lg text-white text-sm font-medium transition-all"
-        style={{ background: "linear-gradient(135deg, #a855f7, #ec4899)" }}
+        className="w-full py-2 rounded-lg text-white text-sm font-medium transition-all bg-[#E31837] hover:bg-[#C41230]"
       >
         View Quest
       </button>
@@ -700,8 +699,10 @@ export default function QuestMapClient({ quests, className }: QuestMapClientProp
         >
           {/* Light theme map tiles */}
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>'
             url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+            crossOrigin="anonymous"
+            maxZoom={19}
           />
 
           {/* Custom controls */}
@@ -887,7 +888,7 @@ export default function QuestMapClient({ quests, className }: QuestMapClientProp
         }
 
         .leaflet-control-zoom a {
-          background: linear-gradient(135deg, #a855f7, #ec4899) !important;
+          background: #E31837 !important;
           color: white !important;
           border: none !important;
           width: 36px !important;
@@ -906,7 +907,7 @@ export default function QuestMapClient({ quests, className }: QuestMapClientProp
         }
 
         .leaflet-control-zoom a:hover {
-          background: linear-gradient(135deg, #9333ea, #db2777) !important;
+          background: #C41230 !important;
         }
 
         .leaflet-control-zoom-in,

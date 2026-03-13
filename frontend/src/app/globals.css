@@ -131,6 +131,17 @@
   }
 }
 
+/* Hero background image — responsive object-position */
+.hero-bg-img {
+  object-fit: cover;
+  object-position: 20% 40%; /* mobile: shift left to show more YORK letters */
+}
+@media (min-width: 768px) {
+  .hero-bg-img {
+    object-position: center 40%; /* desktop: centered */
+  }
+}
+
 /* Clean card utility (replaces glassmorphism) */
 @layer utilities {
   .glass {

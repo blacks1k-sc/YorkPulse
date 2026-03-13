@@ -620,13 +620,17 @@ function LandingView() {
             animate={{ opacity: i === imgIndex ? 1 : 0 }}
             transition={{ duration: 1.2 }}
             className="absolute inset-0"
-            style={{
-              backgroundImage: `url(${src})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center 40%",
-              zIndex: 0,
-            }}
-          />
+            style={{ zIndex: 0 }}
+          >
+            <Image
+              src={src}
+              alt="York University campus"
+              fill
+              className="hero-bg-img"
+              priority={i === 0}
+              sizes="100vw"
+            />
+          </motion.div>
         ))}
 
         {/* Dark gradient overlay for text readability */}
