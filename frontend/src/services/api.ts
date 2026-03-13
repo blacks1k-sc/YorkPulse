@@ -256,8 +256,24 @@ class ApiClient {
 
     getPost: (id: string) => this.get<VaultPost>(`/vault/${id}`),
 
-    createPost: (data: { title: string; content: string; category: string; is_anonymous: boolean }) =>
+    createPost: (data: { title: string; content: string; category: string; is_anonymous: boolean; image_url?: string | null }) =>
       this.post<VaultPost>("/vault", data),
+
+    uploadImageDirect: async (file: File): Promise<{ public_url: string }> => {
+      const formData = new FormData();
+      formData.append("file", file);
+      const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+      const response = await fetch(`${API_URL}${API_PREFIX}/vault/upload-image-direct`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ detail: "Upload failed" }));
+        throw new Error(err.detail || "Upload failed");
+      }
+      return response.json();
+    },
 
     updatePost: (id: string, data: { title?: string; content?: string; category?: string }) =>
       this.patch<VaultPost>(`/vault/${id}`, data),

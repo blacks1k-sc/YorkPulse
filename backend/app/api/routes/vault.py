@@ -1,9 +1,10 @@
 """Vault (anonymous forum) API routes."""
 
+import logging
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -25,6 +26,9 @@ from app.schemas.vault import (
 )
 from app.schemas.user import UserMinimal
 from app.services.gemini import gemini_service
+from app.services.storage import storage_service
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/vault", tags=["Vault"])
 
@@ -52,6 +56,7 @@ def _post_to_response(post: VaultPost, current_user_id: str | None = None) -> Va
         comment_count=post.comment_count,
         upvote_count=post.upvote_count,
         flag_count=post.flag_count,
+        image_url=post.image_url,
         author=author,
         created_at=post.created_at,
         updated_at=post.updated_at,
@@ -78,6 +83,42 @@ def _comment_to_response(comment: VaultComment) -> VaultCommentResponse:
         author=author,
         created_at=comment.created_at,
     )
+
+
+@router.post("/upload-image-direct")
+async def upload_vault_image(
+    user: VerifiedUser,
+    file: UploadFile = File(...),
+):
+    """Upload an image directly for a vault post."""
+    allowed_types = ["image/jpeg", "image/png", "image/webp"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid file type. Only JPEG, PNG, and WebP are allowed.",
+        )
+
+    content = await file.read()
+    if len(content) > 5 * 1024 * 1024:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File too large. Maximum size is 5MB.",
+        )
+
+    try:
+        public_url = storage_service.upload_file(
+            folder="vault",
+            filename=file.filename or "image.jpg",
+            file_data=content,
+            content_type=file.content_type,
+        )
+        return {"public_url": public_url}
+    except Exception as e:
+        logger.error("Vault image upload error: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to upload image. Please try again.",
+        )
 
 
 @router.get("", response_model=VaultPostListResponse)
@@ -149,6 +190,7 @@ async def create_post(
         content=request.content,
         category=request.category,
         is_anonymous=request.is_anonymous,
+        image_url=request.image_url,
         user_id=user.id,
     )
 

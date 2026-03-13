@@ -83,6 +83,11 @@ export function CreateModal() {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Vault specific
+  const [vaultImage, setVaultImage] = useState<string | null>(null);
+  const [isUploadingVaultImage, setIsUploadingVaultImage] = useState(false);
+  const vaultFileInputRef = useRef<HTMLInputElement>(null);
+
   const createVaultPost = useCreateVaultPost();
   const createListing = useCreateListing();
 
@@ -104,6 +109,7 @@ export function CreateModal() {
     setImages([]);
     setShowPhotoMenu(false);
     setIsCameraOpen(false);
+    setVaultImage(null);
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -185,6 +191,31 @@ export function CreateModal() {
     }
   };
 
+  const handleVaultImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      toast({ title: "Invalid file type", description: "Only JPEG, PNG, and WebP are allowed", variant: "destructive" });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Maximum file size is 5MB", variant: "destructive" });
+      return;
+    }
+
+    setIsUploadingVaultImage(true);
+    try {
+      const { public_url } = await api.vault.uploadImageDirect(file);
+      setVaultImage(public_url);
+    } catch (error) {
+      toast({ title: "Upload failed", description: error instanceof Error ? error.message : "Failed to upload image", variant: "destructive" });
+    } finally {
+      setIsUploadingVaultImage(false);
+      if (vaultFileInputRef.current) vaultFileInputRef.current.value = "";
+    }
+  };
+
   const handleClose = () => {
     closeCreateModal();
     resetForm();
@@ -200,6 +231,7 @@ export function CreateModal() {
           content,
           category,
           is_anonymous: isAnonymous,
+          image_url: vaultImage,
         });
         toast({ title: "Post created" });
         handleClose();
@@ -314,18 +346,58 @@ export function CreateModal() {
             </Select>
           </div>
 
-          {/* Vault specific: Anonymous toggle */}
+          {/* Vault specific: Image + Anonymous */}
           {createModalType === "vault" && (
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="anonymous"
-                checked={isAnonymous}
-                onCheckedChange={(checked) => setIsAnonymous(checked as boolean)}
-              />
-              <Label htmlFor="anonymous" className="text-sm cursor-pointer">
-                Post anonymously
-              </Label>
-            </div>
+            <>
+              <div className="space-y-2">
+                <Label>Photo (optional)</Label>
+                <input
+                  ref={vaultFileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={handleVaultImageUpload}
+                />
+                {vaultImage ? (
+                  <div className="relative w-full rounded-lg overflow-hidden border border-white/10">
+                    <img src={vaultImage} alt="Post image" className="w-full max-h-48 object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setVaultImage(null)}
+                      className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/70 flex items-center justify-center hover:bg-red-600 transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => vaultFileInputRef.current?.click()}
+                    disabled={isUploadingVaultImage}
+                    className="w-full h-20 rounded-lg border-2 border-dashed border-white/20 hover:border-[#E31837]/50 transition-colors flex items-center justify-center gap-2 text-gray-400 hover:text-[#E31837]"
+                  >
+                    {isUploadingVaultImage ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <>
+                        <ImagePlus className="w-5 h-5" />
+                        <span className="text-sm">Add photo</span>
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="anonymous"
+                  checked={isAnonymous}
+                  onCheckedChange={(checked) => setIsAnonymous(checked as boolean)}
+                />
+                <Label htmlFor="anonymous" className="text-sm cursor-pointer">
+                  Post anonymously
+                </Label>
+              </div>
+            </>
           )}
 
           {/* Marketplace specific fields */}
