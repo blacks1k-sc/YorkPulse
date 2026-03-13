@@ -48,10 +48,10 @@ export function FloatingActionButton() {
         aria-label={config.label}
       >
         {/* Glow effect */}
-        <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 blur-lg opacity-50 group-hover:opacity-75 transition-opacity" />
+        <div className="absolute inset-0 rounded-full bg-[#E31837] blur-lg opacity-30 group-hover:opacity-50 transition-opacity" />
 
         {/* Button */}
-        <div className="relative flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 shadow-lg shadow-purple-500/30 backdrop-blur-sm border border-white/20">
+        <div className="relative flex items-center justify-center w-14 h-14 rounded-full bg-[#E31837] hover:bg-[#C41230] shadow-lg shadow-red-300/40 border border-white/20">
           <Plus className="w-6 h-6 text-white" />
         </div>
 
