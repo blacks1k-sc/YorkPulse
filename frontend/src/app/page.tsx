@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -588,117 +589,185 @@ function DashboardView() {
   );
 }
 
+// York U campus images for hero carousel
+const heroImages = [
+  "https://www.yorku.ca/brand/wp-content/uploads/sites/386/nggallery/experience-york/Commons_fall_6.jpg",
+  "https://www.yorku.ca/brand/wp-content/uploads/sites/386/nggallery/experience-york/Kaneff_fall.jpg",
+  "https://www.yorku.ca/brand/wp-content/uploads/sites/386/nggallery/experience-markham/Markham-campus-14.jpg",
+];
+
+const YORKU_LOGO = "https://www.yorku.ca/wp-content/uploads/2025/08/YorkULogo_DIGITAL_Hor_RGB.png";
+
 // Landing View (non-authenticated users)
 function LandingView() {
+  const [imgIndex, setImgIndex] = useState(0);
+
+  // Cycle background image every 6 seconds
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setImgIndex((i) => (i + 1) % heroImages.length);
+    }, 6000);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <main className="min-h-screen bg-white">
-      {/* Hero Section */}
-      <div className="relative overflow-hidden bg-white">
-        {/* Subtle background pattern */}
-        <div className="absolute inset-0 gradient-mesh" />
+      {/* ── Hero Section with campus background ── */}
+      <div className="relative overflow-hidden" style={{ minHeight: "92vh" }}>
 
-        <div className="relative mx-auto max-w-5xl px-6 pt-28 pb-16 sm:pt-36 lg:px-8">
+        {/* Campus background images — crossfade */}
+        {heroImages.map((src, i) => (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            key={src}
+            animate={{ opacity: i === imgIndex ? 1 : 0 }}
+            transition={{ duration: 1.2 }}
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `url(${src})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              zIndex: 0,
+            }}
+          />
+        ))}
+
+        {/* Dark gradient overlay for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70" style={{ zIndex: 1 }} />
+
+        {/* Content */}
+        <div className="relative flex flex-col items-center justify-center text-center px-6 pt-32 pb-24 min-h-[92vh]" style={{ zIndex: 2 }}>
+
+          {/* York U Official Logo Badge */}
+          <motion.div
+            initial={{ opacity: 0, y: -12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="mx-auto max-w-2xl text-center"
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="mb-8"
           >
-            {/* York U badge */}
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.4, delay: 0.1 }}
-              className="mb-6 flex justify-center"
-            >
-              <span className="inline-flex items-center gap-2 rounded-full bg-[#E31837]/10 px-4 py-1.5 text-sm font-medium text-[#E31837]">
-                <Shield className="w-3.5 h-3.5" />
-                Exclusively for York University Students
-              </span>
-            </motion.div>
-
-            {/* Title */}
-            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
-              Your Campus.{" "}
-              <span className="text-[#E31837]">Your Community.</span>
-            </h1>
-
-            {/* Subtitle */}
-            <p className="mt-6 text-lg leading-8 text-gray-500 max-w-xl mx-auto">
-              YorkPulse is the exclusive platform for York University students.
-              Connect, trade, and build lasting friendships in a safe, verified community.
-            </p>
-
-            {/* CTA Buttons */}
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.25 }}
-              className="mt-10 flex items-center justify-center gap-4"
-            >
-              <Button
-                size="lg"
-                className="bg-[#E31837] hover:bg-[#C41230] text-white px-8 shadow-sm"
-                asChild
-              >
-                <Link href="/auth/signup">Get Started</Link>
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                className="px-8 border-gray-200 text-gray-700 hover:bg-gray-50"
-                asChild
-              >
-                <Link href="/auth/login">Sign In</Link>
-              </Button>
-            </motion.div>
-          </motion.div>
-
-          {/* Feature Cards */}
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="mx-auto mt-20 max-w-5xl"
-          >
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {landingFeatures.map((feature) => (
-                <motion.div key={feature.href} variants={itemVariants} className="h-full">
-                  <Link href={feature.href} className="h-full block">
-                    <motion.div
-                      whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(0,0,0,0.08)" }}
-                      transition={{ duration: 0.2 }}
-                      className={cn(
-                        "bg-white p-6 h-full rounded-xl border-t-2 border border-gray-100 cursor-pointer transition-all duration-200 shadow-sm",
-                        feature.accentBorder
-                      )}
-                    >
-                      <div className={cn("mb-4 inline-flex rounded-lg p-2.5", feature.iconBg)}>
-                        <feature.icon className={cn("h-5 w-5", feature.iconColor)} />
-                      </div>
-                      <h3 className="font-semibold text-gray-900">{feature.title}</h3>
-                      <p className="mt-1.5 text-sm text-gray-500">{feature.description}</p>
-                    </motion.div>
-                  </Link>
-                </motion.div>
-              ))}
+            <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-5 py-3">
+              <Image
+                src={YORKU_LOGO}
+                alt="York University"
+                width={100}
+                height={32}
+                className="object-contain brightness-0 invert"
+                unoptimized
+              />
+              <div className="w-px h-6 bg-white/30" />
+              <span className="text-white/90 text-sm font-medium tracking-wide">Student Community</span>
             </div>
           </motion.div>
 
-          {/* Trust Badge */}
+          {/* Title */}
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white max-w-3xl"
+          >
+            Your Campus.{" "}
+            <span className="text-[#ff4d6b]">Your Community.</span>
+          </motion.h1>
+
+          {/* Subtitle */}
+          <motion.p
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.35 }}
+            className="mt-6 text-lg leading-8 text-white/75 max-w-xl"
+          >
+            The exclusive platform for York University students.
+            Connect, trade, and build lasting friendships in a safe, verified community.
+          </motion.p>
+
+          {/* CTA Buttons */}
           <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.45 }}
+            className="mt-10 flex items-center gap-4"
+          >
+            <Button
+              size="lg"
+              className="bg-[#E31837] hover:bg-[#C41230] text-white px-8 shadow-lg text-base"
+              asChild
+            >
+              <Link href="/auth/signup">Get Started</Link>
+            </Button>
+            <Button
+              size="lg"
+              className="bg-white/15 hover:bg-white/25 text-white border border-white/30 px-8 text-base backdrop-blur-sm"
+              asChild
+            >
+              <Link href="/auth/login">Sign In</Link>
+            </Button>
+          </motion.div>
+
+          {/* Verified badge */}
+          <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.5 }}
-            className="mx-auto mt-14 text-center"
+            transition={{ delay: 0.6 }}
+            className="mt-8 text-sm text-white/50"
           >
-            <p className="text-sm text-gray-400">
-              Verified with{" "}
-              <span className="font-semibold text-gray-600">@yorku.ca</span> or{" "}
-              <span className="font-semibold text-gray-600">@my.yorku.ca</span> email
-            </p>
-          </motion.div>
+            Verified with <span className="text-white/80 font-medium">@yorku.ca</span> or{" "}
+            <span className="text-white/80 font-medium">@my.yorku.ca</span> email
+          </motion.p>
+
+          {/* Image indicator dots */}
+          <div className="absolute bottom-8 flex gap-2">
+            {heroImages.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setImgIndex(i)}
+                className={cn(
+                  "w-2 h-2 rounded-full transition-all duration-300",
+                  i === imgIndex ? "bg-white w-6" : "bg-white/40"
+                )}
+              />
+            ))}
+          </div>
         </div>
+      </div>
+
+      {/* ── Feature Cards Section ── */}
+      <div className="bg-gray-50 py-20 px-6">
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          className="mx-auto max-w-5xl"
+        >
+          {/* Section heading */}
+          <motion.div variants={itemVariants} className="text-center mb-12">
+            <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">Everything you need on campus</h2>
+            <p className="mt-3 text-gray-500">Six features built specifically for York U students.</p>
+          </motion.div>
+
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {landingFeatures.map((feature) => (
+              <motion.div key={feature.href} variants={itemVariants} className="h-full">
+                <Link href={feature.href} className="h-full block">
+                  <motion.div
+                    whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(0,0,0,0.08)" }}
+                    transition={{ duration: 0.2 }}
+                    className={cn(
+                      "bg-white p-6 h-full rounded-xl border-t-2 border border-gray-100 cursor-pointer transition-all duration-200 shadow-sm",
+                      feature.accentBorder
+                    )}
+                  >
+                    <div className={cn("mb-4 inline-flex rounded-lg p-2.5", feature.iconBg)}>
+                      <feature.icon className={cn("h-5 w-5", feature.iconColor)} />
+                    </div>
+                    <h3 className="font-semibold text-gray-900">{feature.title}</h3>
+                    <p className="mt-1.5 text-sm text-gray-500">{feature.description}</p>
+                  </motion.div>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
       </div>
     </main>
   );
