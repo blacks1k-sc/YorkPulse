@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -52,6 +52,139 @@ const categories = [
   { value: "mental_health", label: "Mental Health" },
   { value: "general", label: "General" },
 ];
+
+function Lightbox({
+  images,
+  index,
+  onClose,
+  onNavigate,
+}: {
+  images: string[];
+  index: number;
+  onClose: () => void;
+  onNavigate: (i: number) => void;
+}) {
+  const imgRef = useRef<HTMLImageElement>(null);
+  const scale = useRef(1);
+  const lastDist = useRef<number | null>(null);
+  const origin = useRef({ x: 0, y: 0 });
+  const translate = useRef({ x: 0, y: 0 });
+
+  const applyTransform = useCallback(() => {
+    if (imgRef.current) {
+      imgRef.current.style.transform = `translate(${translate.current.x}px, ${translate.current.y}px) scale(${scale.current})`;
+    }
+  }, []);
+
+  const resetTransform = useCallback(() => {
+    scale.current = 1;
+    translate.current = { x: 0, y: 0 };
+    applyTransform();
+  }, [applyTransform]);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      lastDist.current = Math.hypot(dx, dy);
+      origin.current = {
+        x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+        y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
+      };
+    }
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    e.preventDefault();
+    if (e.touches.length === 2 && lastDist.current !== null) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const dist = Math.hypot(dx, dy);
+      const delta = dist / lastDist.current;
+      scale.current = Math.min(Math.max(scale.current * delta, 1), 5);
+      lastDist.current = dist;
+      applyTransform();
+    }
+  }, [applyTransform]);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length < 2) lastDist.current = null;
+    if (scale.current <= 1.05) resetTransform();
+  }, [resetTransform]);
+
+  // Reset transform on image change
+  const handleNavigate = (i: number) => {
+    resetTransform();
+    onNavigate(i);
+  };
+
+  return (
+    <div
+      className="fixed inset-0 bg-black flex items-center justify-center"
+      style={{ zIndex: 9999 }}
+      onClick={onClose}
+    >
+      {/* Close */}
+      <button
+        className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+        style={{ zIndex: 10000 }}
+        onClick={onClose}
+      >
+        <X className="w-5 h-5 text-white" />
+      </button>
+
+      {/* Counter */}
+      {images.length > 1 && (
+        <div
+          className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/60 text-white text-sm font-semibold px-3 py-1 rounded-full"
+          style={{ zIndex: 10000 }}
+        >
+          {index + 1} / {images.length}
+        </div>
+      )}
+
+      {/* Pinch-zoomable image */}
+      <div
+        className="w-full h-full flex items-center justify-center overflow-hidden"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <img
+          ref={imgRef}
+          src={images[index]}
+          alt={`Image ${index + 1}`}
+          className="max-w-full max-h-full object-contain select-none"
+          style={{ transformOrigin: `${origin.current.x}px ${origin.current.y}px`, willChange: "transform", transition: "none" }}
+          draggable={false}
+        />
+      </div>
+
+      {/* Prev */}
+      {index > 0 && (
+        <button
+          className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+          style={{ zIndex: 10000 }}
+          onClick={(e) => { e.stopPropagation(); handleNavigate(index - 1); }}
+        >
+          <ChevronLeft className="w-6 h-6 text-white" />
+        </button>
+      )}
+
+      {/* Next */}
+      {index < images.length - 1 && (
+        <button
+          className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+          style={{ zIndex: 10000 }}
+          onClick={(e) => { e.stopPropagation(); handleNavigate(index + 1); }}
+        >
+          <ChevronRight className="w-6 h-6 text-white" />
+        </button>
+      )}
+    </div>
+  );
+}
 
 export default function VaultPostPage() {
   const params = useParams();
@@ -335,53 +468,12 @@ export default function VaultPostPage() {
 
       {/* Lightbox */}
       {lightboxIndex !== null && post.images && (
-        <div
-          className="fixed inset-0 z-50 bg-black flex items-center justify-center"
-          onClick={() => setLightboxIndex(null)}
-        >
-          {/* Exit button */}
-          <button
-            className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
-            onClick={() => setLightboxIndex(null)}
-          >
-            <X className="w-5 h-5 text-white" />
-          </button>
-
-          {/* Counter */}
-          {post.images.length > 1 && (
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/60 text-white text-sm font-semibold px-3 py-1 rounded-full">
-              {lightboxIndex + 1} / {post.images.length}
-            </div>
-          )}
-
-          {/* Image */}
-          <img
-            src={post.images[lightboxIndex]}
-            alt={`Image ${lightboxIndex + 1}`}
-            className="max-w-full max-h-full object-contain"
-            onClick={(e) => e.stopPropagation()}
-          />
-
-          {/* Prev */}
-          {lightboxIndex > 0 && (
-            <button
-              className="absolute left-3 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
-              onClick={(e) => { e.stopPropagation(); setLightboxIndex(lightboxIndex - 1); }}
-            >
-              <ChevronLeft className="w-6 h-6 text-white" />
-            </button>
-          )}
-
-          {/* Next */}
-          {lightboxIndex < post.images.length - 1 && (
-            <button
-              className="absolute right-3 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
-              onClick={(e) => { e.stopPropagation(); setLightboxIndex(lightboxIndex + 1); }}
-            >
-              <ChevronRight className="w-6 h-6 text-white" />
-            </button>
-          )}
-        </div>
+        <Lightbox
+          images={post.images}
+          index={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+          onNavigate={setLightboxIndex}
+        />
       )}
 
       {/* Comments */}
