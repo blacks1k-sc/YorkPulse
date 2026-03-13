@@ -359,15 +359,15 @@ export default function CoursesPage() {
                   className={cn(
                     "p-3 rounded-lg cursor-pointer transition-colors",
                     "bg-white hover:bg-gray-50 border border-gray-100 shadow-sm",
-                    isCourseMember(course.id) && "border-[#00ff88]/30"
+                    isCourseMember(course.id) && "border-[#E31837]/30"
                   )}
                 >
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-sm text-[#00ff88]">{course.code}</span>
+                        <span className="font-mono text-sm text-[#E31837]">{course.code}</span>
                         {isCourseMember(course.id) && (
-                          <Badge variant="secondary" className="bg-[#00ff88]/20 text-[#00ff88] text-xs">
+                          <Badge variant="secondary" className="bg-[#E31837]/20 text-[#E31837] text-xs">
                             Joined
                           </Badge>
                         )}
@@ -390,7 +390,7 @@ export default function CoursesPage() {
       {!searchQuery && popularCourses.length > 0 && (
         <div className="p-4 rounded-xl bg-white border border-gray-100 shadow-sm">
           <h3 className="text-sm font-medium text-gray-500 mb-3 flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-[#00ff88]" />
+            <TrendingUp className="w-4 h-4 text-[#E31837]" />
             Popular Courses
           </h3>
           <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
@@ -402,17 +402,17 @@ export default function CoursesPage() {
                 className={cn(
                   "flex-shrink-0 w-40 p-3 rounded-xl cursor-pointer border transition-colors",
                   isCourseMember(course.id)
-                    ? "bg-[#00ff88]/5 border-[#00ff88]/30"
+                    ? "bg-[#E31837]/5 border-[#E31837]/30"
                     : "bg-white hover:bg-gray-50 border-gray-200"
                 )}
               >
-                <p className="font-mono text-sm text-[#00ff88] font-bold truncate">{course.code}</p>
+                <p className="font-mono text-sm text-[#E31837] font-bold truncate">{course.code}</p>
                 <p className="text-xs text-gray-500 mt-1 truncate">{course.name}</p>
                 <div className="flex items-center gap-1 mt-2 text-gray-400">
                   <Users className="w-3 h-3" />
                   <span className="text-xs">{course.member_count}</span>
                   {isCourseMember(course.id) && (
-                    <span className="ml-auto text-[10px] text-[#00ff88]">Joined</span>
+                    <span className="ml-auto text-[10px] text-[#E31837]">Joined</span>
                   )}
                 </div>
               </motion.div>
@@ -435,9 +435,9 @@ export default function CoursesPage() {
                   setSelectedCourse(membership.course);
                   setViewMode("chat");
                 }}
-                className="relative px-3 py-2 rounded-lg bg-[#00ff88]/10 border border-[#00ff88]/30 cursor-pointer"
+                className="relative px-3 py-2 rounded-lg bg-[#E31837]/10 border border-[#E31837]/30 cursor-pointer"
               >
-                <span className="font-mono text-sm text-[#00ff88]">{membership.course.code}</span>
+                <span className="font-mono text-sm text-[#E31837]">{membership.course.code}</span>
                 {membership.unread_count > 0 && (
                   <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center px-1 text-[10px] font-bold text-white bg-red-500 rounded-full">
                     {membership.unread_count > 99 ? "99+" : membership.unread_count}
@@ -540,10 +540,10 @@ export default function CoursesPage() {
                                           className={cn(
                                             "px-3 py-1.5 rounded-lg text-xs font-mono transition-colors",
                                             "bg-white hover:bg-white/10 border border-gray-100",
-                                            isCourseMember(course.id) && "border-[#00ff88]/50 bg-[#00ff88]/10"
+                                            isCourseMember(course.id) && "border-[#E31837]/50 bg-[#E31837]/10"
                                           )}
                                         >
-                                          <span className="text-[#00ff88]">{course.code}</span>
+                                          <span className="text-[#E31837]">{course.code}</span>
                                           <span className="ml-2 text-gray-400">{course.member_count}</span>
                                         </motion.button>
                                       ))}
@@ -595,7 +595,7 @@ export default function CoursesPage() {
         </Button>
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <span className="font-mono text-[#00ff88]">{selectedCourse?.code}</span>
+            <span className="font-mono text-[#E31837]">{selectedCourse?.code}</span>
             {showParticipants ? (
               <>
                 <ChevronRight className="w-4 h-4 text-gray-400" />
@@ -652,7 +652,7 @@ export default function CoursesPage() {
                 className={cn(
                   "w-full px-2 py-1.5 rounded flex items-center gap-2 text-sm transition-colors",
                   showParticipants
-                    ? "bg-[#00ff88]/20 text-[#00ff88]"
+                    ? "bg-[#E31837]/20 text-[#E31837]"
                     : "hover:bg-gray-50 text-gray-500"
                 )}
               >
@@ -667,7 +667,7 @@ export default function CoursesPage() {
                   className={cn(
                     "w-full px-2 py-1.5 rounded flex items-center gap-2 text-sm transition-colors",
                     selectedChannel?.id === channel.id
-                      ? "bg-[#00ff88]/20 text-[#00ff88]"
+                      ? "bg-[#E31837]/20 text-[#E31837]"
                       : "hover:bg-gray-50 text-gray-500"
                   )}
                 >
@@ -725,7 +725,7 @@ export default function CoursesPage() {
                       >
                         <Avatar className="w-10 h-10 flex-shrink-0">
                           <AvatarImage src={p.avatar_url ?? undefined} />
-                          <AvatarFallback className="text-xs bg-[#00ff88]/10 text-[#00ff88]">
+                          <AvatarFallback className="text-xs bg-[#E31837]/10 text-[#E31837]">
                             {p.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
@@ -782,8 +782,8 @@ export default function CoursesPage() {
                 {/* Welcome Banner */}
                 <div className="max-w-lg mx-auto">
                   <div className="text-center mb-6">
-                    <div className="w-16 h-16 mx-auto rounded-2xl bg-[#00ff88]/10 border border-[#00ff88]/20 flex items-center justify-center mb-4">
-                      <GraduationCap className="w-8 h-8 text-[#00ff88]" />
+                    <div className="w-16 h-16 mx-auto rounded-2xl bg-[#E31837]/10 border border-[#E31837]/20 flex items-center justify-center mb-4">
+                      <GraduationCap className="w-8 h-8 text-[#E31837]" />
                     </div>
                     <h2 className="text-xl font-bold text-white mb-1">
                       Welcome to {selectedCourse?.code}
@@ -812,14 +812,14 @@ export default function CoursesPage() {
                     {/* Professor Channel Voting */}
                     <div className="p-4 rounded-xl bg-white border border-gray-100 shadow-sm">
                       <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-[#00ff88]/20 flex items-center justify-center flex-shrink-0">
-                          <Vote className="w-4 h-4 text-[#00ff88]" />
+                        <div className="w-8 h-8 rounded-lg bg-[#E31837]/20 flex items-center justify-center flex-shrink-0">
+                          <Vote className="w-4 h-4 text-[#E31837]" />
                         </div>
                         <div>
                           <p className="font-medium text-sm text-white">Professor Channels</p>
                           <p className="text-xs text-gray-500 mt-1">
                             Want a dedicated channel for your professor's section? Use the
-                            <span className="text-[#00ff88] font-medium"> "Request Prof Channel" </span>
+                            <span className="text-[#E31837] font-medium"> "Request Prof Channel" </span>
                             button. When <span className="text-white font-medium">5 students</span> vote
                             for the same professor, a channel is automatically created!
                           </p>
@@ -1052,7 +1052,7 @@ export default function CoursesPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <GraduationCap className="w-5 h-5 text-[#00ff88]" />
+              <GraduationCap className="w-5 h-5 text-[#E31837]" />
               Join Course
             </DialogTitle>
             <DialogDescription>
@@ -1065,7 +1065,7 @@ export default function CoursesPage() {
               <div className="p-4 rounded-xl bg-white border border-gray-100 shadow-sm">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="font-mono text-lg text-[#00ff88] font-bold">
+                    <p className="font-mono text-lg text-[#E31837] font-bold">
                       {previewCourse.code}
                     </p>
                     <p className="text-sm text-gray-700 mt-1">
@@ -1105,7 +1105,7 @@ export default function CoursesPage() {
             <Button
               onClick={handleJoinCourse}
               disabled={joinCourseMutation.isPending}
-              className="bg-[#00ff88] hover:bg-[#00ff88]/90 text-black"
+              className="bg-[#E31837] hover:bg-[#E31837]/90 text-black"
             >
               {joinCourseMutation.isPending ? (
                 <>

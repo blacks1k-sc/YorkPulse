@@ -347,10 +347,10 @@ function StatsOverlay({
         {/* Live indicator */}
         <div className="flex items-center gap-2 mb-3">
           <div className="relative">
-            <div className="w-2 h-2 rounded-full bg-green-400" />
-            <div className="absolute inset-0 w-2 h-2 rounded-full bg-green-400 animate-ping" />
+            <div className="w-2 h-2 rounded-full bg-[#E31837]" />
+            <div className="absolute inset-0 w-2 h-2 rounded-full bg-[#E31837] animate-ping" />
           </div>
-          <span className="text-xs text-green-400 font-medium">LIVE</span>
+          <span className="text-xs text-[#E31837] font-medium">LIVE</span>
         </div>
 
         {/* Quest count */}
@@ -604,7 +604,7 @@ function QuestPopupContent({
         </div>
         <div className="flex items-center gap-1 text-xs">
           <Users className="w-3 h-3 text-gray-400" />
-          <span className={spotsLeft > 0 ? "text-green-600" : "text-red-500"}>
+          <span className={spotsLeft > 0 ? "text-[#E31837]" : "text-red-500"}>
             {spotsLeft > 0 ? `${spotsLeft} spots` : "Full"}
           </span>
         </div>
@@ -690,18 +690,18 @@ export default function QuestMapClient({ quests, className }: QuestMapClientProp
   return (
     <div className={cn("relative w-full h-full", className)}>
       {/* Map container with glow effect */}
-      <div className="relative w-full h-full rounded-2xl overflow-hidden shadow-[0_0_60px_-15px_rgba(168,85,247,0.4)] border border-gray-100">
+      <div className="relative w-full h-full rounded-2xl overflow-hidden shadow-[0_0_40px_-15px_rgba(227,24,55,0.15)] border border-gray-100">
         <MapContainer
           center={YORK_CENTER}
           zoom={DEFAULT_ZOOM}
           className="w-full h-full"
-          style={{ background: "#0A0A0A", height: "100%", minHeight: "400px" }}
+          style={{ background: "#f9fafb", height: "100%", minHeight: "400px" }}
           zoomControl={false}
         >
-          {/* Dark theme map tiles */}
+          {/* Light theme map tiles */}
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
           />
 
           {/* Custom controls */}
