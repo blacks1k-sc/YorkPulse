@@ -250,6 +250,29 @@ export default function VaultPostPage() {
         <h1 className="text-xl font-bold mb-3">{post.title}</h1>
         <p className="text-gray-700 whitespace-pre-wrap mb-4">{post.content}</p>
 
+        {/* Images */}
+        {post.images && post.images.length > 0 && (
+          <div
+            className="flex gap-2 overflow-x-auto mb-4 scrollbar-hide -mx-6 px-6"
+            style={{ scrollSnapType: "x mandatory" }}
+          >
+            {post.images.map((url, i) => (
+              <div key={i} className="relative flex-shrink-0" style={{ scrollSnapAlign: "start" }}>
+                <img
+                  src={url}
+                  alt={`Image ${i + 1}`}
+                  className="h-64 w-auto max-w-[85vw] rounded-lg object-cover"
+                />
+                {post.images!.length > 1 && (
+                  <div className="absolute bottom-2 left-2 bg-black/60 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
+                    {i + 1}/{post.images!.length}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Footer */}
         <div className="flex items-center gap-3">
           <Badge variant="secondary">
