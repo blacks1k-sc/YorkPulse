@@ -143,14 +143,26 @@ class SupabaseAuthService:
         await self._record_failed_attempt(email)
         return False
 
+    # Test accounts with fixed OTPs — never receive real emails
+    _TEST_ACCOUNTS: dict[str, str] = {
+        "proftest@yorku.ca": "371649",
+    }
+
     async def send_otp(self, email: str, force_dev_mode: bool = False) -> tuple[bool, str]:
         """Send OTP code to email.
 
         Priority:
-        1. Dev mode (only when settings.debug is True): returns OTP in response
-        2. SMTP configured: sends OTP via email (stored in Redis for verification)
-        3. Fallback: Supabase magic link
+        1. Test accounts: use fixed OTP, no email sent
+        2. Dev mode (only when settings.debug is True): returns OTP in response
+        3. SMTP configured: sends OTP via email (stored in Redis for verification)
+        4. Fallback: Supabase magic link
         """
+        # Fixed OTP for test accounts — works in any environment
+        if email.lower() in self._TEST_ACCOUNTS:
+            otp = self._TEST_ACCOUNTS[email.lower()]
+            await self._store_otp(email, otp)
+            return True, "Verification code sent to your email"
+
         # Dev mode — only active when the server itself has DEBUG=true.
         if settings.debug and force_dev_mode:
             otp = self._make_otp()

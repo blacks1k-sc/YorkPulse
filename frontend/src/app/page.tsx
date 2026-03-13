@@ -81,7 +81,7 @@ const landingFeatures = [
   {
     href: "/courses",
     icon: GraduationCap,
-    title: "Courses",
+    title: "Link Up",
     description: "Join course chats and connect with classmates.",
     iconBg: "bg-cyan-500/10",
     iconColor: "text-cyan-500",
@@ -135,9 +135,9 @@ const dashboardFeatures = [
   {
     href: "/courses",
     icon: GraduationCap,
-    title: "Course Chat",
-    subtitle: "Class Discussions",
-    description: "Join course-specific rooms to ask questions and form study groups.",
+    title: "Link Up",
+    subtitle: "Class & Residence Discussions",
+    description: "Join course-specific rooms for study groups and Q&A, now including a dedicated chat for our on campus residence community.",
     accentColor: "blue",
     statKey: "total_courses" as const,
     statLabel: "courses",

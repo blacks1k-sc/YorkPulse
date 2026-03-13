@@ -35,7 +35,7 @@ const navItems = [
   { href: "/marketplace", label: "Marketplace", icon: ShoppingBag },
   { href: "/quests", label: "Side Quests", icon: Users },
   { href: "/gigs", label: "Quick Gigs", icon: Briefcase },
-  { href: "/courses", label: "Courses", icon: GraduationCap },
+  { href: "/courses", label: "Link Up", icon: GraduationCap },
   { href: "/messages", label: "Messages", icon: MessageCircle },
 ];
 

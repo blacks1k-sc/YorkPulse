@@ -657,3 +657,15 @@ async def admin_delete_user(
 
     await db.delete(user)
     await db.commit()
+
+
+@router.post("/admin/seed-otp")
+async def admin_seed_otp(
+    email: str,
+    otp: str,
+    _: AdminUser,
+):
+    """Admin only: manually seed a specific OTP into Redis for a given email (testing)."""
+    from app.services.redis import redis_service
+    await redis_service.set(f"otp:{email.lower()}", otp, expire_seconds=86400)
+    return {"message": f"OTP seeded for {email}"}

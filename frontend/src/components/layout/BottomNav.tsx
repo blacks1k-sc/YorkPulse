@@ -12,7 +12,7 @@ const navItems = [
   { href: "/marketplace", label: "Market", icon: ShoppingBag },
   { href: "/quests", label: "Quests", icon: Users },
   { href: "/gigs", label: "Gigs", icon: Briefcase },
-  { href: "/courses", label: "Courses", icon: GraduationCap },
+  { href: "/courses", label: "Link Up", icon: GraduationCap },
   { href: "/messages", label: "DMs", icon: MessageCircle },
 ];
 
@@ -29,7 +29,9 @@ export function BottomNav() {
     <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden glass border-t border-white/10 safe-area-bottom">
       <div className="flex items-center justify-around h-16 px-1">
         {navItems.map((item) => {
-          const isActive = pathname.startsWith(item.href);
+          const isActive =
+            pathname.startsWith(item.href) ||
+            (item.href === "/courses" && pathname.startsWith("/residences"));
           return (
             <Link
               key={item.href}
