@@ -16,7 +16,7 @@ class VaultPostCreate(BaseModel):
     content: Annotated[str, Field(min_length=10, max_length=10000)]
     category: VaultCategory
     is_anonymous: bool = True
-    image_url: Annotated[str | None, Field(default=None, max_length=500)] = None
+    images: list[Annotated[str, Field(max_length=500)]] | None = None
 
 
 class VaultPostUpdate(BaseModel):
@@ -39,7 +39,7 @@ class VaultPostResponse(BaseModel):
     comment_count: int
     upvote_count: int
     flag_count: int
-    image_url: str | None
+    images: list[str] | None
     author: UserMinimal | None  # None if anonymous
     created_at: datetime
     updated_at: datetime

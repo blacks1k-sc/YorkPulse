@@ -56,7 +56,7 @@ def _post_to_response(post: VaultPost, current_user_id: str | None = None) -> Va
         comment_count=post.comment_count,
         upvote_count=post.upvote_count,
         flag_count=post.flag_count,
-        image_url=post.image_url,
+        images=post.images,
         author=author,
         created_at=post.created_at,
         updated_at=post.updated_at,
@@ -190,7 +190,7 @@ async def create_post(
         content=request.content,
         category=request.category,
         is_anonymous=request.is_anonymous,
-        image_url=request.image_url,
+        images=request.images,
         user_id=user.id,
     )
 

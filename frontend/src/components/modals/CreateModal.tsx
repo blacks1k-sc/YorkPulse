@@ -84,7 +84,7 @@ export function CreateModal() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Vault specific
-  const [vaultImage, setVaultImage] = useState<string | null>(null);
+  const [vaultImages, setVaultImages] = useState<string[]>([]);
   const [isUploadingVaultImage, setIsUploadingVaultImage] = useState(false);
   const vaultFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -109,7 +109,7 @@ export function CreateModal() {
     setImages([]);
     setShowPhotoMenu(false);
     setIsCameraOpen(false);
-    setVaultImage(null);
+    setVaultImages([]);
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -192,22 +192,31 @@ export function CreateModal() {
   };
 
   const handleVaultImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-      toast({ title: "Invalid file type", description: "Only JPEG, PNG, and WebP are allowed", variant: "destructive" });
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      toast({ title: "File too large", description: "Maximum file size is 5MB", variant: "destructive" });
+    if (vaultImages.length >= 5) {
+      toast({ title: "Maximum 5 images", description: "You can only upload up to 5 images per post", variant: "destructive" });
       return;
     }
 
     setIsUploadingVaultImage(true);
     try {
-      const { public_url } = await api.vault.uploadImageDirect(file);
-      setVaultImage(public_url);
+      for (const file of Array.from(files)) {
+        if (vaultImages.length >= 5) break;
+
+        if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+          toast({ title: "Invalid file type", description: "Only JPEG, PNG, and WebP are allowed", variant: "destructive" });
+          continue;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+          toast({ title: "File too large", description: "Maximum file size is 5MB", variant: "destructive" });
+          continue;
+        }
+
+        const { public_url } = await api.vault.uploadImageDirect(file);
+        setVaultImages((prev) => [...prev, public_url]);
+      }
     } catch (error) {
       toast({ title: "Upload failed", description: error instanceof Error ? error.message : "Failed to upload image", variant: "destructive" });
     } finally {
@@ -231,7 +240,7 @@ export function CreateModal() {
           content,
           category,
           is_anonymous: isAnonymous,
-          image_url: vaultImage,
+          images: vaultImages.length > 0 ? vaultImages : undefined,
         });
         toast({ title: "Post created" });
         handleClose();
@@ -350,42 +359,46 @@ export function CreateModal() {
           {createModalType === "vault" && (
             <>
               <div className="space-y-2">
-                <Label>Photo (optional)</Label>
+                <Label>Photos (up to 5)</Label>
                 <input
                   ref={vaultFileInputRef}
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
+                  multiple
                   className="hidden"
                   onChange={handleVaultImageUpload}
                 />
-                {vaultImage ? (
-                  <div className="relative w-full rounded-lg overflow-hidden border border-white/10">
-                    <img src={vaultImage} alt="Post image" className="w-full max-h-48 object-cover" />
+                <div className="flex flex-wrap gap-2">
+                  {vaultImages.map((url, index) => (
+                    <div key={index} className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-100">
+                      <img src={url} alt={`Image ${index + 1}`} className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => setVaultImages((prev) => prev.filter((_, i) => i !== index))}
+                        className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/70 flex items-center justify-center hover:bg-red-600 transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                  {vaultImages.length < 5 && (
                     <button
                       type="button"
-                      onClick={() => setVaultImage(null)}
-                      className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/70 flex items-center justify-center hover:bg-red-600 transition-colors"
+                      onClick={() => vaultFileInputRef.current?.click()}
+                      disabled={isUploadingVaultImage}
+                      className="w-20 h-20 rounded-lg border-2 border-dashed border-white/20 hover:border-[#E31837]/50 transition-colors flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-[#E31837]"
                     >
-                      <X className="w-3 h-3" />
+                      {isUploadingVaultImage ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : (
+                        <>
+                          <ImagePlus className="w-5 h-5" />
+                          <span className="text-[10px]">Add</span>
+                        </>
+                      )}
                     </button>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => vaultFileInputRef.current?.click()}
-                    disabled={isUploadingVaultImage}
-                    className="w-full h-20 rounded-lg border-2 border-dashed border-white/20 hover:border-[#E31837]/50 transition-colors flex items-center justify-center gap-2 text-gray-400 hover:text-[#E31837]"
-                  >
-                    {isUploadingVaultImage ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <>
-                        <ImagePlus className="w-5 h-5" />
-                        <span className="text-sm">Add photo</span>
-                      </>
-                    )}
-                  </button>
-                )}
+                  )}
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <Checkbox

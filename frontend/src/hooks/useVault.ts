@@ -33,7 +33,7 @@ export function useCreateVaultPost() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: { title: string; content: string; category: string; is_anonymous: boolean; image_url?: string | null }) =>
+    mutationFn: (data: { title: string; content: string; category: string; is_anonymous: boolean; images?: string[] | null }) =>
       api.vault.createPost(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vault", "posts"] });

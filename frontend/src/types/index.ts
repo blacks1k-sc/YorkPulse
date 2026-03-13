@@ -31,6 +31,7 @@ export interface VaultPost {
   comment_count: number;
   upvote_count: number;
   flag_count: number;
+  images: string[] | null;
   created_at: string;
   updated_at: string;
 }

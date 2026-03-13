@@ -1,7 +1,7 @@
 import enum
 import uuid
 
-from sqlalchemy import String, Boolean, Text, ForeignKey, Integer, Enum
+from sqlalchemy import String, Boolean, Text, ForeignKey, Integer, Enum, ARRAY
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -41,6 +41,10 @@ class VaultPost(Base, UUIDMixin, TimestampMixin):
     content: Mapped[str] = mapped_column(
         Text,
         nullable=False,
+    )
+    images: Mapped[list[str] | None] = mapped_column(
+        ARRAY(String(500)),
+        nullable=True,
     )
     category: Mapped[VaultCategory] = mapped_column(
         Enum(VaultCategory, values_callable=lambda x: [e.value for e in x]),
