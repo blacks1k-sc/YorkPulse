@@ -592,7 +592,6 @@ function DashboardView() {
 // York U campus images for hero carousel
 const heroImages = [
   "/images/library_atrium3-1.jpg",
-  "/images/OurBrand_8.png",
 ];
 
 const YORKU_LOGO = "/images/download.png";
@@ -624,7 +623,7 @@ function LandingView() {
             style={{
               backgroundImage: `url(${src})`,
               backgroundSize: "cover",
-              backgroundPosition: "center",
+              backgroundPosition: "center 40%",
               zIndex: 0,
             }}
           />
@@ -647,11 +646,11 @@ function LandingView() {
               <Image
                 src={YORKU_LOGO}
                 alt="York University"
-                width={110}
-                height={36}
+                width={80}
+                height={64}
                 className="object-contain"
               />
-              <div className="w-px h-6 bg-gray-200" />
+              <div className="w-px h-8 bg-gray-200" />
               <span className="text-gray-600 text-sm font-medium tracking-wide">Student Community</span>
             </div>
           </motion.div>
