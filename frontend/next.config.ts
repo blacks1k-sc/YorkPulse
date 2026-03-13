@@ -7,10 +7,6 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "**.supabase.co",
       },
-      {
-        protocol: "https",
-        hostname: "www.yorku.ca",
-      },
     ],
   },
 };

@@ -591,12 +591,11 @@ function DashboardView() {
 
 // York U campus images for hero carousel
 const heroImages = [
-  "https://www.yorku.ca/brand/wp-content/uploads/sites/386/nggallery/experience-york/Commons_fall_6.jpg",
-  "https://www.yorku.ca/brand/wp-content/uploads/sites/386/nggallery/experience-york/Kaneff_fall.jpg",
-  "https://www.yorku.ca/brand/wp-content/uploads/sites/386/nggallery/experience-markham/Markham-campus-14.jpg",
+  "/images/library_atrium3-1.jpg",
+  "/images/OurBrand_8.png",
 ];
 
-const YORKU_LOGO = "https://www.yorku.ca/wp-content/uploads/2025/08/YorkULogo_DIGITAL_Hor_RGB.png";
+const YORKU_LOGO = "/images/download.png";
 
 // Landing View (non-authenticated users)
 function LandingView() {
@@ -644,17 +643,16 @@ function LandingView() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="mb-8"
           >
-            <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-5 py-3">
+            <div className="inline-flex items-center gap-3 bg-white rounded-2xl px-5 py-3 shadow-lg">
               <Image
                 src={YORKU_LOGO}
                 alt="York University"
-                width={100}
-                height={32}
-                className="object-contain brightness-0 invert"
-                unoptimized
+                width={110}
+                height={36}
+                className="object-contain"
               />
-              <div className="w-px h-6 bg-white/30" />
-              <span className="text-white/90 text-sm font-medium tracking-wide">Student Community</span>
+              <div className="w-px h-6 bg-gray-200" />
+              <span className="text-gray-600 text-sm font-medium tracking-wide">Student Community</span>
             </div>
           </motion.div>
 
