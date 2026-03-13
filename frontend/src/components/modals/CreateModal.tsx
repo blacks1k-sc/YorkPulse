@@ -372,6 +372,10 @@ export function CreateModal() {
                   {vaultImages.map((url, index) => (
                     <div key={index} className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-100">
                       <img src={url} alt={`Image ${index + 1}`} className="w-full h-full object-cover" />
+                      {/* Order badge */}
+                      <div className="absolute bottom-1 left-1 w-5 h-5 rounded-full bg-black/70 flex items-center justify-center">
+                        <span className="text-white text-[10px] font-bold leading-none">{index + 1}</span>
+                      </div>
                       <button
                         type="button"
                         onClick={() => setVaultImages((prev) => prev.filter((_, i) => i !== index))}
