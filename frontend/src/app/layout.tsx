@@ -23,6 +23,12 @@ export const metadata: Metadata = {
   },
   description: "Community and safety platform for York University students",
   keywords: ["York University", "student community", "marketplace", "campus safety"],
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/icon-192.png",
+    apple: "/apple-touch-icon.png",
+    shortcut: "/icon-192.png",
+  },
 };
 
 export const viewport: Viewport = {
