@@ -330,8 +330,9 @@ interface VaultComment {
   id: string;
   content: string;
   is_anonymous: boolean;
+  is_hidden: boolean;
   author: { id: string; name: string; avatar_url: string | null } | null;
-  created_at: string;
+  created_at: string | null;
 }
 
 function VaultPostComments({ postId }: { postId: string }) {
