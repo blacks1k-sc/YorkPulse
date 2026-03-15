@@ -480,6 +480,37 @@ async def admin_list_posts(
     }
 
 
+@router.get("/admin/posts/{post_id}/comments")
+async def admin_list_comments(
+    post_id: str,
+    admin: AdminUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """List all comments for a post with real author names (admin only)."""
+    result = await db.execute(
+        select(VaultComment)
+        .options(selectinload(VaultComment.author))
+        .where(VaultComment.post_id == post_id)
+        .order_by(VaultComment.created_at.asc())
+    )
+    comments = result.scalars().all()
+
+    return {
+        "items": [
+            {
+                "id": str(c.id),
+                "content": c.content,
+                "is_anonymous": c.is_anonymous,
+                "is_hidden": c.is_hidden,
+                "author": {"id": str(c.author.id), "name": c.author.name} if c.author else None,
+                "created_at": c.created_at.isoformat() if c.created_at else None,
+            }
+            for c in comments
+        ],
+        "total": len(comments),
+    }
+
+
 @router.delete("/admin/posts/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def admin_delete_post(
     post_id: str,

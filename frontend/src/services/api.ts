@@ -881,6 +881,9 @@ class ApiClient {
     deleteVaultPost: (postId: string) =>
       this.delete<void>(`/vault/admin/posts/${postId}`),
 
+    getVaultPostComments: (postId: string) =>
+      this.get<{ items: Array<{ id: string; content: string; is_anonymous: boolean; is_hidden: boolean; author: { id: string; name: string } | null; created_at: string | null }>; total: number }>(`/vault/admin/posts/${postId}/comments`),
+
     getListings: (page = 1, perPage = 50) =>
       this.get<{
         items: Array<{

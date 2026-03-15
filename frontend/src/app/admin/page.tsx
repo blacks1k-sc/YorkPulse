@@ -339,8 +339,8 @@ function VaultPostComments({ postId }: { postId: string }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.vault.getComments(postId).then((res) => {
-      setComments(res.items as VaultComment[]);
+    api.admin.getVaultPostComments(postId).then((res) => {
+      setComments(res.items);
       setLoading(false);
     });
   }, [postId]);
