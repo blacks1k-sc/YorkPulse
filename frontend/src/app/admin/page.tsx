@@ -371,7 +371,10 @@ function VaultTab() {
               <tr key={p.id} className="border-b border-gray-200/50 hover:bg-gray-100/30">
                 <td className="py-2 pr-4 font-medium max-w-[200px] truncate">{p.title}</td>
                 <td className="py-2 pr-4 text-gray-500">
-                  {p.is_anonymous ? <span className="text-gray-400 italic">Anonymous</span> : (p.author?.name ?? "—")}
+                  {p.is_anonymous
+                    ? <span>{p.author?.name ?? "—"} <span className="text-gray-400 italic">(anon)</span></span>
+                    : (p.author?.name ?? "—")
+                  }
                 </td>
                 <td className="py-2 pr-4 text-gray-500">{p.category}</td>
                 <td className="py-2 pr-4"><StatusBadge status={p.status} /></td>
