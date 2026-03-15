@@ -326,10 +326,51 @@ function ListingsTab() {
 
 // ─── Vault Posts Tab ──────────────────────────────────────────────────────────
 
+interface VaultComment {
+  id: string;
+  content: string;
+  is_anonymous: boolean;
+  author: { id: string; name: string; avatar_url: string | null } | null;
+  created_at: string;
+}
+
+function VaultPostComments({ postId }: { postId: string }) {
+  const [comments, setComments] = useState<VaultComment[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.vault.getComments(postId).then((res) => {
+      setComments(res.items as VaultComment[]);
+      setLoading(false);
+    });
+  }, [postId]);
+
+  if (loading) return <div className="py-2 pl-4 text-xs text-gray-400 flex items-center gap-2"><Loader2 className="w-3 h-3 animate-spin" /> Loading comments…</div>;
+  if (comments.length === 0) return <div className="py-2 pl-4 text-xs text-gray-400">No comments.</div>;
+
+  return (
+    <div className="pl-4 pb-3 space-y-2">
+      {comments.map((c) => (
+        <div key={c.id} className="flex items-start gap-2 text-xs">
+          <div className="w-1.5 h-1.5 rounded-full bg-gray-300 mt-1.5 flex-shrink-0" />
+          <div>
+            <span className="font-medium text-gray-700">
+              {c.author?.name ?? "—"}
+            </span>
+            {c.is_anonymous && <span className="text-gray-400 italic ml-1">(anon)</span>}
+            <span className="text-gray-400 ml-2">{c.content}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function VaultTab() {
   const [data, setData] = useState<PagedResult<AdminVaultPost> | null>(null);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const load = useCallback(async (p: number) => {
     setLoading(true);
@@ -345,6 +386,7 @@ function VaultTab() {
 
   async function handleDelete(id: string) {
     await api.admin.deleteVaultPost(id);
+    if (expandedId === id) setExpandedId(null);
     await load(page);
   }
 
@@ -368,30 +410,46 @@ function VaultTab() {
           </thead>
           <tbody>
             {data.items.map((p) => (
-              <tr key={p.id} className="border-b border-gray-200/50 hover:bg-gray-100/30">
-                <td className="py-2 pr-4 font-medium max-w-[200px] truncate">{p.title}</td>
-                <td className="py-2 pr-4 text-gray-500">
-                  {p.is_anonymous
-                    ? <span>{p.author?.name ?? "—"} <span className="text-gray-400 italic">(anon)</span></span>
-                    : (p.author?.name ?? "—")
-                  }
-                </td>
-                <td className="py-2 pr-4 text-gray-500">{p.category}</td>
-                <td className="py-2 pr-4"><StatusBadge status={p.status} /></td>
-                <td className="py-2 pr-4">
-                  {p.flag_count > 0 && (
-                    <span className="flex items-center gap-1 text-orange-400">
-                      <Flag className="w-3 h-3" /> {p.flag_count}
-                    </span>
-                  )}
-                </td>
-                <td className="py-2 pr-4 text-gray-400">{fmtDate(p.created_at)}</td>
-                <td className="py-2 text-right">
-                  {p.status !== "deleted" && (
-                    <DeleteButton onDelete={() => handleDelete(p.id)} label="Delete post" />
-                  )}
-                </td>
-              </tr>
+              <>
+                <tr
+                  key={p.id}
+                  className="border-b border-gray-200/50 hover:bg-gray-100/30 cursor-pointer"
+                  onClick={() => setExpandedId(expandedId === p.id ? null : p.id)}
+                >
+                  <td className="py-2 pr-4 font-medium max-w-[200px] truncate">
+                    <span className="text-gray-400 mr-1">{expandedId === p.id ? "▾" : "▸"}</span>
+                    {p.title}
+                  </td>
+                  <td className="py-2 pr-4 text-gray-500">
+                    {p.is_anonymous
+                      ? <span>{p.author?.name ?? "—"} <span className="text-gray-400 italic">(anon)</span></span>
+                      : (p.author?.name ?? "—")
+                    }
+                  </td>
+                  <td className="py-2 pr-4 text-gray-500">{p.category}</td>
+                  <td className="py-2 pr-4"><StatusBadge status={p.status} /></td>
+                  <td className="py-2 pr-4">
+                    {p.flag_count > 0 && (
+                      <span className="flex items-center gap-1 text-orange-400">
+                        <Flag className="w-3 h-3" /> {p.flag_count}
+                      </span>
+                    )}
+                  </td>
+                  <td className="py-2 pr-4 text-gray-400">{fmtDate(p.created_at)}</td>
+                  <td className="py-2 text-right" onClick={(e) => e.stopPropagation()}>
+                    {p.status !== "deleted" && (
+                      <DeleteButton onDelete={() => handleDelete(p.id)} label="Delete post" />
+                    )}
+                  </td>
+                </tr>
+                {expandedId === p.id && (
+                  <tr key={`${p.id}-comments`} className="bg-gray-50 border-b border-gray-200/50">
+                    <td colSpan={7} className="pt-1">
+                      <VaultPostComments postId={p.id} />
+                    </td>
+                  </tr>
+                )}
+              </>
             ))}
           </tbody>
         </table>
