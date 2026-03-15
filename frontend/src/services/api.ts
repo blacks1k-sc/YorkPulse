@@ -882,7 +882,7 @@ class ApiClient {
       this.delete<void>(`/vault/admin/posts/${postId}`),
 
     getVaultPostComments: (postId: string) =>
-      this.get<{ items: Array<{ id: string; content: string; is_anonymous: boolean; is_hidden: boolean; author: { id: string; name: string } | null; created_at: string | null }>; total: number }>(`/vault/admin/posts/${postId}/comments`),
+      this.get<{ items: Array<{ id: string; content: string; is_anonymous: boolean; is_hidden: boolean; author: { id: string; name: string; avatar_url: string | null } | null; created_at: string | null }>; total: number }>(`/vault/admin/posts/${postId}/comments`),
 
     getListings: (page = 1, perPage = 50) =>
       this.get<{
