@@ -28,118 +28,114 @@ import { useSignup, useVerifyOTP, useResendOTP } from "@/hooks/useAuth";
 const pressStart2P = Press_Start_2P({ weight: "400", subsets: ["latin"], display: "swap" });
 
 // ─── Pixel Cat Mascot ────────────────────────────────────────────────────────
-const PX = 6; // px per "pixel"
-const CAT_PX_W = 12 * PX; // 72px
-const CAT_PX_H = 15 * PX; // 90px
-/* eslint-disable @typescript-eslint/no-unused-vars */
-const _ = null, D = "#2D1B10", O = "#E8954A", L = "#F5B96E",
-      K = "#C47228", pk = "#F9A8A8", Ey = "#1E2952", wh = "#FFFFFF", N = "#E87AA0";
-/* eslint-enable @typescript-eslint/no-unused-vars */
+const PX = 5; // px per pixel
 
-const CAT_GRID: (string | null)[][] = [
-  [_, _, D, _, _, _, _, D, _, _, _, _],
-  [_, D, O, D, _, _, D, O, D, _, _, _],
-  [_, D, pk, O, D, _, D, O, pk, D, _, _],
-  [_, _, D, O, O, D, O, O, D, _, _, _],
-  [_, D, O, O, O, O, O, O, O, D, _, _],
-  [_, D, O, K, O, O, O, K, O, D, _, _],
-  [_, D, O, Ey, wh, O, Ey, wh, O, D, _, _],
-  [_, D, L, O, O, N, O, O, L, D, _, _],
-  [_, D, O, O, O, O, O, O, O, D, _, _],
-  [_, _, D, O, O, O, O, D, _, _, D, _],
-  [_, D, O, O, O, O, O, D, _, D, O, D],
-  [_, D, O, O, O, O, O, O, D, O, O, D],
-  [_, D, O, O, O, O, O, O, O, D, _, _],
-  [_, _, D, O, D, _, D, O, D, _, _, _],
-  [_, _, _, D, _, _, _, D, _, _, _, _],
+// Lounging cat silhouette — 22 cols × 13 rows
+// Backward-C tail on left, head elevated on right, two ears at top
+const SILHOUETTE: (0 | 1)[][] = [
+// col: 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0], // 0 — ear tips
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0], // 1 — ears/head
+        [0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0], // 2 — tail top + head
+        [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], // 3 — tail walls (hollow C)
+        [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], // 4
+        [0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], // 5
+        [0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], // 6 — tail base + body
+        [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0], // 7 — body
+        [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0], // 8
+        [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0], // 9
+        [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0], // 10
+        [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 11 — paws
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 12
 ];
+const SROWS = SILHOUETTE.length;
+const SCOLS = SILHOUETTE[0].length;
+const CAT_PX_W = SCOLS * PX; // 110px
+const CAT_PX_H = SROWS * PX; //  65px
 
-const TAIL_KEYS = new Set(["10-9", "9-10", "10-10", "11-10", "9-11", "10-11", "11-11"]);
+// Compute which filled pixels are on the silhouette border (adjacent to empty)
+// Split into body and tail (tail: backward-C at cols 1-4, rows 2-6)
+const _BODY_PX: [number, number][] = [];
+const _TAIL_PX: [number, number][] = [];
+for (let r = 0; r < SROWS; r++) {
+  for (let c = 0; c < SCOLS; c++) {
+    if (!SILHOUETTE[r][c]) continue;
+    const isBorder =
+      r === 0 || !SILHOUETTE[r - 1][c] ||
+      r === SROWS - 1 || !SILHOUETTE[r + 1][c] ||
+      c === 0 || !SILHOUETTE[r][c - 1] ||
+      c === SCOLS - 1 || !SILHOUETTE[r][c + 1];
+    if (!isBorder) continue;
+    if (r >= 2 && r <= 6 && c >= 1 && c <= 4) _TAIL_PX.push([c, r]);
+    else _BODY_PX.push([c, r]);
+  }
+}
 
-// Outline-only cat — no fill, just red pixel borders
-function PixelCatOutlineSVG() {
-  const body: React.ReactElement[] = [];
-  const tail: React.ReactElement[] = [];
-  CAT_GRID.forEach((row, r) =>
-    row.forEach((color, c) => {
-      if (!color) return;
-      const el = (
-        <rect
-          key={`${r}-${c}`}
-          x={c * PX} y={r * PX}
-          width={PX} height={PX}
-          fill="none"
-          stroke="#E31837"
-          strokeWidth="1"
-          shapeRendering="crispEdges"
-        />
-      );
-      (TAIL_KEYS.has(`${c}-${r}`) ? tail : body).push(el);
-    })
-  );
+function PixelCatSVG() {
   return (
     <>
       <style>{`
-        @keyframes yp-tail-o { 0%,100%{transform:rotate(0deg)}50%{transform:rotate(5deg)} }
-        .yp-tail-o { transform-origin: ${9 * PX}px ${9 * PX}px; animation: yp-tail-o 1.4s ease-in-out infinite; }
+        @keyframes yp-cat-wag { 0%,100%{transform:rotate(0deg)} 50%{transform:rotate(5deg)} }
+        .yp-cat-tail { transform-origin:${5 * PX}px ${6 * PX}px; animation:yp-cat-wag 2s ease-in-out infinite; }
       `}</style>
       <svg width={CAT_PX_W} height={CAT_PX_H} style={{ imageRendering: "pixelated" }} aria-hidden>
-        <g>{body}</g>
-        <g className="yp-tail-o">{tail}</g>
+        <g>
+          {_BODY_PX.map(([c, r]) => (
+            <rect key={`b${r}-${c}`} x={c * PX} y={r * PX} width={PX} height={PX} fill="#E31837" shapeRendering="crispEdges" />
+          ))}
+        </g>
+        <g className="yp-cat-tail">
+          {_TAIL_PX.map(([c, r]) => (
+            <rect key={`t${r}-${c}`} x={c * PX} y={r * PX} width={PX} height={PX} fill="#E31837" shapeRendering="crispEdges" />
+          ))}
+        </g>
       </svg>
     </>
   );
 }
 
-// Join YorkPulse card with integrated cat + cloud animation
+// Join YorkPulse card — cat peeks from top-right corner, plays 2.6s, then bubble appears
 function JoinYorkPulseCard() {
   const [phase, setPhase] = useState<"entering" | "playing" | "done">("entering");
 
   useEffect(() => {
-    const t1 = setTimeout(() => setPhase("playing"), 700);   // entrance done
-    const t2 = setTimeout(() => setPhase("done"), 3300);     // playing done → show cloud
+    const t1 = setTimeout(() => setPhase("playing"), 650);
+    const t2 = setTimeout(() => setPhase("done"), 3300);
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, []);
 
   const catAnimate =
-    phase === "entering"
-      ? { y: 0, rotate: 0 }
-      : phase === "playing"
-      ? { y: [0, -16, 2, -12, 2, -7, 0], rotate: [0, -5, 5, -3, 3, -1, 0] }
-      : { y: 0, rotate: 0 };
+    phase === "entering" ? { y: 0, rotate: 0 } :
+    phase === "playing"  ? { y: [0, -18, 3, -13, 3, -8, 0], rotate: [0, -6, 5, -4, 3, -1, 0] } :
+                           { y: 0, rotate: 0 };
 
   const catTransition =
-    phase === "entering"
-      ? { type: "spring" as const, stiffness: 260, damping: 20 }
-      : phase === "playing"
-      ? { duration: 2.6, ease: "easeInOut" as const, times: [0, 0.12, 0.28, 0.45, 0.62, 0.82, 1] }
-      : { type: "spring" as const, stiffness: 180, damping: 18 };
+    phase === "entering" ? { type: "spring" as const, stiffness: 260, damping: 20 } :
+    phase === "playing"  ? { duration: 2.65, ease: "easeInOut" as const, times: [0, 0.1, 0.28, 0.46, 0.64, 0.82, 1] } :
+                           { type: "spring" as const, stiffness: 180, damping: 18 };
 
   return (
-    // mt-28 gives visual breathing room above the card for the cat
-    <div className="relative mt-28 rounded-lg bg-white border border-gray-100 shadow-sm">
-      {/* Cat + cloud stage — anchored to top-right of card */}
+    <div className="relative mt-24 rounded-lg bg-white border border-gray-100 shadow-sm">
+      {/* Cat + bubble stage anchored to top-right corner of card */}
       <div
         className="absolute pointer-events-none select-none"
         style={{
-          right: 8,
+          right: 4,
           top: -CAT_PX_H,
           width: CAT_PX_W,
           height: CAT_PX_H,
-          // overflow:hidden clips the cat behind the card during entrance;
-          // overflow:visible lets it bounce freely + shows cloud after
           overflow: phase === "entering" ? "hidden" : "visible",
           zIndex: 10,
         }}
       >
-        {/* Speech bubble — appears only after playing, tail at bottom-left */}
+        {/* Speech bubble — hidden until cat finishes playing */}
         <AnimatePresence>
           {phase === "done" && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.7, y: 6 }}
+              initial={{ opacity: 0, scale: 0.6, y: 8 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ type: "spring", stiffness: 420, damping: 18 }}
-              style={{ position: "absolute", top: -52, right: 0 }}
+              transition={{ type: "spring", stiffness: 440, damping: 20 }}
+              style={{ position: "absolute", top: -48, left: 0 }}
             >
               <div
                 className={`${pressStart2P.className} bg-white rounded-xl px-3 py-2.5 text-[7px] text-gray-800 whitespace-nowrap`}
@@ -147,26 +143,25 @@ function JoinYorkPulseCard() {
               >
                 wassup dawg?!
               </div>
-              {/* Tail at bottom-left — border layer */}
-              <div style={{ position: "absolute", bottom: -9, left: 10, width: 0, height: 0, borderLeft: "7px solid transparent", borderRight: "7px solid transparent", borderTop: "9px solid #e5e7eb" }} />
-              {/* Tail at bottom-left — fill layer */}
-              <div style={{ position: "absolute", bottom: -7, left: 11, width: 0, height: 0, borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderTop: "7px solid white" }} />
+              {/* Triangle tail — bottom-left corner of bubble */}
+              <div style={{ position: "absolute", bottom: -9, left: 10, width: 0, height: 0, borderLeft: "8px solid transparent", borderRight: "8px solid transparent", borderTop: "9px solid #e5e7eb" }} />
+              <div style={{ position: "absolute", bottom: -7, left: 11, width: 0, height: 0, borderLeft: "7px solid transparent", borderRight: "7px solid transparent", borderTop: "7px solid white" }} />
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Cat sprite — pops up from behind card, then plays */}
+        {/* Cat — starts fully hidden below card edge, slides up */}
         <motion.div
           initial={{ y: CAT_PX_H }}
           animate={catAnimate}
           transition={catTransition}
         >
-          <PixelCatOutlineSVG />
+          <PixelCatSVG />
         </motion.div>
       </div>
 
-      {/* Card content — right padding so text doesn't overlap cat area */}
-      <div className="flex items-center gap-3 p-3 pr-[88px]">
+      {/* Card text — right padding avoids cat overlap */}
+      <div className="flex items-center gap-3 p-3 pr-[120px]">
         <div className="w-10 h-10 rounded-lg bg-[#E31837] flex items-center justify-center flex-shrink-0">
           <span className="text-white font-bold text-sm">YP</span>
         </div>
