@@ -34,18 +34,19 @@ function ServiceWorkerRegistrar() {
 
 function PushNotificationPrompt() {
   const { isAuthenticated } = useAuthStore();
-  const { subscribe, isSupported, currentPermission } = usePushNotifications();
+  const { subscribe, isSupported } = usePushNotifications();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated || !isSupported) return;
-    if (currentPermission() !== "default") return;
+    if (typeof window === "undefined" || !("Notification" in window)) return;
+    if (Notification.permission !== "default") return;
     if (localStorage.getItem("push_prompt_shown")) return;
 
     // Show after a short delay so the page settles first
     const t = setTimeout(() => setVisible(true), 2500);
     return () => clearTimeout(t);
-  }, [isAuthenticated, isSupported, currentPermission]);
+  }, [isAuthenticated, isSupported]);
 
   const dismiss = () => {
     setVisible(false);
