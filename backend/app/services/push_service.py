@@ -19,6 +19,9 @@ def _send_webpush_sync(endpoint: str, p256dh: str, auth: str, payload: str) -> N
     """Synchronous webpush call — run in a thread via asyncio.to_thread."""
     from pywebpush import webpush, WebPushException
 
+    # Render/Railway may store PEM newlines as literal \n — normalise them
+    private_key = settings.vapid_private_key.replace("\\n", "\n")
+
     try:
         webpush(
             subscription_info={
@@ -26,12 +29,12 @@ def _send_webpush_sync(endpoint: str, p256dh: str, auth: str, payload: str) -> N
                 "keys": {"p256dh": p256dh, "auth": auth},
             },
             data=payload,
-            vapid_private_key=settings.vapid_private_key,
+            vapid_private_key=private_key,
             vapid_claims={"sub": f"mailto:{settings.vapid_contact_email}"},
         )
     except WebPushException as exc:
-        # Return the status code so callers can handle 410 (expired sub)
         status_code = exc.response.status_code if exc.response is not None else None
+        logger.error("WebPushException status=%s body=%s", status_code, exc.response.text if exc.response is not None else str(exc))
         raise _WebPushError(status_code) from exc
 
 
