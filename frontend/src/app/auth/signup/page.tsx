@@ -14,6 +14,7 @@ import {
   Shield,
   ShoppingBag,
   Users,
+  GraduationCap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +38,11 @@ const features = [
     icon: Users,
     title: "Side Quests",
     description: "Find buddies for any activity",
+  },
+  {
+    icon: GraduationCap,
+    title: "Link Up",
+    description: "7706 courses & residence chats",
   },
 ];
 
@@ -178,11 +184,15 @@ export default function SignupPage() {
           exit={{ opacity: 0, x: -20 }}
           className="space-y-6"
         >
-          <div className="text-center space-y-2">
-            <h1 className="text-2xl font-bold">Join YorkPulse</h1>
-            <p className="text-gray-500">
-              The community platform for York University students
-            </p>
+          {/* Header card */}
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-white border border-gray-100 shadow-sm">
+            <div className="w-10 h-10 rounded-lg bg-[#E31837] flex items-center justify-center flex-shrink-0">
+              <span className="text-white font-bold text-sm">YP</span>
+            </div>
+            <div>
+              <p className="font-semibold text-sm">Join YorkPulse</p>
+              <p className="text-xs text-gray-400">The community platform for York University students</p>
+            </div>
           </div>
 
           {/* Features */}
