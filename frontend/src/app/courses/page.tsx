@@ -961,7 +961,7 @@ export default function CoursesPage() {
   // Auth guard
   if (!isAuthenticated) {
     return (
-      <div className="container mx-auto px-4 py-6 max-w-4xl">
+      <div className="px-4 py-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-xl bg-cyan-500/20 flex items-center justify-center">
             <GraduationCap className="w-5 h-5 text-cyan-400" />
@@ -990,7 +990,7 @@ export default function CoursesPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-4xl">
+    <div className="px-4 py-6">
       {/* Page Header */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
