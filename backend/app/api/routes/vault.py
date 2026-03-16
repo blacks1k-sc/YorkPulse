@@ -4,7 +4,7 @@ import logging
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -164,6 +164,7 @@ async def list_posts(
 @router.post("", response_model=VaultPostResponse, status_code=status.HTTP_201_CREATED)
 async def create_post(
     request: VaultPostCreate,
+    background_tasks: BackgroundTasks,
     user: VerifiedUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
@@ -197,6 +198,16 @@ async def create_post(
     db.add(post)
     await db.commit()
     await db.refresh(post, ["author"])
+
+    from app.services import push_service
+
+    background_tasks.add_task(
+        push_service.send_push_broadcast,
+        user.id,
+        "New post in The Vault",
+        request.title[:100],
+        "/vault",
+    )
 
     return _post_to_response(post, str(user.id))
 

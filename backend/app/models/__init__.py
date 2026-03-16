@@ -49,6 +49,8 @@ from app.models.gig import (
     GigResponseStatus,
     GigTransactionStatus,
 )
+from app.models.push_subscription import PushSubscription
+
 __all__ = [
     # Base
     "UUIDMixin",
@@ -111,4 +113,6 @@ __all__ = [
     "GigStatus",
     "GigResponseStatus",
     "GigTransactionStatus",
+    # Push
+    "PushSubscription",
 ]

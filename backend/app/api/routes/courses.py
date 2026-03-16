@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from typing import Annotated
 from collections import defaultdict
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status, UploadFile, File
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status, UploadFile, File
 from sqlalchemy import and_, func, or_, select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -967,6 +967,7 @@ async def get_channel_messages(
 async def send_channel_message(
     channel_id: str,
     request: MessageCreate,
+    background_tasks: BackgroundTasks,
     user: VerifiedUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
@@ -1023,6 +1024,17 @@ async def send_channel_message(
             .where(CourseMessage.id == message.reply_to_id)
         )
         message.reply_to = reply_result.scalar_one_or_none()
+
+    # Push notification to all course members except sender
+    from app.services import push_service
+
+    background_tasks.add_task(
+        push_service.send_push_broadcast,
+        user.id,
+        "New course chat message",
+        request.message[:100] if request.message else "Sent an image",
+        "/courses",
+    )
 
     return _message_to_response(message, user)
 

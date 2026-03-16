@@ -19,8 +19,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useVerifyName, useVerifyId } from "@/hooks/useAuth";
 import { api } from "@/services/api";
 import { cn } from "@/lib/utils";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
-type Step = "name" | "upload" | "verifying" | "success";
+type Step = "name" | "upload" | "verifying" | "success" | "notify";
 
 export default function SetupProfilePage() {
   const [step, setStep] = useState<Step>("name");
@@ -29,6 +30,7 @@ export default function SetupProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const { toast } = useToast();
+  const { subscribe, isSupported } = usePushNotifications();
 
   const verifyNameMutation = useVerifyName();
   const verifyIdMutation = useVerifyId();
@@ -49,9 +51,13 @@ export default function SetupProfilePage() {
       const result = await verifyNameMutation.mutateAsync(name);
 
       if (result.name_verified) {
-        // Name matched email pattern - auto verified, go to complete profile
-        setStep("success");
-        setTimeout(() => router.push("/auth/complete-profile"), 2000);
+        // Name matched email pattern - auto verified
+        if (isSupported && Notification.permission === "default") {
+          setStep("notify");
+        } else {
+          setStep("success");
+          setTimeout(() => router.push("/auth/complete-profile"), 2000);
+        }
       } else if (result.requires_id_upload) {
         // Need to upload ID for verification
         setStep("upload");
@@ -117,8 +123,12 @@ export default function SetupProfilePage() {
       });
 
       if (result.verified) {
-        setStep("success");
-        setTimeout(() => router.push("/auth/complete-profile"), 2000);
+        if (isSupported && Notification.permission === "default") {
+          setStep("notify");
+        } else {
+          setStep("success");
+          setTimeout(() => router.push("/auth/complete-profile"), 2000);
+        }
       } else {
         setStep("upload");
         toast({
@@ -346,6 +356,46 @@ export default function SetupProfilePage() {
               </p>
             </div>
             <p className="text-sm text-gray-400">Setting up your profile...</p>
+          </motion.div>
+        )}
+
+        {step === "notify" && (
+          <motion.div
+            key="notify"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="space-y-6 text-center"
+          >
+            <div className="w-16 h-16 mx-auto rounded-full bg-blue-500/20 flex items-center justify-center">
+              <AlertCircle className="w-8 h-8 text-blue-400" />
+            </div>
+            <div className="space-y-2">
+              <h1 className="text-2xl font-bold">Stay in the loop</h1>
+              <p className="text-gray-500">
+                Get notified when someone messages you, even when the app is closed.
+              </p>
+            </div>
+            <div className="flex gap-3 justify-center">
+              <Button
+                onClick={async () => {
+                  await subscribe();
+                  setStep("success");
+                  setTimeout(() => router.push("/auth/complete-profile"), 1500);
+                }}
+                className="bg-[#E31837] hover:bg-[#C41230]"
+              >
+                Enable Notifications
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setStep("success");
+                  setTimeout(() => router.push("/auth/complete-profile"), 500);
+                }}
+              >
+                Skip
+              </Button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

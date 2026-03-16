@@ -61,6 +61,11 @@ class Settings(BaseSettings):
         "https://www.yorkpulse.com",
     ]
 
+    # Web Push (VAPID)
+    vapid_public_key: str = ""
+    vapid_private_key: str = ""
+    vapid_contact_email: str = "yorkpulse.app@gmail.com"
+
     # Rate Limiting
     rate_limit_requests: int = 100
     rate_limit_window_seconds: int = 60

@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 from datetime import datetime, timezone
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status, UploadFile, File
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status, UploadFile, File
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -507,6 +507,7 @@ async def get_messages(
 async def send_message(
     conversation_id: str,
     request: MessageCreate,
+    background_tasks: BackgroundTasks,
     user: VerifiedUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
@@ -558,6 +559,23 @@ async def send_message(
             select(Message).where(Message.id == message.reply_to_id)
         )
         message.reply_to = reply_result.scalar_one_or_none()
+
+    # Push notification to recipient
+    recipient_id = (
+        conversation.user2_id
+        if user.id == conversation.user1_id
+        else conversation.user1_id
+    )
+    from app.services import push_service
+
+    background_tasks.add_task(
+        push_service.send_push_to_user,
+        recipient_id,
+        f"New message from {user.name or 'someone'}",
+        request.content[:100] if request.content else "Sent an image",
+        f"/messages/{conversation_id}",
+        conversation_id,
+    )
 
     return _message_to_response(message)
 

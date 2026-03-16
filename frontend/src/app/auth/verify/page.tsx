@@ -3,9 +3,10 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { Loader2, CheckCircle, XCircle, RefreshCw } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, RefreshCw, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useVerifyEmail } from "@/hooks/useAuth";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 const VERIFICATION_TIMEOUT = 15000; // 15 seconds
 
@@ -14,10 +15,10 @@ function VerifyContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   const verifyMutation = useVerifyEmail();
-  const [status, setStatus] = useState<"loading" | "success" | "error" | "timeout">(token ? "loading" : "error");
-  // Name verification removed - simplified flow
+  const [status, setStatus] = useState<"loading" | "success" | "notify" | "error" | "timeout">(token ? "loading" : "error");
   const hasRun = useRef(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { subscribe, isSupported } = usePushNotifications();
 
   const verifyToken = async () => {
     if (!token) return;
@@ -37,12 +38,13 @@ function VerifyContent() {
         clearTimeout(timeoutRef.current);
       }
 
-      setStatus("success");
-
-      // Redirect to home after a short delay (simplified flow)
-      setTimeout(() => {
-        router.push("/");
-      }, 1500);
+      // Show notification prompt if supported and not already granted/denied
+      if (isSupported && Notification.permission === "default") {
+        setStatus("notify");
+      } else {
+        setStatus("success");
+        setTimeout(() => router.push("/"), 1500);
+      }
     } catch {
       // Clear timeout on error
       if (timeoutRef.current) {
@@ -98,6 +100,42 @@ function VerifyContent() {
             <p className="text-gray-500">
               Redirecting you to YorkPulse...
             </p>
+          </div>
+        </>
+      )}
+
+      {status === "notify" && (
+        <>
+          <div className="w-16 h-16 mx-auto rounded-full bg-blue-500/20 flex items-center justify-center">
+            <Bell className="w-8 h-8 text-blue-400" />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold">Stay in the loop</h1>
+            <p className="text-gray-500">
+              Get notified when someone messages you, even when the app is closed.
+            </p>
+          </div>
+          <div className="flex gap-3 justify-center">
+            <Button
+              onClick={async () => {
+                await subscribe();
+                setStatus("success");
+                setTimeout(() => router.push("/"), 1000);
+              }}
+              className="bg-[#E31837] hover:bg-[#C41230]"
+            >
+              <Bell className="w-4 h-4 mr-2" />
+              Enable Notifications
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setStatus("success");
+                setTimeout(() => router.push("/"), 500);
+              }}
+            >
+              Skip
+            </Button>
           </div>
         </>
       )}

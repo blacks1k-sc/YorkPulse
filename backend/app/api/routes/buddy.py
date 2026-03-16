@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -153,6 +153,7 @@ async def list_quests(
 @router.post("", response_model=BuddyRequestResponse, status_code=status.HTTP_201_CREATED)
 async def create_quest(
     request: BuddyRequestCreate,
+    background_tasks: BackgroundTasks,
     user: VerifiedUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
@@ -184,6 +185,16 @@ async def create_quest(
     db.add(buddy_request)
     await db.commit()
     await db.refresh(buddy_request, ["host"])
+
+    from app.services import push_service
+
+    background_tasks.add_task(
+        push_service.send_push_broadcast,
+        user.id,
+        "New Side Quest posted",
+        f"{request.activity[:80]} — looking for a buddy!",
+        "/quests",
+    )
 
     return _request_to_response(buddy_request)
 

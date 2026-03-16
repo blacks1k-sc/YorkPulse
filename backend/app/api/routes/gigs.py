@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -169,6 +169,7 @@ async def get_gigs(
 @router.post("", response_model=GigResponse, status_code=status.HTTP_201_CREATED)
 async def create_gig(
     data: GigCreate,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -190,6 +191,16 @@ async def create_gig(
     db.add(gig)
     await db.commit()
     await db.refresh(gig, ["poster"])
+
+    from app.services import push_service
+
+    background_tasks.add_task(
+        push_service.send_push_broadcast,
+        current_user.id,
+        "New Quick Gig posted",
+        data.title[:100],
+        "/gigs",
+    )
 
     return _gig_to_response(gig)
 

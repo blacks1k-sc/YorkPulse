@@ -1048,6 +1048,14 @@ class ApiClient {
         "/residences/admin/seed"
       ),
   };
+  // Push notification endpoints
+  push = {
+    subscribe: (data: { endpoint: string; p256dh: string; auth: string }) =>
+      this.post<{ message: string }>("/push/subscribe", data),
+
+    unsubscribe: (endpoint: string) =>
+      this.post<void>("/push/unsubscribe", { endpoint }),
+  };
 }
 
 export const api = new ApiClient(API_URL);

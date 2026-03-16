@@ -36,6 +36,9 @@ httpx>=0.28.0
 aiosmtplib>=3.0.0
 certifi>=2024.0.0
 
+# Web Push Notifications
+pywebpush>=2.0.0
+
 # Utils
 python-dotenv>=1.0.1
 

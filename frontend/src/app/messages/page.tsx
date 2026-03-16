@@ -39,6 +39,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useConversations, usePendingRequests } from "@/hooks/useMessaging";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useRealtimeConversations } from "@/hooks/useRealtimeMessages";
 import { useMyQuests, useQuest, useQuestMessages, useSendQuestMessage, useQuestParticipants } from "@/hooks/useQuests";
 import { useUser } from "@/hooks/useAuth";
@@ -815,6 +816,8 @@ export default function MessagesPage() {
   const [viewedTimestamps, setViewedTimestamps] = useState<Record<string, number>>({});
   const [questUnreadCounts, setQuestUnreadCounts] = useState<Record<string, number>>({});
   const [activeTab, setActiveTab] = useState("all");
+  const [notifBannerDismissed, setNotifBannerDismissed] = useState(true); // start hidden, reveal after mount
+  const { subscribe, isSupported, currentPermission } = usePushNotifications();
 
   // All hooks must be called before any conditional returns (Rules of Hooks)
   // Real-time subscription for conversations
@@ -834,9 +837,17 @@ export default function MessagesPage() {
   const { data: hostedData, isLoading: loadingHosted } = useMyQuests("host", isAuthenticated);
   const { data: joinedData, isLoading: loadingJoined } = useMyQuests("participant", isAuthenticated);
 
-  // Load viewed timestamps on mount
+  // Load viewed timestamps on mount and check notification banner state
   useEffect(() => {
     setViewedTimestamps(getViewedQuestTimestamps());
+    // Show banner if notifications are supported, default permission, and not dismissed
+    if (isSupported && currentPermission() === "default") {
+      const dismissed = localStorage.getItem("push_banner_dismissed");
+      if (!dismissed) {
+        setNotifBannerDismissed(false);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Callback for quest cards to report their unread count
@@ -912,6 +923,37 @@ export default function MessagesPage() {
           <p className="text-sm text-gray-400">Your private conversations</p>
         </div>
       </div>
+
+      {/* Notification opt-in banner */}
+      {!notifBannerDismissed && (
+        <div className="mb-4 flex items-center gap-3 px-4 py-3 rounded-xl bg-blue-500/10 border border-blue-500/20">
+          <MessageCircle className="w-4 h-4 text-blue-400 shrink-0" />
+          <p className="text-sm text-blue-300 flex-1">
+            Enable notifications to get alerted when someone messages you.
+          </p>
+          <Button
+            size="sm"
+            className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-7 px-3"
+            onClick={async () => {
+              await subscribe();
+              setNotifBannerDismissed(true);
+              localStorage.setItem("push_banner_dismissed", "true");
+            }}
+          >
+            Enable
+          </Button>
+          <button
+            onClick={() => {
+              setNotifBannerDismissed(true);
+              localStorage.setItem("push_banner_dismissed", "true");
+            }}
+            className="p-1 hover:bg-white/10 rounded text-gray-400 hover:text-gray-300"
+            aria-label="Dismiss"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="w-full mb-4 bg-white border border-gray-100 shadow-sm p-1 rounded-xl">
