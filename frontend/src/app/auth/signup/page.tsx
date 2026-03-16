@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { Press_Start_2P } from "next/font/google";
 import {
   Mail,
   ArrowRight,
@@ -16,12 +17,105 @@ import {
   Users,
   GraduationCap,
 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { OTPInput } from "@/components/ui/otp-input";
 import { useToast } from "@/hooks/use-toast";
 import { useSignup, useVerifyOTP, useResendOTP } from "@/hooks/useAuth";
+
+const pressStart2P = Press_Start_2P({ weight: "400", subsets: ["latin"], display: "swap" });
+
+// ─── Pixel Cat Mascot ────────────────────────────────────────────────────────
+const PX = 6; // px per "pixel"
+/* eslint-disable @typescript-eslint/no-unused-vars */
+const _ = null, D = "#2D1B10", O = "#E8954A", L = "#F5B96E",
+      K = "#C47228", pk = "#F9A8A8", Ey = "#1E2952", wh = "#FFFFFF", N = "#E87AA0";
+/* eslint-enable @typescript-eslint/no-unused-vars */
+
+const CAT_GRID: (string | null)[][] = [
+  [_, _, D, _, _, _, _, D, _, _, _, _], // 0 — ear tips
+  [_, D, O, D, _, _, D, O, D, _, _, _], // 1 — ears
+  [_, D, pk, O, D, _, D, O, pk, D, _, _], // 2 — pink inner ear
+  [_, _, D, O, O, D, O, O, D, _, _, _], // 3 — head top
+  [_, D, O, O, O, O, O, O, O, D, _, _], // 4 — head
+  [_, D, O, K, O, O, O, K, O, D, _, _], // 5 — tabby stripes
+  [_, D, O, Ey, wh, O, Ey, wh, O, D, _, _], // 6 — eyes
+  [_, D, L, O, O, N, O, O, L, D, _, _], // 7 — nose + cheeks
+  [_, D, O, O, O, O, O, O, O, D, _, _], // 8 — chin
+  [_, _, D, O, O, O, O, D, _, _, D, _], // 9 — neck + tail base
+  [_, D, O, O, O, O, O, D, _, D, O, D], // 10 — body + tail
+  [_, D, O, O, O, O, O, O, D, O, O, D], // 11 — body + tail
+  [_, D, O, O, O, O, O, O, O, D, _, _], // 12 — body
+  [_, _, D, O, D, _, D, O, D, _, _, _], // 13 — paws
+  [_, _, _, D, _, _, _, D, _, _, _, _], // 14 — paw bottoms
+];
+
+// Tail pixel keys "col-row" — animated separately for wag
+const TAIL_KEYS = new Set(["10-9", "9-10", "10-10", "11-10", "9-11", "10-11", "11-11"]);
+
+function PixelCatSVG() {
+  const body: React.ReactElement[] = [];
+  const tail: React.ReactElement[] = [];
+  CAT_GRID.forEach((row, r) =>
+    row.forEach((color, c) => {
+      if (!color) return;
+      const el = (
+        <rect key={`${r}-${c}`} x={c * PX} y={r * PX} width={PX} height={PX} fill={color} shapeRendering="crispEdges" />
+      );
+      (TAIL_KEYS.has(`${c}-${r}`) ? tail : body).push(el);
+    })
+  );
+  return (
+    <>
+      <style>{`
+        @keyframes yp-tail { 0%,100%{transform:rotate(0deg)}50%{transform:rotate(4deg)} }
+        .yp-tail { transform-origin: ${9 * PX}px ${9 * PX}px; animation: yp-tail 1.8s ease-in-out infinite; }
+      `}</style>
+      <svg width={12 * PX} height={15 * PX} style={{ imageRendering: "pixelated" }} aria-hidden>
+        <g>{body}</g>
+        <g className="yp-tail">{tail}</g>
+      </svg>
+    </>
+  );
+}
+
+function PixelCatMascot() {
+  return (
+    <div className="flex flex-col items-center gap-2 select-none" aria-hidden>
+      {/* Speech bubble */}
+      <motion.div
+        initial={{ scale: 0.3, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.85, type: "spring", stiffness: 380, damping: 18 }}
+        style={{ transformOrigin: "bottom center" }}
+        className="relative"
+      >
+        <div
+          className={`${pressStart2P.className} bg-white rounded-xl px-3 py-2.5 text-[8px] text-gray-800 whitespace-nowrap`}
+          style={{ boxShadow: "0 2px 10px rgba(0,0,0,0.08)", border: "1px solid #e5e7eb" }}
+        >
+          wassup dawg?!
+        </div>
+        {/* Triangle pointer — border */}
+        <div style={{ position: "absolute", bottom: -9, left: "50%", transform: "translateX(-50%)", width: 0, height: 0, borderLeft: "7px solid transparent", borderRight: "7px solid transparent", borderTop: "9px solid #e5e7eb" }} />
+        {/* Triangle pointer — fill */}
+        <div style={{ position: "absolute", bottom: -7, left: "50%", transform: "translateX(-50%)", width: 0, height: 0, borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderTop: "7px solid white" }} />
+      </motion.div>
+
+      {/* Cat sprite */}
+      <motion.div
+        initial={{ y: 80, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.2, type: "spring", stiffness: 280, damping: 22, mass: 0.8 }}
+      >
+        <PixelCatSVG />
+      </motion.div>
+    </div>
+  );
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 const features = [
   {
@@ -184,6 +278,9 @@ export default function SignupPage() {
           exit={{ opacity: 0, x: -20 }}
           className="space-y-6"
         >
+          {/* Pixel cat mascot */}
+          <PixelCatMascot />
+
           {/* Header card */}
           <div className="flex items-center gap-3 p-3 rounded-lg bg-white border border-gray-100 shadow-sm">
             <div className="w-10 h-10 rounded-lg bg-[#E31837] flex items-center justify-center flex-shrink-0">
