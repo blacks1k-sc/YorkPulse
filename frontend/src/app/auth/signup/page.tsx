@@ -16,6 +16,7 @@ import {
   ShoppingBag,
   Users,
   GraduationCap,
+  AlertCircle,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -421,6 +422,24 @@ export default function SignupPage() {
               Privacy Policy
             </Link>
           </p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.8, duration: 0.5, ease: "easeOut" }}
+            className="flex items-start gap-2.5 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2.5"
+          >
+            <AlertCircle className="w-3.5 h-3.5 text-gray-400 mt-0.5 flex-shrink-0" />
+            <p className="text-xs text-gray-400 leading-relaxed">
+              Facing an issue?{" "}
+              <a
+                href="mailto:yorkpulse.app@gmail.com"
+                className="text-gray-500 underline underline-offset-2 hover:text-gray-700 transition-colors"
+              >
+                yorkpulse.app@gmail.com
+              </a>
+            </p>
+          </motion.div>
         </motion.div>
       ) : (
         <motion.div
