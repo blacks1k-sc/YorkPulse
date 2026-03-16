@@ -15,12 +15,35 @@ from app.models.push_subscription import PushSubscription
 logger = logging.getLogger(__name__)
 
 
+def _get_vapid_private_key() -> str:
+    """
+    Return the VAPID private key as a raw base64url scalar string.
+
+    pywebpush expects the 32-byte EC private scalar encoded as base64url
+    (no PEM headers, no newlines).  Render/Railway may store the key as a
+    full PEM block with literal \\n escapes — this function normalises both
+    formats so the app works regardless of how the env var was entered.
+    """
+    raw = settings.vapid_private_key.replace("\\n", "\n").strip()
+    if not raw:
+        return ""
+    if "BEGIN" in raw:
+        # PEM → extract raw 32-byte scalar → base64url
+        import base64
+        from cryptography.hazmat.primitives.serialization import load_pem_private_key
+
+        key = load_pem_private_key(raw.encode(), password=None)
+        scalar = key.private_numbers().private_value.to_bytes(32, "big")  # type: ignore[union-attr]
+        return base64.urlsafe_b64encode(scalar).rstrip(b"=").decode()
+    # Already base64url
+    return raw
+
+
 def _send_webpush_sync(endpoint: str, p256dh: str, auth: str, payload: str) -> None:
     """Synchronous webpush call — run in a thread via asyncio.to_thread."""
     from pywebpush import webpush, WebPushException
 
-    # Render/Railway may store PEM newlines as literal \n — normalise them
-    private_key = settings.vapid_private_key.replace("\\n", "\n")
+    private_key = _get_vapid_private_key()
 
     try:
         webpush(
