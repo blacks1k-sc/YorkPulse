@@ -228,7 +228,7 @@ export default function LoginPage() {
           >
             <AlertCircle className="w-3.5 h-3.5 text-gray-400 mt-0.5 flex-shrink-0" />
             <p className="text-xs text-gray-400 leading-relaxed">
-              Facing an issue?{" "}
+              Having trouble? Write to us at{" "}
               <a
                 href="mailto:yorkpulse.app@gmail.com"
                 className="text-gray-500 underline underline-offset-2 hover:text-gray-700 transition-colors"
