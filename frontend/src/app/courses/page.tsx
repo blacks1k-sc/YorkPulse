@@ -962,9 +962,14 @@ export default function CoursesPage() {
   if (!isAuthenticated) {
     return (
       <div className="container mx-auto px-4 py-6 max-w-4xl">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold mb-1">Course Chat</h1>
-          <p className="text-sm text-gray-400">Browse and join course chat rooms</p>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-xl bg-cyan-500/20 flex items-center justify-center">
+            <GraduationCap className="w-5 h-5 text-cyan-400" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold">Course Chat</h1>
+            <p className="text-sm text-gray-400">Browse and join course chat rooms</p>
+          </div>
         </div>
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="w-20 h-20 rounded-full bg-cyan-500/10 flex items-center justify-center mb-6">
@@ -996,7 +1001,7 @@ export default function CoursesPage() {
           <GraduationCap className="w-5 h-5 text-cyan-400" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold mb-1">Course Chat</h1>
+          <h1 className="text-xl font-bold">Course Chat</h1>
           <p className="text-sm text-gray-400">
             {viewMode === "browse"
               ? "Browse and join across 7,706 course chat rooms"

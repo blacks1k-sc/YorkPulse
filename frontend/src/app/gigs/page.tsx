@@ -190,9 +190,14 @@ export default function GigsPage() {
   if (!isAuthenticated) {
     return (
       <div className="container mx-auto px-4 py-6 max-w-4xl">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold">Quick Gigs</h1>
-          <p className="text-gray-500 text-sm">Find help or offer your services</p>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-xl bg-yellow-500/20 flex items-center justify-center">
+            <GraduationCap className="w-5 h-5 text-yellow-400" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold">Quick Gigs</h1>
+            <p className="text-sm text-gray-400">Find help or offer your services</p>
+          </div>
         </div>
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="w-20 h-20 rounded-full bg-yellow-500/10 flex items-center justify-center mb-6">
@@ -221,8 +226,8 @@ export default function GigsPage() {
             <GraduationCap className="w-5 h-5 text-yellow-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Quick Gigs</h1>
-            <p className="text-gray-500 text-sm">Find help or offer your services</p>
+            <h1 className="text-xl font-bold">Quick Gigs</h1>
+            <p className="text-sm text-gray-400">Find help or offer your services</p>
           </div>
         </div>
         <Button asChild className="bg-yellow-500 hover:bg-yellow-600 text-black">
