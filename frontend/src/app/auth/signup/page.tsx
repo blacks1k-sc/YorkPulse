@@ -28,57 +28,51 @@ import { useSignup, useVerifyOTP, useResendOTP } from "@/hooks/useAuth";
 const pressStart2P = Press_Start_2P({ weight: "400", subsets: ["latin"], display: "swap" });
 
 // ─── Pixel Cat Mascot ────────────────────────────────────────────────────────
-const PX = 5; // px per pixel
+const PX = 7; // px per "pixel"
 
-// Lounging cat — 26 cols × 15 rows
-// Head upper-right, body horizontal, tail forms a closed loop on the left.
-// The loop's inner hollow + the head/body interiors are all empty: only the
-// silhouette BORDER pixels are rendered, making the cat completely hollow.
-const SILHOUETTE: (0 | 1)[][] = [
-//   0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25
-  [  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0], //  0 — ear tips
-  [  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0], //  1 — ears/head
-  [  0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0], //  2 — loop-top + head
-  [  0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0], //  3 — loop-sides + head
-  [  0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0], //  4 — loop-sides + head
-  [  0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0], //  5 — loop-sides + head
-  [  0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0], //  6 — loop-sides + body
-  [  0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0], //  7 — loop-bottom + body
-  [  0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0], //  8 — loop inner-stem + body
-  [  0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0], //  9 — tail-stem + body
-  [  0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0], // 10 — body
-  [  0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0], // 11 — body
-  [  0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 12 — paws
-  [  0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 13 — paws-bottom
-  [  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 14 — base
+// Front-facing sitting cat — 15 cols × 16 rows — direct outline pixels.
+// Two pointy ears → round hollow head → neck pinch → body → two paw bumps.
+// Tail curls to the right of body (rows 10-12, cols 13-14).
+const OUTLINE: (0 | 1)[][] = [
+//  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14
+  [ 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0 ], //  0 ear tips
+  [ 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0 ], //  1 ears
+  [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 ], //  2 head top (ear bases connect)
+  [ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0 ], //  3 head sides
+  [ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0 ], //  4 eyes row
+  [ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0 ], //  5 nose row
+  [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 ], //  6 chin
+  [ 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0 ], //  7 neck (narrower)
+  [ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0 ], //  8 chest/shoulders
+  [ 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 ], //  9 body sides
+  [ 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0 ], // 10 body + tail right
+  [ 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1 ], // 11 body + tail tip
+  [ 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0 ], // 12 body + tail returns
+  [ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0 ], // 13 body bottom
+  [ 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0 ], // 14 paws (two bumps)
+  [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ], // 15 empty
 ];
-const SROWS = SILHOUETTE.length;
-const SCOLS = SILHOUETTE[0].length;
-const CAT_PX_W = SCOLS * PX; // 130px
-const CAT_PX_H = SROWS * PX; //  75px
+const CAT_PX_W = 15 * PX; // 105px
+const CAT_PX_H = 16 * PX; // 112px
 
-// Compute silhouette border pixels (filled, adjacent to at least one empty cell)
+// Eyes — two 2×2 blocks inside the hollow head
+const _EYE_PX: [number, number][] = [
+  [4, 4], [5, 4], [4, 5], [5, 5],  // left eye
+  [8, 4], [9, 4], [8, 5], [9, 5],  // right eye
+];
+
+// Separate tail pixels (cols 13-14, rows 10-12) for wag animation
+const _TAIL_PX: [number, number][] = [];
 const _BODY_PX: [number, number][] = [];
-const _TAIL_PX: [number, number][] = []; // tail loop: cols 2-6, rows 2-9
-
-for (let r = 0; r < SROWS; r++) {
-  for (let c = 0; c < SCOLS; c++) {
-    if (!SILHOUETTE[r][c]) continue;
-    const border =
-      r === 0         || !SILHOUETTE[r - 1][c] ||
-      r === SROWS - 1 || !SILHOUETTE[r + 1][c] ||
-      c === 0         || !SILHOUETTE[r][c - 1] ||
-      c === SCOLS - 1 || !SILHOUETTE[r][c + 1];
-    if (!border) continue;
-    (r >= 2 && r <= 9 && c >= 2 && c <= 6 ? _TAIL_PX : _BODY_PX).push([c, r]);
+for (let r = 0; r < OUTLINE.length; r++) {
+  for (let c = 0; c < OUTLINE[0].length; c++) {
+    if (!OUTLINE[r][c]) continue;
+    if (c >= 13 && r >= 10 && r <= 12)
+      _TAIL_PX.push([c, r]);
+    else
+      _BODY_PX.push([c, r]);
   }
 }
-
-// Eyes — explicit 2×2 red blocks rendered over the hollow interior
-const _EYE_PX: [number, number][] = [
-  [15, 5], [16, 5], [15, 6], [16, 6],
-  [18, 5], [19, 5], [18, 6], [19, 6],
-];
 
 function PixelCatSVG() {
   const R = "#E31837";
@@ -88,15 +82,15 @@ function PixelCatSVG() {
   return (
     <>
       <style>{`
-        @keyframes yp-cat-wag { 0%,100%{transform:rotate(0deg)} 50%{transform:rotate(5deg)} }
-        .yp-cat-tail { transform-origin:${7 * PX}px ${9 * PX}px; animation:yp-cat-wag 2s ease-in-out infinite; }
+        @keyframes yp-wag { 0%,100%{transform:rotate(0deg)} 50%{transform:rotate(12deg)} }
+        .yp-tail { transform-origin:${12 * PX}px ${10 * PX}px; animation:yp-wag 1.8s ease-in-out infinite; }
       `}</style>
       <svg width={CAT_PX_W} height={CAT_PX_H} style={{ imageRendering: "pixelated" }} aria-hidden>
         <g>
           {_BODY_PX.map(([c, r]) => px(c, r, `b${r}-${c}`))}
-          {_EYE_PX.map(([c, r])  => px(c, r, `e${r}-${c}`))}
+          {_EYE_PX.map(([c, r]) => px(c, r, `e${r}-${c}`))}
         </g>
-        <g className="yp-cat-tail">
+        <g className="yp-tail">
           {_TAIL_PX.map(([c, r]) => px(c, r, `t${r}-${c}`))}
         </g>
       </svg>
@@ -125,7 +119,7 @@ function JoinYorkPulseCard() {
                            { type: "spring" as const, stiffness: 180, damping: 18 };
 
   return (
-    <div className="relative mt-24 rounded-lg bg-white border border-gray-100 shadow-sm">
+    <div className="relative mt-[120px] rounded-lg bg-white border border-gray-100 shadow-sm">
       {/* Cat + bubble container — anchored to top-right of card */}
       <div
         className="absolute pointer-events-none select-none"
@@ -167,7 +161,7 @@ function JoinYorkPulseCard() {
       </div>
 
       {/* Card text — right padding keeps text clear of cat */}
-      <div className="flex items-center gap-3 p-3 pr-[136px]">
+      <div className="flex items-center gap-3 p-3 pr-[112px]">
         <div className="w-10 h-10 rounded-lg bg-[#E31837] flex items-center justify-center flex-shrink-0">
           <span className="text-white font-bold text-sm">YP</span>
         </div>
