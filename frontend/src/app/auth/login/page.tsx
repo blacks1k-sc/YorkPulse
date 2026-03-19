@@ -49,29 +49,29 @@ export default function LoginPage() {
   }, []);
 
   // Handle email submission
-  const handleEmailSubmit = (e: React.FormEvent) => {
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateEmail(email)) {
       return;
     }
 
-    // Switch to OTP page immediately — don't block on API round-trip
-    setStep("otp");
-    setCooldown(60);
-
-    loginMutation.mutate({ email }, {
-      onError: (error) => {
-        // Revert if the request actually failed
-        setStep("email");
-        setCooldown(0);
+    try {
+      await loginMutation.mutateAsync({ email });
+      setStep("otp");
+      setCooldown(60);
+    } catch (error: any) {
+      const status = error?.response?.status ?? error?.status;
+      if (status === 404) {
+        router.push(`/auth/signup?email=${encodeURIComponent(email)}`);
+      } else {
         toast({
           title: "Error",
           description: error instanceof Error ? error.message : "Failed to send verification code",
           variant: "destructive",
         });
-      },
-    });
+      }
+    }
   };
 
   // Handle OTP verification

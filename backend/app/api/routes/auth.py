@@ -146,7 +146,13 @@ async def login(
     # But we still send OTP for both new and existing users
     # The verify-otp endpoint will handle user creation/login
 
-    if user and user.is_banned:
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No account found for this email. Please sign up first.",
+        )
+
+    if user.is_banned:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Account is banned",

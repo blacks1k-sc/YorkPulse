@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Press_Start_2P } from "next/font/google";
 import {
@@ -209,7 +209,14 @@ export default function SignupPage() {
   const [cooldown, setCooldown] = useState(0);
 
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
+
+  // Pre-fill email if redirected from login page
+  useEffect(() => {
+    const emailParam = searchParams.get("email");
+    if (emailParam) setEmail(emailParam);
+  }, []);
   const signupMutation = useSignup();
   const verifyOTPMutation = useVerifyOTP();
   const resendOTPMutation = useResendOTP();
