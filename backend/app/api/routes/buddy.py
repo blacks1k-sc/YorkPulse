@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
-from app.core.dependencies import CurrentUser, VerifiedUser
+from app.core.dependencies import AdminUser, CurrentUser, VerifiedUser
 from app.models.buddy import (
     BuddyCategory,
     BuddyParticipant,
@@ -639,6 +639,57 @@ async def remove_participant(
 
     # Delete the participant record
     await db.delete(participant)
+    await db.commit()
+
+
+# Admin endpoints
+
+@router.get("/admin/quests")
+async def admin_list_quests(
+    admin: AdminUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    page: int = Query(1, ge=1),
+    per_page: int = Query(50, ge=1, le=100),
+):
+    """List all quests (admin only)."""
+    from app.models.user import User
+    offset = (page - 1) * per_page
+    total_result = await db.execute(select(func.count(BuddyRequest.id)))
+    total = total_result.scalar_one()
+    result = await db.execute(
+        select(BuddyRequest)
+        .options(selectinload(BuddyRequest.user))
+        .order_by(BuddyRequest.created_at.desc())
+        .offset(offset)
+        .limit(per_page)
+    )
+    quests = result.scalars().all()
+    items = [
+        {
+            "id": str(q.id),
+            "title": q.title,
+            "category": q.category.value if q.category else None,
+            "status": q.status.value if q.status else None,
+            "host": {"id": str(q.user.id), "name": q.user.name} if q.user else None,
+            "created_at": q.created_at.isoformat() if q.created_at else None,
+        }
+        for q in quests
+    ]
+    return {"items": items, "total": total, "page": page, "per_page": per_page, "has_more": (offset + per_page) < total}
+
+
+@router.delete("/admin/quests/{quest_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def admin_delete_quest(
+    quest_id: str,
+    admin: AdminUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Force-cancel any quest (admin only)."""
+    result = await db.execute(select(BuddyRequest).where(BuddyRequest.id == quest_id))
+    quest = result.scalar_one_or_none()
+    if not quest:
+        raise HTTPException(status_code=404, detail="Quest not found")
+    quest.status = BuddyRequestStatus.CANCELLED
     await db.commit()
 
 
