@@ -146,6 +146,7 @@ class SupabaseAuthService:
     # Test accounts with fixed OTPs — never receive real emails
     _TEST_ACCOUNTS: dict[str, str] = {
         "proftest@yorku.ca": "371649",
+        "yorkpulse.app@gmail.com": "102938",
     }
 
     async def send_otp(self, email: str, force_dev_mode: bool = False) -> tuple[bool, str]:
