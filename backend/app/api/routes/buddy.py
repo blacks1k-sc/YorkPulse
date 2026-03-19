@@ -95,7 +95,6 @@ async def list_quests(
     per_page: Annotated[int, Query(ge=1, le=50)] = 20,
 ):
     """List side quests with filters and sorting."""
-    now = datetime.now(timezone.utc)
 
     query = (
         select(BuddyRequest)
@@ -107,7 +106,8 @@ async def list_quests(
         query = query.where(BuddyRequest.status == status)
     else:
         query = query.where(BuddyRequest.status == BuddyRequestStatus.OPEN)
-        query = query.where(BuddyRequest.start_time > now)  # Only future events for open
+        # Use DB-side NOW() to avoid Python/DB timezone mismatch with naive datetimes
+        query = query.where(BuddyRequest.start_time > func.now())
 
     if category:
         query = query.where(BuddyRequest.category == category)
