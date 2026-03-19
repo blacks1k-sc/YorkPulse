@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Trash2, Loader2, Shield, Users, ShoppingBag, FileText, MessageSquare, Flag, ChevronLeft, ChevronRight, BookOpen, Image, Search } from "lucide-react";
+import { Trash2, Loader2, Shield, Users, ShoppingBag, FileText, MessageSquare, Flag, ChevronLeft, ChevronRight, BookOpen, Image, Search, Compass } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -798,6 +798,79 @@ function CourseMonitorTab() {
   );
 }
 
+// ─── Side Quests Tab ──────────────────────────────────────────────────────────
+
+interface AdminQuest {
+  id: string;
+  title: string;
+  category: string;
+  status: string;
+  host: { id: string; name: string } | null;
+  created_at: string | null;
+}
+
+function QuestsTab() {
+  const [data, setData] = useState<PagedResult<AdminQuest> | null>(null);
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async (p: number) => {
+    setLoading(true);
+    try {
+      const result = await api.admin.getQuests(p, 50);
+      setData(result);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(page); }, [load, page]);
+
+  async function handleDelete(id: string) {
+    await api.admin.deleteQuest(id);
+    await load(page);
+  }
+
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>;
+  if (!data) return null;
+
+  return (
+    <div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-gray-200 text-gray-400 text-left">
+              <th className="pb-2 pr-4 font-medium">Title</th>
+              <th className="pb-2 pr-4 font-medium">Host</th>
+              <th className="pb-2 pr-4 font-medium">Category</th>
+              <th className="pb-2 pr-4 font-medium">Status</th>
+              <th className="pb-2 pr-4 font-medium">Created</th>
+              <th className="pb-2 font-medium"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.items.map((q) => (
+              <tr key={q.id} className="border-b border-gray-200/50 hover:bg-gray-100/30">
+                <td className="py-2 pr-4 font-medium max-w-[200px] truncate">{q.title}</td>
+                <td className="py-2 pr-4 text-gray-500">{q.host?.name ?? "—"}</td>
+                <td className="py-2 pr-4 text-gray-500">{q.category}</td>
+                <td className="py-2 pr-4"><StatusBadge status={q.status} /></td>
+                <td className="py-2 pr-4 text-gray-400">{fmtDate(q.created_at)}</td>
+                <td className="py-2 text-right">
+                  {q.status !== "cancelled" && (
+                    <DeleteButton onDelete={() => handleDelete(q.id)} label="Cancel quest" />
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <Pagination page={page} hasMore={data.has_more} total={data.total} perPage={data.per_page} onPrev={() => setPage(p => p - 1)} onNext={() => setPage(p => p + 1)} />
+    </div>
+  );
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 const ADMIN_EMAIL = "yorkpulse.app@gmail.com";
@@ -859,6 +932,9 @@ export default function AdminPage() {
           <TabsTrigger value="courses" className="flex items-center gap-1.5">
             <BookOpen className="w-4 h-4" /> Course Chat
           </TabsTrigger>
+          <TabsTrigger value="quests" className="flex items-center gap-1.5">
+            <Compass className="w-4 h-4" /> Side Quests
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="users"><UsersTab /></TabsContent>
@@ -867,6 +943,7 @@ export default function AdminPage() {
         <TabsContent value="feedback"><FeedbackTab /></TabsContent>
         <TabsContent value="reports"><ReportsTab /></TabsContent>
         <TabsContent value="courses"><CourseMonitorTab /></TabsContent>
+        <TabsContent value="quests"><QuestsTab /></TabsContent>
       </Tabs>
     </div>
   );

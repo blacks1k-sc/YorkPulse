@@ -926,6 +926,25 @@ class ApiClient {
     deleteFeedback: (feedbackId: string) =>
       this.delete<void>(`/feedback/admin/${feedbackId}`),
 
+    getQuests: (page = 1, perPage = 50) =>
+      this.get<{
+        items: Array<{
+          id: string;
+          title: string;
+          category: string;
+          status: string;
+          host: { id: string; name: string } | null;
+          created_at: string | null;
+        }>;
+        total: number;
+        page: number;
+        per_page: number;
+        has_more: boolean;
+      }>(`/quests/admin/quests?page=${page}&per_page=${perPage}`),
+
+    deleteQuest: (questId: string) =>
+      this.delete<void>(`/quests/admin/quests/${questId}`),
+
     getReports: (page = 1, perPage = 50) =>
       this.get<{
         items: Array<{
