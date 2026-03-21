@@ -8,7 +8,7 @@ from alembic import op
 import sqlalchemy as sa
 
 revision = 'add_last_login_ip'
-down_revision = 'merge_heads'
+down_revision = '8ec545ca7d1a'
 branch_labels = None
 depends_on = None
 

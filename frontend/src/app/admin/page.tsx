@@ -982,17 +982,19 @@ function isAdmin(user: { is_admin?: boolean; email?: string } | null) {
 export default function AdminPage() {
   const router = useRouter();
   const { user, isAuthenticated, isHydrated } = useAuthStore();
-  const { isLoading } = useUser();
+  const { isLoading, isError } = useUser();
 
   useEffect(() => {
     // Wait for store to hydrate AND user query to finish before redirecting
     if (!isHydrated || isLoading) return;
+    // Don't redirect on API errors (e.g. backend deploy in progress) — just show spinner
+    if (isError) return;
     if (!isAuthenticated || !isAdmin(user)) {
       router.replace("/");
     }
-  }, [isHydrated, isLoading, isAuthenticated, user, router]);
+  }, [isHydrated, isLoading, isError, isAuthenticated, user, router]);
 
-  if (!isHydrated || isLoading || !isAuthenticated || !isAdmin(user)) {
+  if (!isHydrated || isLoading || isError || !isAuthenticated || !isAdmin(user)) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
