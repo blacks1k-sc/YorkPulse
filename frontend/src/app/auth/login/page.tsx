@@ -271,7 +271,7 @@ export default function LoginPage() {
             </p>
           </motion.div>
         </motion.div>
-      ) : (
+      ) : step === "otp" ? (
         <motion.div
           key="otp"
           initial={{ opacity: 0, x: 20 }}

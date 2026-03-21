@@ -175,7 +175,7 @@ function UserTable({ data, page, loading, search, onSearchChange, onDelete, onPr
   loading: boolean;
   search: string;
   onSearchChange: (v: string) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: string) => Promise<void>;
   onPrev: () => void;
   onNext: () => void;
   view: "signins" | "signups";

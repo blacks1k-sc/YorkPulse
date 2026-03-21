@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -201,7 +201,7 @@ const features = [
 
 type Step = "email" | "otp";
 
-export default function SignupPage() {
+function SignupPageInner() {
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
@@ -535,5 +535,13 @@ export default function SignupPage() {
         </motion.div>
       )}
     </AnimatePresence>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense>
+      <SignupPageInner />
+    </Suspense>
   );
 }
