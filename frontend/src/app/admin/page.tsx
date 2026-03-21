@@ -256,8 +256,16 @@ function UserTable({ data, page, loading, search, onSearchChange, onDelete, onPr
   );
 }
 
+interface SignupAttempt {
+  id: string;
+  email: string;
+  ip_address: string;
+  attempted_at: string;
+  was_blocked: boolean;
+}
+
 function UsersTab() {
-  const [view, setView] = useState<"signins" | "signups">("signins");
+  const [view, setView] = useState<"signins" | "signups" | "attempts">("signins");
 
   const [signinsData, setSigninsData] = useState<PagedResult<AdminUser> | null>(null);
   const [signinsPage, setSigninsPage] = useState(1);
@@ -270,6 +278,10 @@ function UsersTab() {
   const [signupsLoading, setSignupsLoading] = useState(true);
   const [signupsSearch, setSignupsSearch] = useState("");
   const [signupsDebounced, setSignupsDebounced] = useState("");
+
+  const [attemptsData, setAttemptsData] = useState<PagedResult<SignupAttempt> | null>(null);
+  const [attemptsPage, setAttemptsPage] = useState(1);
+  const [attemptsLoading, setAttemptsLoading] = useState(false);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -293,8 +305,19 @@ function UsersTab() {
     }
   }, []);
 
+  const loadAttempts = useCallback(async (p: number) => {
+    setAttemptsLoading(true);
+    try {
+      const result = await api.admin.getSignupAttempts(p, 50);
+      setAttemptsData(result);
+    } finally {
+      setAttemptsLoading(false);
+    }
+  }, []);
+
   useEffect(() => { loadSignins(signinsPage, signinsDebounced); }, [loadSignins, signinsPage, signinsDebounced]);
   useEffect(() => { loadSignups(signupsPage, signupsDebounced); }, [loadSignups, signupsPage, signupsDebounced]);
+  useEffect(() => { if (view === "attempts") loadAttempts(attemptsPage); }, [loadAttempts, attemptsPage, view]);
 
   function makeSearchHandler(setter: (v: string) => void, debounceSetter: (v: string) => void, resetPage: () => void) {
     return (val: string) => {
@@ -317,18 +340,13 @@ function UsersTab() {
     <div>
       {/* Sub-tabs */}
       <div className="flex gap-1 mb-4 bg-gray-100 rounded-lg p-1 w-fit">
-        <button
-          onClick={() => setView("signins")}
-          className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${view === "signins" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
-        >
-          Sign Ins
-        </button>
-        <button
-          onClick={() => setView("signups")}
-          className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${view === "signups" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
-        >
-          Sign Ups
-        </button>
+        {(["signins", "signups", "attempts"] as const).map((v) => (
+          <button key={v} onClick={() => setView(v)}
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${view === v ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+          >
+            {v === "signins" ? "Sign Ins" : v === "signups" ? "Sign Ups" : "Attempts"}
+          </button>
+        ))}
       </div>
 
       {view === "signins" ? (
@@ -343,7 +361,7 @@ function UsersTab() {
           onNext={() => setSigninsPage(p => p + 1)}
           view="signins"
         />
-      ) : (
+      ) : view === "signups" ? (
         <UserTable
           data={signupsData}
           page={signupsPage}
@@ -355,6 +373,42 @@ function UsersTab() {
           onNext={() => setSignupsPage(p => p + 1)}
           view="signups"
         />
+      ) : (
+        <div>
+          {attemptsLoading ? (
+            <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
+          ) : !attemptsData ? null : (
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-200 text-gray-400 text-left">
+                      <th className="pb-2 pr-4 font-medium">Email</th>
+                      <th className="pb-2 pr-4 font-medium">IP Address</th>
+                      <th className="pb-2 pr-4 font-medium">Time</th>
+                      <th className="pb-2 font-medium">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {attemptsData.items.map((a) => (
+                      <tr key={a.id} className="border-b border-gray-200/50 hover:bg-gray-100/30">
+                        <td className="py-2 pr-4 text-gray-700">{a.email}</td>
+                        <td className="py-2 pr-4 font-mono text-xs text-gray-500">{a.ip_address}</td>
+                        <td className="py-2 pr-4 text-gray-400 whitespace-nowrap">{fmtDateTime(a.attempted_at)}</td>
+                        <td className="py-2">
+                          {a.was_blocked
+                            ? <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-400">blocked</span>
+                            : <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400">sent</span>}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <Pagination page={attemptsPage} hasMore={attemptsData.has_more} total={attemptsData.total} perPage={attemptsData.per_page} onPrev={() => setAttemptsPage(p => p - 1)} onNext={() => setAttemptsPage(p => p + 1)} />
+            </>
+          )}
+        </div>
       )}
     </div>
   );

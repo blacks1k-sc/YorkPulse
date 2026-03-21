@@ -40,6 +40,7 @@ from app.schemas.auth import (
     VerifyEmailResponse,
     VerifyOTPRequest,
 )
+from app.models.signup_attempt import SignupAttempt
 from app.services.email_validation import email_validation_service
 from app.services.gemini import gemini_service
 from app.services.jwt import jwt_service
@@ -106,7 +107,19 @@ async def signup(
             detail="Email already registered. Please login instead.",
         )
 
-    await _check_otp_send_rate_limit(request.email)
+    # Log this attempt before rate limiting (captures attacker IPs even on blocked requests)
+    was_blocked = False
+    try:
+        await _check_otp_send_rate_limit(request.email)
+    except HTTPException:
+        was_blocked = True
+        raise
+    finally:
+        try:
+            db.add(SignupAttempt(email=request.email, ip_address=real_ip, was_blocked=was_blocked))
+            await db.commit()
+        except Exception:
+            pass  # Never let logging failure break the signup flow
 
     # Send OTP via Supabase (or locally if dev_mode)
     success, message = await supabase_auth_service.send_otp(
@@ -774,3 +787,40 @@ async def admin_seed_otp(
     from app.services.redis import redis_service
     await redis_service.set(f"otp:{email.lower()}", otp, expire_seconds=86400)
     return {"message": f"OTP seeded for {email}"}
+
+
+@router.get("/admin/signup-attempts")
+async def admin_list_signup_attempts(
+    _: AdminUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    page: int = Query(1, ge=1),
+    per_page: int = Query(50, ge=1, le=200),
+    ip: str | None = Query(None),
+):
+    """Admin only: list signup attempts for forensic IP tracking."""
+    query = select(SignupAttempt).order_by(SignupAttempt.attempted_at.desc())
+    if ip:
+        query = query.where(SignupAttempt.ip_address == ip)
+
+    total_result = await db.execute(select(func.count()).select_from(query.subquery()))
+    total = total_result.scalar_one()
+
+    items_result = await db.execute(query.offset((page - 1) * per_page).limit(per_page))
+    items = items_result.scalars().all()
+
+    return {
+        "items": [
+            {
+                "id": str(a.id),
+                "email": a.email,
+                "ip_address": a.ip_address,
+                "attempted_at": a.attempted_at.isoformat() if a.attempted_at else None,
+                "was_blocked": a.was_blocked,
+            }
+            for a in items
+        ],
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+        "has_more": (page * per_page) < total,
+    }

@@ -864,6 +864,15 @@ class ApiClient {
     deleteUser: (userId: string) =>
       this.delete<void>(`/auth/admin/users/${userId}`),
 
+    getSignupAttempts: (page = 1, perPage = 50, ip?: string) => {
+      const params = new URLSearchParams({ page: String(page), per_page: String(perPage) });
+      if (ip) params.set("ip", ip);
+      return this.get<{
+        items: Array<{ id: string; email: string; ip_address: string; attempted_at: string; was_blocked: boolean }>;
+        total: number; page: number; per_page: number; has_more: boolean;
+      }>(`/auth/admin/signup-attempts?${params.toString()}`);
+    },
+
     getVaultPosts: (page = 1, perPage = 50) =>
       this.get<{
         items: Array<{
