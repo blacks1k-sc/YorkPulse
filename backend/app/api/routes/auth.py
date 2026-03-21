@@ -224,6 +224,7 @@ async def login(
 @router.post("/verify-otp", response_model=VerifyEmailResponse)
 async def verify_otp(
     request: VerifyOTPRequest,
+    http_request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """
@@ -266,8 +267,11 @@ async def verify_otp(
         if not user.email_verified:
             user.email_verified = True
 
-    # Track last login
+    # Track last login time and IP
+    real_ip = getattr(http_request.state, "real_ip", http_request.client.host if http_request.client else None)
     user.last_login_at = datetime.now(timezone.utc)
+    user.last_login_ip = real_ip
+    logger.info("LOGIN success: email=%s ip=%s", user.email, real_ip)
     await db.commit()
 
     # Generate our own JWT tokens (for API auth)
@@ -678,6 +682,7 @@ async def admin_list_users(
                 "is_banned": u.is_banned,
                 "created_at": u.created_at.isoformat() if u.created_at else None,
                 "last_login_at": u.last_login_at.isoformat() if u.last_login_at else None,
+                "last_login_ip": u.last_login_ip,
             }
             for u in users
         ],

@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 # Auth endpoints get a much stricter limit than the global one.
 # 10 requests per 10 minutes per IP — allows a real user to retry a few
 # times but makes a flood script hit the wall almost immediately.
-AUTH_RATE_LIMIT_REQUESTS = 10
+AUTH_RATE_LIMIT_REQUESTS = 5
 AUTH_RATE_LIMIT_WINDOW = 600   # 10 minutes
 AUTH_ENDPOINTS = {
     "/api/v1/auth/login",

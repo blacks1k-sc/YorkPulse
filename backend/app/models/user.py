@@ -105,6 +105,10 @@ class User(Base, UUIDMixin, TimestampMixin):
         DateTime(timezone=True),
         nullable=True,
     )
+    last_login_ip: Mapped[str | None] = mapped_column(
+        String(45),   # fits IPv4 and IPv6
+        nullable=True,
+    )
 
     # Account status
     is_active: Mapped[bool] = mapped_column(
