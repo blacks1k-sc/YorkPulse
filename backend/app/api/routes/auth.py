@@ -1,10 +1,13 @@
 """Authentication API routes."""
 
+import logging
 import uuid
 from datetime import datetime, timezone
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status, UploadFile, File
+
+logger = logging.getLogger(__name__)
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -78,6 +81,7 @@ async def _check_otp_send_rate_limit(email: str) -> None:
 @router.post("/signup", response_model=SignupResponse)
 async def signup(
     request: SignupRequest,
+    http_request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """
@@ -87,6 +91,9 @@ async def signup(
     2. Checks if email already exists and is verified
     3. Sends OTP verification email via Supabase (or locally if dev_mode)
     """
+    real_ip = getattr(http_request.state, "real_ip", http_request.client.host if http_request.client else "unknown")
+    logger.info("SIGNUP attempt: email=%s ip=%s", request.email, real_ip)
+
     # Check if user already exists and is verified
     result = await db.execute(select(User).where(User.email == request.email))
     existing_user = result.scalar_one_or_none()
@@ -164,6 +171,7 @@ async def verify_email(
 @router.post("/login", response_model=SignupResponse)
 async def login(
     request: LoginRequest,
+    http_request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """
@@ -172,6 +180,9 @@ async def login(
     Sends a 6-digit OTP code to the user's email for passwordless login.
     If dev_mode=True, generates a local OTP instead of sending email.
     """
+    real_ip = getattr(http_request.state, "real_ip", http_request.client.host if http_request.client else "unknown")
+    logger.info("LOGIN attempt: email=%s ip=%s", request.email, real_ip)
+
     result = await db.execute(select(User).where(User.email == request.email))
     user = result.scalar_one_or_none()
 

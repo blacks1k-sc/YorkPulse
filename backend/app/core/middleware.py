@@ -6,48 +6,100 @@ import logging
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from app.services.redis import rate_limiter
+from app.services.redis import rate_limiter, redis_service
 
 logger = logging.getLogger(__name__)
 
+# Auth endpoints get a much stricter limit than the global one.
+# 10 requests per 10 minutes per IP — allows a real user to retry a few
+# times but makes a flood script hit the wall almost immediately.
+AUTH_RATE_LIMIT_REQUESTS = 10
+AUTH_RATE_LIMIT_WINDOW = 600   # 10 minutes
+AUTH_ENDPOINTS = {
+    "/api/v1/auth/login",
+    "/api/v1/auth/signup",
+    "/api/v1/auth/resend-otp",
+    "/api/v1/auth/verify-otp",
+}
+
+# In-process fallback for when Redis is unavailable
+_ip_request_counts: dict[str, list[float]] = {}
+
+
+def _get_real_ip(request: Request) -> str:
+    """
+    Extract the real client IP from X-Forwarded-For.
+    Render's load balancer sets this to the actual client IP.
+    We take the LAST entry to prevent spoofing — Render appends
+    the real IP at the end, so the attacker can't fake it by
+    setting their own X-Forwarded-For header.
+    """
+    forwarded = request.headers.get("X-Forwarded-For")
+    if forwarded:
+        # Take the last IP — appended by Render's LB (trustworthy)
+        ip = forwarded.split(",")[-1].strip()
+    else:
+        ip = request.client.host if request.client else "unknown"
+    return ip
+
 
 class TimingMiddleware(BaseHTTPMiddleware):
-    """Middleware to log request timing for debugging slow endpoints."""
+    """Log request timing and real client IP on every request."""
 
     async def dispatch(self, request: Request, call_next) -> Response:
         start_time = time.time()
+        real_ip = _get_real_ip(request)
+
+        # Store real IP on request state so routes can access it
+        request.state.real_ip = real_ip
 
         response = await call_next(request)
 
         process_time = time.time() - start_time
 
-        # Log slow requests (> 1 second)
         if process_time > 1.0:
             logger.warning(
-                f"SLOW REQUEST: {request.method} {request.url.path} "
-                f"took {process_time:.2f}s"
+                "SLOW REQUEST: %s %s took %.2fs (ip=%s)",
+                request.method, request.url.path, process_time, real_ip,
             )
 
-        # Always add timing header
         response.headers["X-Process-Time"] = f"{process_time:.3f}"
-
         return response
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
-    """Middleware for rate limiting requests."""
+    """
+    Two-tier rate limiting:
+      1. Auth endpoints: strict — 10 req / 10 min per real IP
+      2. Everything else: relaxed — 100 req / 60 sec per real IP or user ID
+    """
 
     async def dispatch(self, request: Request, call_next) -> Response:
-        # Get identifier (user ID from token or IP address)
-        identifier = self._get_identifier(request)
+        real_ip = _get_real_ip(request)
+        path = request.url.path
 
-        # Get endpoint for per-endpoint limiting
-        endpoint = request.url.path
+        # Strict limit on auth endpoints
+        if path in AUTH_ENDPOINTS:
+            blocked = await self._check_auth_limit(real_ip, path)
+            if blocked:
+                logger.warning(
+                    "AUTH RATE LIMIT EXCEEDED: ip=%s path=%s", real_ip, path
+                )
+                return Response(
+                    content='{"detail": "Too many requests. Please wait 10 minutes."}',
+                    status_code=429,
+                    media_type="application/json",
+                    headers={"Retry-After": str(AUTH_RATE_LIMIT_WINDOW)},
+                )
 
-        # Check rate limit
-        is_allowed, info = await rate_limiter.is_allowed(identifier, endpoint)
+        # Global limit for everything
+        identifier = self._get_identifier(request, real_ip)
+        is_allowed, info = await rate_limiter.is_allowed(identifier, path)
 
         if not is_allowed:
+            logger.warning(
+                "GLOBAL RATE LIMIT EXCEEDED: ip=%s path=%s", real_ip, path
+            )
             return Response(
                 content='{"detail": "Rate limit exceeded. Please try again later."}',
                 status_code=429,
@@ -60,28 +112,41 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 },
             )
 
-        # Process request
         response = await call_next(request)
-
-        # Add rate limit headers
         response.headers["X-RateLimit-Limit"] = str(info["limit"])
         response.headers["X-RateLimit-Remaining"] = str(info["remaining"])
         response.headers["X-RateLimit-Reset"] = str(info["reset_in"])
-
         return response
 
-    def _get_identifier(self, request: Request) -> str:
-        """Get a unique identifier for the request."""
-        # Try to get user ID from request state (set by auth middleware)
+    async def _check_auth_limit(self, ip: str, path: str) -> bool:
+        """
+        Returns True (blocked) if this IP has exceeded 10 requests
+        to auth endpoints in the last 10 minutes.
+        Uses Redis sliding window; falls back to in-process list.
+        """
+        key = f"auth_rate:{ip}"
+        try:
+            current = await redis_service.incr(key)
+            if current == 1:
+                await redis_service.expire(key, AUTH_RATE_LIMIT_WINDOW)
+            if current > AUTH_RATE_LIMIT_REQUESTS:
+                logger.warning(
+                    "AUTH FLOOD DETECTED: ip=%s count=%d path=%s",
+                    ip, current, path,
+                )
+            return current > AUTH_RATE_LIMIT_REQUESTS
+        except Exception:
+            # Redis unavailable — sliding window in process memory
+            now = time.time()
+            window_start = now - AUTH_RATE_LIMIT_WINDOW
+            times = _ip_request_counts.get(ip, [])
+            times = [t for t in times if t > window_start]  # prune old
+            times.append(now)
+            _ip_request_counts[ip] = times
+            return len(times) > AUTH_RATE_LIMIT_REQUESTS
+
+    def _get_identifier(self, request: Request, real_ip: str) -> str:
         user_id = getattr(request.state, "user_id", None)
         if user_id:
             return f"user:{user_id}"
-
-        # Fall back to IP address
-        forwarded = request.headers.get("X-Forwarded-For")
-        if forwarded:
-            ip = forwarded.split(",")[0].strip()
-        else:
-            ip = request.client.host if request.client else "unknown"
-
-        return f"ip:{ip}"
+        return f"ip:{real_ip}"
