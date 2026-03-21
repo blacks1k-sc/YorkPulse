@@ -38,10 +38,41 @@ from app.schemas.auth import (
 from app.services.email_validation import email_validation_service
 from app.services.gemini import gemini_service
 from app.services.jwt import jwt_service
+from app.services.redis import redis_service
 from app.services.storage import storage_service
 from app.services.supabase import supabase_auth_service
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+# In-process fallback for per-email OTP send rate limiting (when Redis is unavailable)
+# key: email → last send timestamp
+import time as _time
+_otp_send_times: dict[str, float] = {}
+OTP_SEND_COOLDOWN = 60  # seconds between OTP sends per email
+
+async def _check_otp_send_rate_limit(email: str) -> None:
+    """Raise 429 if this email has received an OTP in the last 60 seconds."""
+    key = f"otp_send_cooldown:{email.lower()}"
+    try:
+        existing = await redis_service.get(key)
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Please wait 60 seconds before requesting another code.",
+            )
+        await redis_service.set(key, "1", expire_seconds=OTP_SEND_COOLDOWN)
+    except HTTPException:
+        raise
+    except Exception:
+        # Redis unavailable — use in-process fallback
+        now = _time.time()
+        last = _otp_send_times.get(email.lower(), 0)
+        if now - last < OTP_SEND_COOLDOWN:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Please wait 60 seconds before requesting another code.",
+            )
+        _otp_send_times[email.lower()] = now
 
 
 @router.post("/signup", response_model=SignupResponse)
@@ -65,6 +96,8 @@ async def signup(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered. Please login instead.",
         )
+
+    await _check_otp_send_rate_limit(request.email)
 
     # Send OTP via Supabase (or locally if dev_mode)
     success, message = await supabase_auth_service.send_otp(
@@ -158,6 +191,8 @@ async def login(
             detail="Account is banned",
         )
 
+    await _check_otp_send_rate_limit(request.email)
+
     # Send OTP via Supabase (or locally if dev_mode)
     success, message = await supabase_auth_service.send_otp(
         request.email, force_dev_mode=request.dev_mode
@@ -247,6 +282,8 @@ async def resend_otp(
     Rate limited to prevent abuse - client should enforce 60s cooldown.
     If dev_mode=True, generates a local OTP instead of sending email.
     """
+    await _check_otp_send_rate_limit(request.email)
+
     success, message = await supabase_auth_service.resend_otp(
         request.email, force_dev_mode=request.dev_mode
     )
