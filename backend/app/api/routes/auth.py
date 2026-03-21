@@ -653,8 +653,9 @@ async def admin_list_users(
     page: Annotated[int, Query(ge=1)] = 1,
     per_page: Annotated[int, Query(ge=1, le=100)] = 50,
     search: Annotated[str | None, Query(max_length=100)] = None,
+    sort_by: Annotated[str, Query()] = "last_login",
 ):
-    """List all users (admin only)."""
+    """List all users (admin only). sort_by=last_login|created"""
     query = select(User)
 
     if search:
@@ -663,7 +664,10 @@ async def admin_list_users(
             or_(User.name.ilike(term), User.email.ilike(term))
         )
 
-    query = query.order_by(User.last_login_at.desc().nulls_last(), User.created_at.desc())
+    if sort_by == "created":
+        query = query.order_by(User.created_at.desc())
+    else:
+        query = query.order_by(User.last_login_at.desc().nulls_last(), User.created_at.desc())
 
     count_query = select(func.count()).select_from(query.subquery())
     total = (await db.execute(count_query)).scalar() or 0

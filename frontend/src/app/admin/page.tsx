@@ -21,6 +21,7 @@ interface AdminUser {
   is_banned: boolean;
   created_at: string | null;
   last_login_at: string | null;
+  last_login_ip: string | null;
 }
 
 interface AdminVaultPost {
@@ -168,40 +169,17 @@ function DeleteButton({ onDelete, label = "Delete" }: { onDelete: () => Promise<
 
 // ─── Users Tab ────────────────────────────────────────────────────────────────
 
-function UsersTab() {
-  const [data, setData] = useState<PagedResult<AdminUser> | null>(null);
-  const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const load = useCallback(async (p: number, q: string) => {
-    setLoading(true);
-    try {
-      const result = await api.admin.getUsers(p, 50, q || undefined);
-      setData(result);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { load(page, debouncedSearch); }, [load, page, debouncedSearch]);
-
-  function handleSearchChange(val: string) {
-    setSearch(val);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      setPage(1);
-      setDebouncedSearch(val);
-    }, 300);
-  }
-
-  async function handleDelete(userId: string) {
-    await api.admin.deleteUser(userId);
-    await load(page, debouncedSearch);
-  }
-
+function UserTable({ data, page, loading, search, onSearchChange, onDelete, onPrev, onNext, view }: {
+  data: PagedResult<AdminUser> | null;
+  page: number;
+  loading: boolean;
+  search: string;
+  onSearchChange: (v: string) => void;
+  onDelete: (id: string) => void;
+  onPrev: () => void;
+  onNext: () => void;
+  view: "signins" | "signups";
+}) {
   return (
     <div>
       <div className="mb-4 relative">
@@ -210,7 +188,7 @@ function UsersTab() {
           type="text"
           placeholder="Search by name or email…"
           value={search}
-          onChange={(e) => handleSearchChange(e.target.value)}
+          onChange={(e) => onSearchChange(e.target.value)}
           className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-500"
         />
       </div>
@@ -224,8 +202,17 @@ function UsersTab() {
                 <tr className="border-b border-gray-200 text-gray-400 text-left">
                   <th className="pb-2 pr-4 font-medium">Name</th>
                   <th className="pb-2 pr-4 font-medium">Email</th>
-                  <th className="pb-2 pr-4 font-medium">Last Login</th>
-                  <th className="pb-2 pr-4 font-medium">Joined</th>
+                  {view === "signins" ? (
+                    <>
+                      <th className="pb-2 pr-4 font-medium">Last Login</th>
+                      <th className="pb-2 pr-4 font-medium">IP Address</th>
+                    </>
+                  ) : (
+                    <>
+                      <th className="pb-2 pr-4 font-medium">Joined</th>
+                      <th className="pb-2 pr-4 font-medium">Last Login IP</th>
+                    </>
+                  )}
                   <th className="pb-2 pr-4 font-medium">Flags</th>
                   <th className="pb-2 font-medium"></th>
                 </tr>
@@ -238,14 +225,23 @@ function UsersTab() {
                       {u.is_admin && <span className="ml-2 text-xs bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded-full">admin</span>}
                     </td>
                     <td className="py-2 pr-4 text-gray-500">{u.email}</td>
-                    <td className="py-2 pr-4 text-gray-500 whitespace-nowrap">{fmtDateTime(u.last_login_at)}</td>
-                    <td className="py-2 pr-4 text-gray-400">{fmtDate(u.created_at)}</td>
+                    {view === "signins" ? (
+                      <>
+                        <td className="py-2 pr-4 text-gray-500 whitespace-nowrap">{fmtDateTime(u.last_login_at)}</td>
+                        <td className="py-2 pr-4 font-mono text-xs text-gray-400">{u.last_login_ip ?? "—"}</td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="py-2 pr-4 text-gray-400">{fmtDate(u.created_at)}</td>
+                        <td className="py-2 pr-4 font-mono text-xs text-gray-400">{u.last_login_ip ?? "—"}</td>
+                      </>
+                    )}
                     <td className="py-2 pr-4">
                       {u.is_banned && <StatusBadge status="banned" />}
                     </td>
                     <td className="py-2 text-right">
                       {!u.is_admin && (
-                        <DeleteButton onDelete={() => handleDelete(u.id)} label="Delete user" />
+                        <DeleteButton onDelete={() => onDelete(u.id)} label="Delete user" />
                       )}
                     </td>
                   </tr>
@@ -253,8 +249,112 @@ function UsersTab() {
               </tbody>
             </table>
           </div>
-          <Pagination page={page} hasMore={data.has_more} total={data.total} perPage={data.per_page} onPrev={() => setPage(p => p - 1)} onNext={() => setPage(p => p + 1)} />
+          <Pagination page={page} hasMore={data.has_more} total={data.total} perPage={data.per_page} onPrev={onPrev} onNext={onNext} />
         </>
+      )}
+    </div>
+  );
+}
+
+function UsersTab() {
+  const [view, setView] = useState<"signins" | "signups">("signins");
+
+  const [signinsData, setSigninsData] = useState<PagedResult<AdminUser> | null>(null);
+  const [signinsPage, setSigninsPage] = useState(1);
+  const [signinsLoading, setSigninsLoading] = useState(true);
+  const [signinsSearch, setSigninsSearch] = useState("");
+  const [signinsDebounced, setSigninsDebounced] = useState("");
+
+  const [signupsData, setSignupsData] = useState<PagedResult<AdminUser> | null>(null);
+  const [signupsPage, setSignupsPage] = useState(1);
+  const [signupsLoading, setSignupsLoading] = useState(true);
+  const [signupsSearch, setSignupsSearch] = useState("");
+  const [signupsDebounced, setSignupsDebounced] = useState("");
+
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const loadSignins = useCallback(async (p: number, q: string) => {
+    setSigninsLoading(true);
+    try {
+      const result = await api.admin.getUsers(p, 50, q || undefined, "last_login");
+      setSigninsData(result);
+    } finally {
+      setSigninsLoading(false);
+    }
+  }, []);
+
+  const loadSignups = useCallback(async (p: number, q: string) => {
+    setSignupsLoading(true);
+    try {
+      const result = await api.admin.getUsers(p, 50, q || undefined, "created");
+      setSignupsData(result);
+    } finally {
+      setSignupsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadSignins(signinsPage, signinsDebounced); }, [loadSignins, signinsPage, signinsDebounced]);
+  useEffect(() => { loadSignups(signupsPage, signupsDebounced); }, [loadSignups, signupsPage, signupsDebounced]);
+
+  function makeSearchHandler(setter: (v: string) => void, debounceSetter: (v: string) => void, resetPage: () => void) {
+    return (val: string) => {
+      setter(val);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => {
+        resetPage();
+        debounceSetter(val);
+      }, 300);
+    };
+  }
+
+  async function handleDelete(userId: string) {
+    await api.admin.deleteUser(userId);
+    await loadSignins(signinsPage, signinsDebounced);
+    await loadSignups(signupsPage, signupsDebounced);
+  }
+
+  return (
+    <div>
+      {/* Sub-tabs */}
+      <div className="flex gap-1 mb-4 bg-gray-100 rounded-lg p-1 w-fit">
+        <button
+          onClick={() => setView("signins")}
+          className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${view === "signins" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+        >
+          Sign Ins
+        </button>
+        <button
+          onClick={() => setView("signups")}
+          className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${view === "signups" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+        >
+          Sign Ups
+        </button>
+      </div>
+
+      {view === "signins" ? (
+        <UserTable
+          data={signinsData}
+          page={signinsPage}
+          loading={signinsLoading}
+          search={signinsSearch}
+          onSearchChange={makeSearchHandler(setSigninsSearch, setSigninsDebounced, () => setSigninsPage(1))}
+          onDelete={handleDelete}
+          onPrev={() => setSigninsPage(p => p - 1)}
+          onNext={() => setSigninsPage(p => p + 1)}
+          view="signins"
+        />
+      ) : (
+        <UserTable
+          data={signupsData}
+          page={signupsPage}
+          loading={signupsLoading}
+          search={signupsSearch}
+          onSearchChange={makeSearchHandler(setSignupsSearch, setSignupsDebounced, () => setSignupsPage(1))}
+          onDelete={handleDelete}
+          onPrev={() => setSignupsPage(p => p - 1)}
+          onNext={() => setSignupsPage(p => p + 1)}
+          view="signups"
+        />
       )}
     </div>
   );

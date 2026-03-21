@@ -837,8 +837,8 @@ class ApiClient {
 
   // Admin endpoints
   admin = {
-    getUsers: (page = 1, perPage = 50, search?: string) => {
-      const params = new URLSearchParams({ page: String(page), per_page: String(perPage) });
+    getUsers: (page = 1, perPage = 50, search?: string, sortBy: "last_login" | "created" = "last_login") => {
+      const params = new URLSearchParams({ page: String(page), per_page: String(perPage), sort_by: sortBy });
       if (search) params.set("search", search);
       return this.get<{
         items: Array<{
@@ -849,6 +849,7 @@ class ApiClient {
           is_banned: boolean;
           created_at: string | null;
           last_login_at: string | null;
+          last_login_ip: string | null;
         }>;
         total: number;
         page: number;
