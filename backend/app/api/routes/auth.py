@@ -11,11 +11,13 @@ logger = logging.getLogger(__name__)
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.dependencies import AdminUser, CurrentUser
 from app.models.user import User
 from app.schemas.auth import (
     ADMIN_EMAILS,
+    AdminLoginRequest,
     AvatarUploadRequest,
     AvatarUploadResponse,
     IDUploadRequest,
@@ -218,6 +220,46 @@ async def login(
     return SignupResponse(
         message=message,  # In dev mode, this includes the OTP
         email=request.email,
+    )
+
+
+@router.post("/admin-login", response_model=VerifyEmailResponse)
+async def admin_login(
+    request: AdminLoginRequest,
+    http_request: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """
+    Password-based login for the admin account only.
+    Bypasses OTP entirely — no email is sent.
+    """
+    real_ip = getattr(http_request.state, "real_ip", http_request.client.host if http_request.client else "unknown")
+    logger.info("ADMIN LOGIN attempt: email=%s ip=%s", request.email, real_ip)
+
+    if request.email.lower() not in [e.lower() for e in ADMIN_EMAILS]:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorised.")
+
+    if not settings.admin_password or request.password != settings.admin_password:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid password.")
+
+    result = await db.execute(select(User).where(User.email == request.email))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Admin account not found.")
+
+    user.last_login_at = datetime.now(timezone.utc)
+    user.last_login_ip = real_ip
+    await db.commit()
+
+    access_token, refresh_token, expires_in = jwt_service.create_token_pair(str(user.id), user.email)
+    logger.info("ADMIN LOGIN success: email=%s ip=%s", request.email, real_ip)
+
+    return VerifyEmailResponse(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        expires_in=expires_in,
+        requires_name_verification=not user.name_verified,
     )
 
 

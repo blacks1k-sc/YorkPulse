@@ -4,25 +4,32 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, ArrowRight, ArrowLeft, Loader2, RefreshCw, CheckCircle, AlertCircle } from "lucide-react";
+import { Mail, ArrowRight, ArrowLeft, Loader2, RefreshCw, CheckCircle, AlertCircle, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { OTPInput } from "@/components/ui/otp-input";
 import { useToast } from "@/hooks/use-toast";
 import { useLogin, useVerifyOTP, useResendOTP } from "@/hooks/useAuth";
+import { useAuthStore } from "@/stores/auth";
+import { api } from "@/services/api";
 
-type Step = "email" | "otp";
+const ADMIN_EMAIL = "yorkpulse.app@gmail.com";
+
+type Step = "email" | "otp" | "password";
 
 export default function LoginPage() {
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
+  const [password, setPassword] = useState("");
+  const [passwordLoading, setPasswordLoading] = useState(false);
   const [emailError, setEmailError] = useState("");
   const [cooldown, setCooldown] = useState(0);
 
   const router = useRouter();
   const { toast } = useToast();
+  const { setTokens } = useAuthStore();
   const loginMutation = useLogin();
   const verifyOTPMutation = useVerifyOTP();
   const resendOTPMutation = useResendOTP();
@@ -56,6 +63,12 @@ export default function LoginPage() {
       return;
     }
 
+    // Admin account uses password — no OTP sent
+    if (email.toLowerCase() === ADMIN_EMAIL) {
+      setStep("password");
+      return;
+    }
+
     try {
       await loginMutation.mutateAsync({ email });
       setStep("otp");
@@ -71,6 +84,25 @@ export default function LoginPage() {
           variant: "destructive",
         });
       }
+    }
+  };
+
+  // Handle admin password login
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordLoading(true);
+    try {
+      const data = await api.auth.adminLogin(email, password);
+      setTokens(data.access_token, data.refresh_token);
+      router.push("/auth/setup");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Invalid password",
+        variant: "destructive",
+      });
+    } finally {
+      setPasswordLoading(false);
     }
   };
 
@@ -138,6 +170,7 @@ export default function LoginPage() {
   const handleBack = () => {
     setStep("email");
     setOtp("");
+    setPassword("");
   };
 
   return (
@@ -323,7 +356,54 @@ export default function LoginPage() {
             The code expires in 10 minutes
           </p>
         </motion.div>
-      )}
+      ) : step === "password" ? (
+        <motion.div
+          key="password"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: 20 }}
+          className="space-y-6"
+        >
+          <Button variant="ghost" size="sm" onClick={handleBack} className="mb-2">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
+
+          <div className="text-center space-y-2">
+            <div className="w-16 h-16 mx-auto rounded-full bg-[#E31837]/10 flex items-center justify-center mb-4">
+              <Lock className="w-8 h-8 text-[#E31837]" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900">Admin login</h1>
+            <p className="text-[#E31837] font-medium">{email}</p>
+          </div>
+
+          <form onSubmit={handlePasswordSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Enter admin password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoFocus
+                required
+              />
+            </div>
+            <Button
+              type="submit"
+              className="w-full bg-[#E31837] hover:bg-[#C41230]"
+              disabled={passwordLoading || !password}
+            >
+              {passwordLoading ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Signing in...</>
+              ) : (
+                <><CheckCircle className="w-4 h-4 mr-2" />Sign in</>
+              )}
+            </Button>
+          </form>
+        </motion.div>
+      ) : null}
     </AnimatePresence>
   );
 }

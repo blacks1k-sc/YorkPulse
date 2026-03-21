@@ -108,6 +108,13 @@ class LoginRequest(BaseModel):
         return email_lower
 
 
+class AdminLoginRequest(BaseModel):
+    """Request schema for admin password login (no OTP)."""
+
+    email: EmailStr
+    password: str
+
+
 class TokenResponse(BaseModel):
     """Response with JWT tokens."""
 

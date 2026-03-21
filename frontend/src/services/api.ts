@@ -194,6 +194,9 @@ class ApiClient {
     login: (email: string) =>
       this.post<SignupResponse>("/auth/login", { email }),
 
+    adminLogin: (email: string, password: string) =>
+      this.post<VerifyEmailResponse>("/auth/admin-login", { email, password }),
+
     verifyEmail: (token: string) =>
       this.post<VerifyEmailResponse>("/auth/verify-email", { token }),
 
