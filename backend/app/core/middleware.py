@@ -29,15 +29,14 @@ _ip_request_counts: dict[str, list[float]] = {}
 def _get_real_ip(request: Request) -> str:
     """
     Extract the real client IP from X-Forwarded-For.
-    Render's load balancer sets this to the actual client IP.
-    We take the LAST entry to prevent spoofing — Render appends
-    the real IP at the end, so the attacker can't fake it by
-    setting their own X-Forwarded-For header.
+    Render's load balancer PREPENDS the real client IP as the first entry.
+    Any entries after the first were set by the client or intermediate proxies
+    and cannot be trusted. Taking the first entry gives us the real public IP.
     """
     forwarded = request.headers.get("X-Forwarded-For")
     if forwarded:
-        # Take the last IP — appended by Render's LB (trustworthy)
-        ip = forwarded.split(",")[-1].strip()
+        # First entry = real client IP prepended by Render's LB
+        ip = forwarded.split(",")[0].strip()
     else:
         ip = request.client.host if request.client else "unknown"
     return ip
