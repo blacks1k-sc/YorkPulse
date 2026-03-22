@@ -1,0 +1,54 @@
+# =============================================================================
+# frontend/.dockerignore
+# Prevents these files from being sent to the Docker build context.
+# Without this, 'COPY . .' in the builder stage would send node_modules/
+# (~400MB) to the daemon before npm ci downloads them again — wasting time
+# and memory on every build.
+# =============================================================================
+
+# Dependencies — never copy these; the builder stage runs npm ci from scratch
+node_modules/
+.pnp
+.pnp.js
+
+# Next.js build output — builder stage regenerates this; don't copy stale output
+.next/
+out/
+
+# Environment files — never bake secrets into the image
+.env
+.env.*
+!.env.example
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# TypeScript cache
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# Testing
+coverage/
+.nyc_output/
+
+# Docker files themselves (no need to copy into the image)
+Dockerfile
+.dockerignore
+
+# Vercel
+.vercel

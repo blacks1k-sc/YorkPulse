@@ -73,6 +73,7 @@ PROJECT_PLAN.md
 PROMPT.md
 REVIEW.md
 
-# Markdown files
+# Markdown files — excluded globally except infrastructure docs
 *.md
+!multicloud/**/*.md
 docs/
