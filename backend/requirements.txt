@@ -1,3 +1,9 @@
+# =============================================================================
+# requirements.txt — PRODUCTION dependencies only
+# This file is used by the Docker image (backend/Dockerfile).
+# Dev tools (ruff, pytest, pytest-asyncio, resend SDK) are in requirements-dev.txt.
+# =============================================================================
+
 # FastAPI
 fastapi>=0.115.0
 uvicorn[standard]>=0.32.0
@@ -20,9 +26,6 @@ passlib[bcrypt]>=1.7.4
 # Redis
 redis>=5.2.0
 
-# AI
-google-generativeai>=0.8.0
-
 # Supabase
 supabase>=2.0.0
 
@@ -41,9 +44,3 @@ pywebpush>=2.0.0
 
 # Utils
 python-dotenv>=1.0.1
-
-# Development
-ruff>=0.8.0
-pytest>=8.3.0
-pytest-asyncio>=0.24.0
-resend>=2.0.0

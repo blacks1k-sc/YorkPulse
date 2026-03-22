@@ -1,0 +1,20 @@
+# =============================================================================
+# requirements-dev.txt — DEVELOPMENT dependencies only
+# NOT installed in the Docker image (Dockerfile uses requirements.txt only).
+# Install locally with: pip install -r requirements-dev.txt
+# =============================================================================
+
+# Pull in all production dependencies first
+-r requirements.txt
+
+# Linting and formatting
+ruff>=0.8.0
+
+# Testing
+pytest>=8.3.0
+pytest-asyncio>=0.24.0
+
+# Resend Python SDK — legacy email provider SDK.
+# Note: production code (email.py) calls the Resend REST API directly via httpx
+# and does NOT import this package. Kept here for local experimentation only.
+resend>=2.0.0

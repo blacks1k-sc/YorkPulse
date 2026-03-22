@@ -74,6 +74,7 @@ RUN pip install --no-cache-dir --upgrade pip \
 COPY app/ ./app/
 COPY alembic/ ./alembic/
 COPY alembic.ini .
+COPY entrypoint.sh .
 
 # -----------------------------------------------------------------------------
 # OWNERSHIP
@@ -81,7 +82,8 @@ COPY alembic.ini .
 # Done before USER switch — chown requires root permissions.
 # Single RUN keeps this as one layer.
 # -----------------------------------------------------------------------------
-RUN chown -R appuser:appuser /app
+RUN chown -R appuser:appuser /app \
+    && chmod +x /app/entrypoint.sh
 
 # -----------------------------------------------------------------------------
 # SWITCH TO NON-ROOT
@@ -154,9 +156,20 @@ HEALTHCHECK \
 # Shell form wraps in /bin/sh -c — the shell intercepts SIGTERM but never
 # forwards it to uvicorn, causing a 30-second forced kill on every deploy.
 # -----------------------------------------------------------------------------
-CMD alembic upgrade head && \
-    uvicorn app.main:app \
-      --host 0.0.0.0 \
-      --port 8000 \
-      --workers 1 \
-      --log-level info
+# -----------------------------------------------------------------------------
+# ENTRYPOINT + CMD — exec form so uvicorn becomes PID 1 and receives SIGTERM.
+#
+# ENTRYPOINT runs entrypoint.sh which:
+#   1. Runs `alembic upgrade head` (idempotent — safe to run every start)
+#   2. exec "$@" — replaces the shell with CMD (uvicorn becomes PID 1)
+#
+# CMD provides the default arguments passed to ENTRYPOINT.
+# Exec form (JSON array) — no shell wrapper, uvicorn receives SIGTERM
+# directly and shuts down gracefully on ECS task stop / rolling deploy.
+# -----------------------------------------------------------------------------
+ENTRYPOINT ["/app/entrypoint.sh"]
+CMD ["uvicorn", "app.main:app", \
+     "--host", "0.0.0.0", \
+     "--port", "8000", \
+     "--workers", "1", \
+     "--log-level", "info"]

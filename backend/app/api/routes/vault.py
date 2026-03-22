@@ -24,8 +24,9 @@ from app.schemas.vault import (
     VaultPostResponse,
     VaultPostUpdate,
 )
+import re
+
 from app.schemas.user import UserMinimal
-from app.services.gemini import gemini_service
 from app.services.storage import storage_service
 
 logger = logging.getLogger(__name__)
@@ -34,6 +35,18 @@ router = APIRouter(prefix="/vault", tags=["Vault"])
 
 # Constants
 FLAG_THRESHOLD = 5  # Posts hidden after this many flags
+
+
+def _check_for_pii(text: str) -> tuple[bool, list[str]]:
+    """Check text for personal identifiable information using regex patterns."""
+    found = []
+    if re.search(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", text):
+        found.append("email")
+    if re.search(r"\b\d{3}[-.]?\d{3}[-.]?\d{4}\b", text):
+        found.append("phone")
+    if re.search(r"\b\d+\s+[A-Za-z]+\s+(Street|St|Avenue|Ave|Road|Rd|Drive|Dr|Boulevard|Blvd)\b", text, re.I):
+        found.append("address")
+    return len(found) > 0, found
 
 
 def _post_to_response(post: VaultPost, current_user_id: str | None = None) -> VaultPostResponse:
@@ -169,20 +182,19 @@ async def create_post(
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Create a new vault post."""
-    # Pre-publish content moderation
-    has_pii, pii_types = await gemini_service.check_for_pii(request.content)
+    # Pre-publish PII check
+    has_pii, pii_types = _check_for_pii(request.content)
     if has_pii:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Content contains personal information ({', '.join(pii_types)}). Please remove it.",
         )
 
-    # Check title for PII too
-    has_pii, pii_types = await gemini_service.check_for_pii(request.title)
+    has_pii, pii_types = _check_for_pii(request.title)
     if has_pii:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Title contains personal information. Please remove it.",
+            detail="Title contains personal information. Please remove it.",
         )
 
     post = VaultPost(
@@ -380,7 +392,7 @@ async def create_comment(
             raise HTTPException(status_code=400, detail="Parent comment not found")
 
     # Check for PII
-    has_pii, _ = await gemini_service.check_for_pii(request.content)
+    has_pii, _ = _check_for_pii(request.content)
     if has_pii:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

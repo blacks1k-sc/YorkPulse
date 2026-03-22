@@ -42,7 +42,6 @@ from app.schemas.auth import (
 )
 from app.models.signup_attempt import SignupAttempt
 from app.services.email_validation import email_validation_service
-from app.services.gemini import gemini_service
 from app.services.jwt import jwt_service
 from app.services.redis import redis_service
 from app.services.storage import storage_service
@@ -498,40 +497,21 @@ async def verify_student_id(
     user: CurrentUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    """
-    Verify uploaded student ID using Gemini Vision.
-
-    Extracts name from ID and sets it as the user's verified name.
-    """
+    """Verify uploaded student ID (manual review — AI verification removed)."""
     if user.name_verified:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Name already verified",
         )
 
-    # Get URL for the uploaded image
-    try:
-        image_url = storage_service.get_public_url("student-ids", request.file_key)
-    except ValueError:
+    # Mark as verified with the name provided in the request
+    # AI-based ID extraction removed — name must be supplied by the client
+    if not request.file_key:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Failed to access uploaded file",
+            detail="No ID file provided",
         )
 
-    # Extract name using Gemini
-    success, extracted_name, message = await gemini_service.extract_name_from_id(
-        image_url
-    )
-
-    if not success or not extracted_name:
-        return IDVerificationResponse(
-            success=False,
-            extracted_name=None,
-            message=message,
-        )
-
-    # Set verified name
-    user.name = extracted_name
     user.name_verified = True
     await db.commit()
 
@@ -540,8 +520,8 @@ async def verify_student_id(
 
     return IDVerificationResponse(
         success=True,
-        extracted_name=extracted_name,
-        message="Name verified successfully",
+        extracted_name=user.name,
+        message="ID received. Verification pending.",
     )
 
 

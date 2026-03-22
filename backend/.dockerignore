@@ -1,6 +1,51 @@
+# =============================================================================
+# .dockerignore — files excluded from the Docker build context
+# The build context is everything sent to the Docker daemon when you run
+# "docker build". Excluding large/sensitive directories makes builds faster
+# and prevents secrets from being accidentally baked into the image.
+# =============================================================================
+
+# --- Secrets (CRITICAL — these must never enter the image) ---
 .env
-__pycache__
+.env.*
+.env.local
+.env.production
+
+# --- Python bytecode (generated at import time, OS/arch-specific) ---
+__pycache__/
 *.pyc
 *.pyo
-.pytest_cache
-.mypy_cache
+*.pyd
+
+# --- Virtual environments (100s of MB, not needed — we pip install fresh) ---
+venv/
+.venv/
+env/
+
+# --- Git history (not needed in image, can leak sensitive commit messages) ---
+.git/
+.gitignore
+
+# --- Test and dev tooling (not needed in production container) ---
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+tests/
+*.test.py
+
+# --- IDE and OS files ---
+.vscode/
+.idea/
+*.DS_Store
+
+# --- Docker files themselves (no need to copy into the image) ---
+Dockerfile
+.dockerignore
+
+# --- Docs and scripts (not needed at runtime) ---
+docs/
+scripts/
+*.md
+
+# --- Node (shouldn't exist in backend but safety exclusion) ---
+node_modules/
