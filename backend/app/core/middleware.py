@@ -25,6 +25,12 @@ AUTH_ENDPOINTS = {
 # In-process fallback for when Redis is unavailable
 _ip_request_counts: dict[str, list[float]] = {}
 
+# Global signup rate limit — caps total /signup requests across ALL IPs.
+# Stops distributed botnet attacks where each IP sends only 1-2 requests.
+GLOBAL_SIGNUP_LIMIT = 20   # max signups per window across all IPs
+GLOBAL_SIGNUP_WINDOW = 60  # 1 minute
+_global_signup_times: list[float] = []  # in-process fallback
+
 
 def _get_real_ip(request: Request) -> str:
     """
@@ -76,6 +82,18 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next) -> Response:
         real_ip = _get_real_ip(request)
         path = request.url.path
+
+        # Global signup rate limit — blocks distributed botnets rotating IPs
+        if path == "/api/v1/auth/signup":
+            globally_blocked = await self._check_global_signup_limit()
+            if globally_blocked:
+                logger.warning("GLOBAL SIGNUP FLOOD: ip=%s blocked", real_ip)
+                return Response(
+                    content='{"detail": "Signup temporarily unavailable. Please try again in a minute."}',
+                    status_code=429,
+                    media_type="application/json",
+                    headers={"Retry-After": str(GLOBAL_SIGNUP_WINDOW)},
+                )
 
         # Strict limit on auth endpoints
         if path in AUTH_ENDPOINTS:
@@ -143,6 +161,29 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             times.append(now)
             _ip_request_counts[ip] = times
             return len(times) > AUTH_RATE_LIMIT_REQUESTS
+
+    async def _check_global_signup_limit(self) -> bool:
+        """
+        Returns True (blocked) if more than GLOBAL_SIGNUP_LIMIT signups
+        have been attempted across ALL IPs in the last GLOBAL_SIGNUP_WINDOW seconds.
+        Defeats distributed botnets that rotate IPs to bypass per-IP limits.
+        """
+        key = "global_signup_rate"
+        try:
+            current = await redis_service.incr(key)
+            if current == 1:
+                await redis_service.expire(key, GLOBAL_SIGNUP_WINDOW)
+            if current > GLOBAL_SIGNUP_LIMIT:
+                logger.warning("GLOBAL SIGNUP FLOOD DETECTED: count=%d", current)
+            return current > GLOBAL_SIGNUP_LIMIT
+        except Exception:
+            # Redis unavailable — sliding window in process memory
+            global _global_signup_times
+            now = time.time()
+            window_start = now - GLOBAL_SIGNUP_WINDOW
+            _global_signup_times = [t for t in _global_signup_times if t > window_start]
+            _global_signup_times.append(now)
+            return len(_global_signup_times) > GLOBAL_SIGNUP_LIMIT
 
     def _get_identifier(self, request: Request, real_ip: str) -> str:
         user_id = getattr(request.state, "user_id", None)
