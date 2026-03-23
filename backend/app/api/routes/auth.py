@@ -1,6 +1,7 @@
 """Authentication API routes."""
 
 import logging
+import re
 import uuid
 from datetime import datetime, timezone
 from typing import Annotated
@@ -49,6 +50,12 @@ from app.services.supabase import supabase_auth_service
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
+# Bot-generated York email pattern: firstname.lastname + 4+ digits
+# e.g. anna.yamazaki71110@my.yorku.ca, oliver.kim295@my.yorku.ca
+# Real York emails never look like this — no legitimate student has
+# a dotted name followed by 4+ random digits.
+_BOT_EMAIL_RE = re.compile(r'^[a-z]+\.[a-z]+\d{4,}@(my\.)?yorku\.ca$', re.IGNORECASE)
+
 # In-process fallback for per-email OTP send rate limiting (when Redis is unavailable)
 # key: email → last send timestamp
 import time as _time
@@ -95,6 +102,14 @@ async def signup(
     """
     real_ip = getattr(http_request.state, "real_ip", http_request.client.host if http_request.client else "unknown")
     logger.info("SIGNUP attempt: email=%s ip=%s", request.email, real_ip)
+
+    # Reject bot-generated emails before hitting DB or Redis
+    if _BOT_EMAIL_RE.match(request.email):
+        logger.warning("BOT EMAIL BLOCKED: email=%s ip=%s", request.email, real_ip)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid email address.",
+        )
 
     # Check if user already exists and is verified
     result = await db.execute(select(User).where(User.email == request.email))
