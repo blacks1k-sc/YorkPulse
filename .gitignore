@@ -58,6 +58,8 @@ env/
 *.tfstate.backup
 *.tfplan
 .terraform.lock.hcl
+*.tfvars
+*.tfvars.json
 
 # One-off scripts with credentials (never commit)
 backend/send_broadcast.py

@@ -33,7 +33,19 @@ PHASE 2 — Terraform AWS infrastructure (VPC, ECR, ECS Fargate, ALB, WAF, Elast
   - [x] frontend/next.config.ts (output: standalone enabled)
   - [x] Both images build clean — zero warnings, zero errors
   - [x] Both images run locally — backend 200 OK, frontend serves on port 3000
-- [ ] Phase 2   → Terraform: VPC + ECR + ECS Fargate + ALB + WAF + ElastiCache + Secrets Manager + IAM + CloudWatch + SNS
+- [x] Phase 2   → Terraform: VPC + ECR + ECS Fargate + ALB + WAF + ElastiCache + Secrets Manager + IAM + CloudWatch + SNS
+  - [x] versions.tf (S3 remote backend, AWS provider ~> 5.0)
+  - [x] variables.tf (project, environment, region, image tag, alert email, ACM cert ARN, GitHub username)
+  - [x] vpc.tf (VPC 10.0.0.0/16, 2 public + 2 private subnets, IGW, NAT GW, route tables, 3 security groups)
+  - [x] ecr.tf (yorkpulse-backend repo, MUTABLE, scan on push, lifecycle policy: 30d untagged + 10 tagged)
+  - [x] secrets.tf (8 Secrets Manager secrets: DB, JWT, Supabase, Redis, SMTP, Gemini, redis-auth-token)
+  - [x] iam.tf (ECS execution role, ECS task role, GitHub Actions OIDC role — all least-privilege)
+  - [x] alb.tf (internet-facing ALB, target group port 8000, HTTP→HTTPS redirect, HTTPS listener)
+  - [x] ecs.tf (ECS cluster, CloudWatch log group, task definition with secrets injection, ECS service rolling deploy)
+  - [x] elasticache.tf (Redis 7.1 cache.t3.micro, TLS, auth token from Secrets Manager, private subnets)
+  - [x] waf.tf (WAF Web ACL: IP Reputation + CRS + Known Bad Inputs, ALB association, CloudWatch logging)
+  - [x] cloudwatch.tf (SNS topic + email, 6 alarms: CPU/memory/5xx/latency/WAF/errors, log metric filter)
+  - [x] outputs.tf (ALB DNS, ECR URL, ECS cluster/service, VPC ID, ElastiCache endpoint, IAM role ARN)
 - [ ] Phase 3   → Terraform: Azure Container Apps + Key Vault + Azure Monitor
 - [ ] Phase 4   → GitHub Actions: OIDC + Trivy + Checkov + staging + prod approval gate
 - [ ] Phase 5   → CloudWatch dashboards + WAF logs + Azure Monitor alerts

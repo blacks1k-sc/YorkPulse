@@ -233,3 +233,203 @@
 **Expected output**: Table showing yorkpulse-backend:local and yorkpulse-frontend:local.
   Backend: ~500-600MB (python:3.12-slim + all pip packages)
   Frontend: ~200MB (node:20-alpine + standalone output only — no full node_modules)
+
+---
+
+## Terraform — Phase 2: AWS Infrastructure (infra/aws/)
+
+> Run these commands from inside the multicloud/infra/aws/ directory.
+> Phase 0.5 bootstrap (infra/bootstrap/) must have been applied before this.
+> The S3 state bucket and DynamoDB lock table must already exist.
+> Complete ALL manual pre-apply steps before running terraform apply.
+
+---
+
+**Command**: `cd multicloud/infra/aws && terraform init`
+**What it does**: Downloads the AWS provider plugin (~5.0) and connects Terraform to the
+  S3 remote backend created in Phase 0.5. After this command, terraform.tfstate is stored
+  in S3 (not locally). DynamoDB locking is active — concurrent applies are blocked.
+  No AWS resources are created yet.
+**When you use it**: Once when first entering the infra/aws/ directory.
+  Also run after adding a new provider or upgrading provider versions.
+**Expected output**: "Terraform has been successfully initialized!" + backend confirmation message.
+
+---
+
+**Command**: `terraform plan -var='acm_certificate_arn=arn:aws:acm:us-east-1:ACCOUNT:certificate/ID' -var='github_username=YOUR_GITHUB_USERNAME'`
+**What it does**: Previews ALL AWS resources that will be created — VPC, subnets, security groups,
+  NAT Gateway, ECR, ECS cluster + task definition + service, ALB, target group, listeners,
+  WAF Web ACL + association, ElastiCache Redis, Secrets Manager secrets (empty), IAM roles,
+  CloudWatch log groups + alarms + metric filter, SNS topic + email subscription.
+  Nothing is created. Read every resource in the output carefully.
+**When you use it**: Always before terraform apply. Never skip. Pass both required variables.
+**Expected output**: "Plan: ~50 to add, 0 to change, 0 to destroy." (approximate count)
+
+---
+
+**Command**: `terraform apply -var='acm_certificate_arn=arn:aws:acm:us-east-1:ACCOUNT:certificate/ID' -var='github_username=YOUR_GITHUB_USERNAME'`
+**What it does**: Creates all AWS infrastructure resources defined in infra/aws/.
+  Prompts for "yes" confirmation before creating anything. State is saved to S3.
+  After apply: Secrets Manager secrets are created but EMPTY — fill them manually.
+  SNS sends a confirmation email to yorkpulse.app@gmail.com — click to confirm.
+**When you use it**: After reviewing terraform plan output. After completing ALL manual pre-apply steps.
+**Expected output**: "Apply complete! Resources: ~50 added, 0 changed, 0 destroyed."
+  Followed by output block showing ALB DNS name, ECR URL, ECS cluster/service names.
+
+---
+
+**Command**: `terraform output`
+**What it does**: Prints all output values defined in outputs.tf:
+  alb_dns_name, ecr_repository_url, ecs_cluster_name, ecs_service_name, vpc_id,
+  elasticache_endpoint, github_actions_role_arn, sns_alerts_topic_arn.
+  Copy these values for the manual post-apply steps.
+**When you use it**: After terraform apply completes. Also any time you need to recall output values.
+**Expected output**: Key-value list of all output names and their values.
+
+---
+
+## AWS CLI — Phase 2 Operations
+
+---
+
+**Command**: `aws secretsmanager put-secret-value --secret-id /yorkpulse/prod/database-url --secret-string "postgresql+asyncpg://user:password@host:5432/postgres?sslmode=require"`
+**What it does**: Fills the empty DATABASE_URL secret created by Terraform with the actual value.
+  The ECS task will fail to start until this (and all other secrets) are filled.
+  Repeat for each secret: jwt-secret-key, supabase-url, supabase-key, redis-url, smtp-password,
+  gemini-api-key, redis-auth-token.
+**When you use it**: Immediately after terraform apply, before starting any ECS tasks.
+**Expected output**: JSON with ARN, Name, and VersionId of the updated secret.
+
+---
+
+**Command**: `aws secretsmanager put-secret-value --secret-id /yorkpulse/prod/redis-auth-token --secret-string "$(python3 -c 'import secrets; t=secrets.token_urlsafe(32); print(t.replace("@","").replace("/",""))')"`
+**What it does**: Generates a random 32-byte URL-safe token (no "@" or "/" which ElastiCache forbids),
+  and stores it as the ElastiCache auth token. This token must be set BEFORE terraform apply
+  because elasticache.tf reads it from Secrets Manager during the ElastiCache cluster creation.
+**When you use it**: Before the first terraform apply (not after — ElastiCache reads it during apply).
+**Expected output**: JSON with ARN, Name, and VersionId.
+
+---
+
+**Command**: `aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <account-id>.dkr.ecr.us-east-1.amazonaws.com`
+**What it does**: Gets a temporary ECR authentication token (valid 12 hours) and logs Docker into
+  the ECR registry. After this, docker push to ECR works. The CI/CD pipeline does this automatically
+  via the GitHub Actions OIDC role — this command is for manual pushes only.
+**When you use it**: When you want to manually push a Docker image to ECR for testing.
+**Expected output**: "Login Succeeded"
+
+---
+
+**Command**: `aws ecs describe-services --cluster yorkpulse-prod-cluster --services yorkpulse-prod-backend --query 'services[0].deployments'`
+**What it does**: Shows the current deployment status of the ECS service.
+  Each deployment has a status (PRIMARY, ACTIVE), desired count, running count, and pending count.
+  During a rolling deploy: you'll see two deployments (PRIMARY = new, ACTIVE = old being drained).
+  After deploy completes: only PRIMARY remains.
+**When you use it**: After triggering a deploy (manually or via CI/CD) to monitor rollout progress.
+**Expected output**: JSON array of deployment objects with status, rolloutState, runningCount.
+
+---
+
+**Command**: `aws ecs update-service --cluster yorkpulse-prod-cluster --service yorkpulse-prod-backend --force-new-deployment`
+**What it does**: Forces ECS to start a rolling deployment using the current task definition.
+  Useful for pulling a new :latest image without changing the task definition revision.
+  ECS starts a new task, waits for health checks, then drains the old task.
+**When you use it**: When you want to redeploy without a code change (e.g. to pick up a new :latest tag).
+**Expected output**: JSON of the updated service configuration.
+
+---
+
+**Command**: `aws wafv2 get-web-acl --name yorkpulse-prod-waf --scope REGIONAL --id $(aws wafv2 list-web-acls --scope REGIONAL --query 'WebACLs[?Name==`yorkpulse-prod-waf`].Id' --output text) --region us-east-1`
+**What it does**: Retrieves the full WAF Web ACL configuration — all rules, priorities, and status.
+  Useful to verify WAF is correctly configured after terraform apply.
+**When you use it**: To verify WAF rules are applied correctly. Also run after any WAF changes.
+**Expected output**: JSON with all three managed rule groups (IP Reputation, CRS, Known Bad Inputs).
+
+---
+
+**Command**: `aws sns publish --topic-arn <sns_alerts_topic_arn> --message "Test alarm from YorkPulse infra setup" --subject "TEST: SNS Alert"`
+**What it does**: Publishes a test message to the yorkpulse-alerts SNS topic.
+  Verifies that the email subscription is confirmed and delivering.
+  Replace <sns_alerts_topic_arn> with the value from terraform output sns_alerts_topic_arn.
+**When you use it**: After confirming the SNS email subscription — verifies end-to-end delivery.
+**Expected output**: JSON with MessageId. Email arrives at yorkpulse.app@gmail.com within 60 seconds.
+
+---
+
+## Route 53 — DNS Migration (route53.tf)
+
+---
+
+**Command**: `terraform output route53_nameservers`
+**What it does**: Prints the four Route 53 nameservers assigned to the yorkpulse.com hosted zone.
+  These are the nameservers you must enter at Name.com to complete the DNS migration.
+  Format: ns-XXX.awsdns-YY.com, ns-XXX.awsdns-YY.co.uk, ns-XXX.awsdns-YY.net, ns-XXX.awsdns-YY.org
+**When you use it**: After terraform apply — copy all four values before going to Name.com.
+**Expected output**: A list of four nameserver hostnames.
+
+---
+
+**Command**: Update nameservers at Name.com — go to:
+  Name.com → My Domains → yorkpulse.com → Nameservers → Use Custom Nameservers
+  Delete existing nameservers, add all four from terraform output route53_nameservers.
+**What it does**: Delegates DNS authority for yorkpulse.com from Name.com's nameservers to Route 53.
+  Until this step, all Route 53 records exist but are unreachable — DNS queries still hit
+  Name.com's nameservers which have no knowledge of your Route 53 records.
+  After updating: DNS queries for yorkpulse.com and all subdomains resolve via Route 53.
+**When you use it**: After terraform apply — AFTER copying the four Route 53 nameservers.
+  Do this at a low-traffic time (late night). Propagation: up to 48 hours, usually < 1 hour.
+**Expected outcome**: After propagation, `dig yorkpulse.com NS` returns the Route 53 nameservers.
+
+---
+
+**Command**: `dig yorkpulse.com NS +short`
+**What it does**: Queries the NS (nameserver) records for yorkpulse.com.
+  After updating nameservers at Name.com, this should return the four Route 53 nameservers.
+  Until propagation completes, it may still show Name.com's old nameservers.
+**When you use it**: To check if nameserver propagation has completed (check every 15-30 minutes after updating).
+**Expected output**: Four lines, each ending with awsdns-XX.com / .co.uk / .net / .org
+
+---
+
+**Command**: `dig api.yorkpulse.com A +short`
+**What it does**: Queries the A record for api.yorkpulse.com.
+  During setup: returns 127.0.0.1 (placeholder from route53.tf api_placeholder record).
+  After switching to ALB alias record: returns the ALB's current IP addresses (rotates as ALB scales).
+**When you use it**: To verify DNS is resolving after nameserver propagation. Also to confirm
+  the ALB alias record is live after switching from the placeholder.
+**Expected output (placeholder phase)**: 127.0.0.1
+**Expected output (ALB alias phase)**: One or more AWS ALB IP addresses (changes over time)
+
+---
+
+**Command**: `dig yorkpulse.com A +short`
+**What it does**: Queries the A record for the root domain (Vercel frontend).
+  Should return 76.76.21.21 (Vercel's Anycast IP) after nameserver propagation.
+  Verifies that the Vercel frontend is still reachable after migrating DNS to Route 53.
+**When you use it**: Immediately after nameserver propagation to confirm Vercel frontend is not broken.
+**Expected output**: 76.76.21.21
+
+---
+
+**Command**: `dig _dmarc.yorkpulse.com TXT +short`
+**What it does**: Queries the DMARC policy TXT record for yorkpulse.com.
+  Verifies that the DMARC record is live and returning the correct policy string.
+**When you use it**: After nameserver propagation — to verify all email records are live.
+**Expected output**: "v=DMARC1; p=none; rua=mailto:rua@dmarc.brevo.com"
+
+---
+
+**Command**: `dig brevo1._domainkey.yorkpulse.com CNAME +short`
+**What it does**: Queries the Brevo DKIM CNAME record (selector 1).
+  Verifies that Brevo DKIM signing is correctly configured.
+**When you use it**: After nameserver propagation — to verify email records are live.
+**Expected output**: b1.yorkpulse-com.dkim.brevo.com.
+
+---
+
+**Command**: `aws route53 list-resource-record-sets --hosted-zone-id Z01059542TIO3YH228MAS --query 'ResourceRecordSets[].{Name:Name,Type:Type}' --output table`
+**What it does**: Lists all DNS records in the Route 53 hosted zone in a human-readable table.
+  Useful to verify all records from route53.tf were created correctly after terraform apply.
+**When you use it**: After terraform apply — spot-check that all expected records are present.
+**Expected output**: Table with one row per record: ACM validation CNAME, Brevo DKIM CNAMEs,
+  Resend DKIM TXT, DMARC TXT, Brevo verify TXT, SPF TXT, MX, CAA (×2), A (×2 Vercel), CNAME (www), A (api placeholder).
