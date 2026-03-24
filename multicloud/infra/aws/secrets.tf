@@ -130,23 +130,6 @@ resource "aws_secretsmanager_secret" "smtp_password" {
 }
 
 # -----------------------------------------------------------------------------
-# GEMINI_API_KEY — Google Gemini API key for AI features
-# Where to get: Google AI Studio → API Keys
-# Used by FastAPI for AI-powered features in the YorkPulse app.
-# -----------------------------------------------------------------------------
-resource "aws_secretsmanager_secret" "gemini_api_key" {
-  name        = "/yorkpulse/prod/gemini-api-key"
-  description = "Google Gemini API key for AI features in YorkPulse"
-
-  recovery_window_in_days = 7
-
-  tags = {
-    Project     = var.project
-    Environment = var.environment
-  }
-}
-
-# -----------------------------------------------------------------------------
 # REDIS_AUTH_TOKEN — ElastiCache auth token for Redis connection authentication
 # This is the password ElastiCache requires when transit_encryption_enabled = true.
 # Generate with: python -c 'import secrets; print(secrets.token_urlsafe(32))'

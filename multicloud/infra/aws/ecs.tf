@@ -120,10 +120,6 @@ resource "aws_ecs_task_definition" "backend" {
         {
           name      = "SMTP_PASSWORD"
           valueFrom = aws_secretsmanager_secret.smtp_password.arn
-        },
-        {
-          name      = "GEMINI_API_KEY"
-          valueFrom = aws_secretsmanager_secret.gemini_api_key.arn
         }
       ]
 
@@ -131,9 +127,10 @@ resource "aws_ecs_task_definition" "backend" {
       environment = [
         {
           name  = "CORS_ORIGINS"
-          # Frontend origins that FastAPI allows cross-origin requests from.
-          # Must include both www and non-www versions of the production domain.
-          value = "https://yorkpulse.com,https://www.yorkpulse.com"
+          # Pydantic parses this as a JSON array — must use JSON array format, not CSV.
+          # jsonencode() guarantees valid JSON output without manual quote escaping.
+          # Includes api.yorkpulse.com for any same-origin requests from the ALB.
+          value = jsonencode(["https://yorkpulse.com", "https://www.yorkpulse.com", "https://api.yorkpulse.com"])
         },
         {
           name  = "AWS_REGION"

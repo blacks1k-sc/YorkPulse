@@ -296,7 +296,7 @@
 **What it does**: Fills the empty DATABASE_URL secret created by Terraform with the actual value.
   The ECS task will fail to start until this (and all other secrets) are filled.
   Repeat for each secret: jwt-secret-key, supabase-url, supabase-key, redis-url, smtp-password,
-  gemini-api-key, redis-auth-token.
+  redis-auth-token.
 **When you use it**: Immediately after terraform apply, before starting any ECS tasks.
 **Expected output**: JSON with ARN, Name, and VersionId of the updated secret.
 
@@ -433,3 +433,80 @@
 **When you use it**: After terraform apply — spot-check that all expected records are present.
 **Expected output**: Table with one row per record: ACM validation CNAME, Brevo DKIM CNAMEs,
   Resend DKIM TXT, DMARC TXT, Brevo verify TXT, SPF TXT, MX, CAA (×2), A (×2 Vercel), CNAME (www), A (api placeholder).
+
+---
+
+## ECS Debugging Commands
+
+> Use these when a deployment is misbehaving, tasks are failing to start,
+> or you need to inspect the running service without ssh access.
+
+---
+
+**Command**: `aws ecs describe-services --cluster yorkpulse-prod-cluster --services yorkpulse-prod-backend --region us-east-1 --query 'services[0].{Running:runningCount,Desired:desiredCount,Pending:pendingCount}'`
+**What it does**: Shows how many ECS tasks are running vs desired vs pending for the backend service.
+  Healthy state: Running=1, Desired=1, Pending=0.
+  During a rolling deploy: Running=1, Desired=1, Pending=1 briefly, then settles back to Running=1.
+**When you use it**: Any time you want to confirm the service is healthy after a deploy or config change.
+**Expected output**: JSON with Running, Desired, Pending counts.
+
+---
+
+**Command**: `aws logs tail /ecs/yorkpulse-backend --region us-east-1 --since 10m`
+**What it does**: Streams the last 10 minutes of live FastAPI logs from CloudWatch to your terminal.
+  Equivalent to "tail -f" on the container's stdout/stderr. Shows uvicorn request logs,
+  Python logging output, and any startup errors (Secrets Manager failures, DB connection errors).
+  Change --since 10m to --since 1h for longer history, or omit to follow live.
+**When you use it**: After a deploy to watch startup logs, or when investigating errors.
+**Expected output**: Timestamped log lines from uvicorn and the FastAPI app.
+
+---
+
+**Command**: `aws ecs update-service --cluster yorkpulse-prod-cluster --service yorkpulse-prod-backend --force-new-deployment --region us-east-1`
+**What it does**: Forces ECS to start a new rolling deployment with the current task definition revision.
+  Useful when you pushed a new :latest image to ECR but didn't change the task definition —
+  ECS won't detect the new image automatically without --force-new-deployment.
+  Does NOT change the task definition revision.
+**When you use it**: After manually pushing a new image to ECR and wanting ECS to pull it.
+**Expected output**: JSON of the updated service object.
+
+---
+
+**Command**: `aws ecs describe-services --cluster yorkpulse-prod-cluster --services yorkpulse-prod-backend --region us-east-1 --query 'services[0].taskDefinition'`
+**What it does**: Shows the exact ARN (including revision number) of the task definition currently
+  registered to the ECS service. Format: arn:aws:ecs:...:task-definition/yorkpulse-prod-backend:N
+  If ECS is using an old revision despite a new terraform apply, this tells you the actual revision.
+**When you use it**: When you suspect ECS is running a stale task definition revision.
+**Expected output**: Full task definition ARN with revision number at the end (e.g. :3).
+
+---
+
+**Command**: `aws ecs update-service --cluster yorkpulse-prod-cluster --service yorkpulse-prod-backend --task-definition yorkpulse-prod-backend:N --force-new-deployment --region us-east-1`
+**What it does**: Explicitly pins the ECS service to a specific task definition revision (replace N
+  with the revision number). Terraform may leave the service on an old revision if the
+  ignore_changes lifecycle block is in effect. This command bypasses that and forces the new revision.
+  The rolling deploy (min 100% / max 200%) ensures zero downtime.
+**When you use it**: When terraform apply created a new task definition revision but ECS didn't
+  pick it up automatically. Check the revision number first with describe-services above.
+**Expected output**: JSON of the updated service showing the new taskDefinition ARN.
+
+---
+
+**Command**: `aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 062677866920.dkr.ecr.us-east-1.amazonaws.com`
+**What it does**: Gets a fresh 12-hour ECR authentication token and logs Docker into the ECR registry.
+  ECR tokens expire every 12 hours. Without re-authenticating, docker push returns HTTP 403.
+  Must be run before any docker push to ECR — the CI/CD pipeline does this automatically,
+  but manual pushes require it explicitly.
+**When you use it**: Before manually pushing an image to ECR, or after getting a 403 error on push.
+**Expected output**: "Login Succeeded"
+
+---
+
+**Command**: `docker buildx build --platform linux/amd64 -t 062677866920.dkr.ecr.us-east-1.amazonaws.com/yorkpulse-backend:latest --push .`
+**What it does**: Builds the Docker image explicitly for linux/amd64 (x86_64) and pushes it to ECR.
+  CRITICAL on Apple Silicon (M1/M2/M3): without --platform linux/amd64, the image is built for
+  ARM64 and ECS Fargate (which runs x86_64) will fail with "image manifest does not contain
+  descriptor matching platform linux/amd64". Always use this command for ECS deployments.
+  --push sends the image directly to ECR (no separate docker push needed).
+**When you use it**: For every manual image build intended for ECS. Run from backend/ directory.
+**Expected output**: Build output ending with "pushed" confirmation and the ECR image digest.

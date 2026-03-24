@@ -17,7 +17,17 @@ Never break production. Never migrate things that don't need migrating.
 Every decision must be defensible under senior engineer questioning.
 
 ## Current Phase
-PHASE 2 — Terraform AWS infrastructure (VPC, ECR, ECS Fargate, ALB, WAF, ElastiCache, Secrets Manager, IAM, CloudWatch, SNS)
+PHASE 3 — Terraform: Azure Container Apps + Key Vault + Azure Monitor
+
+## Phase 2 Live State (as of 2026-03-23)
+- ECS Service: `yorkpulse-prod-backend` running task definition revision 3
+- Task status: RUNNING — health checks returning 200 OK
+- ALB DNS: `yorkpulse-prod-alb-399906510.us-east-1.elb.amazonaws.com`
+- Backend health endpoint: `http://yorkpulse-prod-alb-399906510.us-east-1.elb.amazonaws.com/api/v1/health`
+- 7 secrets active in Secrets Manager: database-url, jwt-secret-key, supabase-url, supabase-key, redis-url, smtp-password, redis-auth-token
+- Redis: Upstash (external TLS) via redis-url secret — ElastiCache provisioned but not yet active
+- WAF: active with 3 managed rule groups (IP Reputation, CRS, Known Bad Inputs)
+- CloudWatch logs: /ecs/yorkpulse-backend active, SNS email subscription confirmed
 
 ## Phase Checklist
 - [x] Phase 0   → CLAUDE.md, DECISIONS.md, SECURITY.md, COMMANDS.md, COST.md
@@ -38,7 +48,7 @@ PHASE 2 — Terraform AWS infrastructure (VPC, ECR, ECS Fargate, ALB, WAF, Elast
   - [x] variables.tf (project, environment, region, image tag, alert email, ACM cert ARN, GitHub username)
   - [x] vpc.tf (VPC 10.0.0.0/16, 2 public + 2 private subnets, IGW, NAT GW, route tables, 3 security groups)
   - [x] ecr.tf (yorkpulse-backend repo, MUTABLE, scan on push, lifecycle policy: 30d untagged + 10 tagged)
-  - [x] secrets.tf (8 Secrets Manager secrets: DB, JWT, Supabase, Redis, SMTP, Gemini, redis-auth-token)
+  - [x] secrets.tf (7 Secrets Manager secrets: DB, JWT, Supabase URL+key, Redis URL, SMTP, redis-auth-token)
   - [x] iam.tf (ECS execution role, ECS task role, GitHub Actions OIDC role — all least-privilege)
   - [x] alb.tf (internet-facing ALB, target group port 8000, HTTP→HTTPS redirect, HTTPS listener)
   - [x] ecs.tf (ECS cluster, CloudWatch log group, task definition with secrets injection, ECS service rolling deploy)
@@ -46,6 +56,8 @@ PHASE 2 — Terraform AWS infrastructure (VPC, ECR, ECS Fargate, ALB, WAF, Elast
   - [x] waf.tf (WAF Web ACL: IP Reputation + CRS + Known Bad Inputs, ALB association, CloudWatch logging)
   - [x] cloudwatch.tf (SNS topic + email, 6 alarms: CPU/memory/5xx/latency/WAF/errors, log metric filter)
   - [x] outputs.tf (ALB DNS, ECR URL, ECS cluster/service, VPC ID, ElastiCache endpoint, IAM role ARN)
+  - [x] route53.tf (full DNS for yorkpulse.com: ACM validation, DKIM, DMARC, CAA, Vercel, api subdomain)
+  - [x] TROUBLESHOOTING.md (10 documented issues encountered during Phase 2 deploy)
 - [ ] Phase 3   → Terraform: Azure Container Apps + Key Vault + Azure Monitor
 - [ ] Phase 4   → GitHub Actions: OIDC + Trivy + Checkov + staging + prod approval gate
 - [ ] Phase 5   → CloudWatch dashboards + WAF logs + Azure Monitor alerts
@@ -92,6 +104,15 @@ PHASE 2 — Terraform AWS infrastructure (VPC, ECR, ECS Fargate, ALB, WAF, Elast
 10. Flag anything that would concern a senior engineer in a code review
 11. At end of each phase add "What You Learned" to DECISIONS.md
 12. Keep README.md updated as a living document
+
+## Phase 2 Known Gotchas (learned from production deploy)
+1. **Always build Docker images with `--platform linux/amd64`** for ECS. Apple Silicon builds ARM64 — Fargate is x86_64. Image will fail to start silently.
+2. **ECR tokens expire every 12 hours** — re-run `aws ecr get-login-password | docker login ...` before pushing.
+3. **After `terraform apply` on ECS task definition, explicitly pin the new revision** in `update-service --task-definition name:N` — ECS may ignore the new revision if `ignore_changes = [task_definition]` is set.
+4. **CORS_ORIGINS must be a JSON array string for Pydantic** — use `jsonencode([...])` in ecs.tf, not a CSV string.
+5. **WAF log group names MUST start with `aws-waf-logs-`** — any other prefix is rejected by the WAF logging API.
+6. **ACM certificates must be created in us-east-1** for ALB use — certificates in other regions are not usable by regional ALBs.
+7. **Secrets Manager ARNs have random suffixes** after creation (e.g. `/yorkpulse/prod/database-url-LlFowN`) — use `list-secrets` to get real ARNs for `terraform import`.
 
 ## Folder Structure
 yorkpulse/ (existing repo)

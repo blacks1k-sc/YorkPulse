@@ -493,5 +493,74 @@ DMARC starts at `p=none` (monitor-only). After confirming DKIM and SPF pass rate
 **Interview Talking Point**:
 "Moving DNS to Route 53 unlocks full Terraform automation of the TLS certificate lifecycle. ACM validation CNAMEs become code — the certificate is created, validated, and associated with the ALB in a single `terraform apply`. With Vercel DNS, each ACM renewal requires a manual DNS record update. Route 53 also gives me alias records on the root domain that integrate with Route 53 health checks — if the ALB goes unhealthy, Route 53 stops resolving api.yorkpulse.com automatically."
 
+---
+
+## Decision 013 — Always build Docker images with `--platform linux/amd64` for ECS Fargate
+
+**Decision**: All Docker images pushed to ECR for ECS Fargate must be built with `--platform linux/amd64`.
+
+**Problem Encountered**:
+Development machine is Apple Silicon (M3, ARM64). `docker build` without a platform flag produces
+an ARM64 image. ECS Fargate defaults to x86_64 (linux/amd64). When the ARM64 image was deployed,
+ECS failed with: `CannotPullContainerError — image manifest does not contain descriptor matching
+platform linux/amd64`. The task failed to start silently — no application logs, only ECS event logs.
+
+**Fix**:
+```bash
+docker buildx build --platform linux/amd64 -t <ECR_URL>:latest --push .
+```
+
+**Why This Applies to CI/CD Too**:
+GitHub Actions runners are x86_64, so images built in CI are naturally linux/amd64. The risk is
+exclusively during local manual pushes from Apple Silicon machines. The `--platform` flag is
+harmless on x86_64 — always include it to make the command safe to copy-paste from any machine.
+
+**Alternatives Considered**:
+1. Use ECS Fargate Graviton (ARM64) — would match the development machine. Graviton is 20% cheaper
+   per vCPU-hour. Rejected because Graviton requires selecting ARM64 at the ECS cluster level and
+   changes the platform for all future tasks — a Phase 4 optimisation, not Phase 2 scope.
+2. Set `DOCKER_DEFAULT_PLATFORM=linux/amd64` in shell profile — implicit, could be forgotten.
+   Explicit `--platform` in the build command is more portable and visible in code review.
+
+**Interview Talking Point**:
+"Multi-architecture is a real operational problem when development is on Apple Silicon and
+production is x86_64. I fixed it by always specifying `--platform linux/amd64` explicitly
+rather than relying on the host machine's default. In Phase 4, the GitHub Actions pipeline
+will enforce this so local pushes become unnecessary entirely."
+
+---
+
+## Decision 014 — Use `jsonencode()` for list-valued ECS environment variables
+
+**Decision**: ECS task definition environment variables that contain lists (CORS_ORIGINS) must use
+Terraform's `jsonencode()` function to produce a valid JSON array string, not a CSV string.
+
+**Problem Encountered**:
+CORS_ORIGINS was set to `"https://yorkpulse.com,https://www.yorkpulse.com"` (CSV format).
+FastAPI uses `pydantic-settings` to parse environment variables. Pydantic's `list[str]` field type
+expects either a JSON array string or a Python list — not CSV. At startup, ECS tasks failed with:
+`pydantic_settings.exceptions.SettingsError: error parsing value for field "cors_origins"`.
+
+**Fix**:
+```hcl
+value = jsonencode(["https://yorkpulse.com", "https://www.yorkpulse.com", "https://api.yorkpulse.com"])
+```
+This produces: `["https://yorkpulse.com","https://www.yorkpulse.com","https://api.yorkpulse.com"]`
+Which Pydantic's list[AnyHttpUrl] field parses correctly.
+
+**Why `jsonencode()` Over a Raw String**:
+A raw HCL string containing a JSON array requires manual escaping of double quotes:
+`value = "[\"https://yorkpulse.com\"]"` — error-prone and hard to read.
+`jsonencode()` handles all escaping automatically and is the idiomatic Terraform approach.
+
+**Applies To**: Any Pydantic `list[...]` or `set[...]` field read from environment variables.
+Check `backend/app/core/config.py` for other list-typed fields that may need the same treatment.
+
+**Interview Talking Point**:
+"Pydantic-settings has a specific contract for how it parses list-typed fields from environment
+variables — it expects JSON, not CSV. This isn't obvious from the ECS console where the value
+looks like a plain string. I fixed it by using Terraform's jsonencode() which guarantees
+well-formed JSON output and makes the intent explicit in the infrastructure code."
+
 > More decisions added as project progresses.
 > Each phase ends with a "What You Learned" retrospective.

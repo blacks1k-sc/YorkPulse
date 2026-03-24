@@ -39,7 +39,7 @@ serverless container stack most hiring managers and senior engineers expect to s
 | Web Application Firewall | **AWS WAF** | Attached to the ALB. Blocks SQLi, XSS, and known malicious IPs before requests reach application code. Blocked requests logged to CloudWatch. |
 | Networking | **VPC + NAT Gateway** | Isolates ECS and ElastiCache in private subnets. NAT Gateway allows outbound internet (Supabase Storage, Gmail SMTP) from private subnets without exposing them publicly. |
 | Cache | **ElastiCache Redis** (cache.t3.micro) | VPC-internal Redis with transit encryption enabled and auth token stored in Secrets Manager (never hardcoded). Enables the rate-limiting middleware in `main.py`. |
-| Secrets | **Secrets Manager** | Stores `SUPABASE_URL`, `SUPABASE_KEY`, `JWT_SECRET_KEY`, `REDIS_URL`, `SMTP_PASSWORD`, `GEMINI_API_KEY`, ElastiCache auth token. Injected into ECS at runtime — never in the Docker image. |
+| Secrets | **Secrets Manager** | Stores `SUPABASE_URL`, `SUPABASE_KEY`, `JWT_SECRET_KEY`, `REDIS_URL`, `SMTP_PASSWORD`, ElastiCache auth token. Injected into ECS at runtime — never in the Docker image. |
 | Alerting | **SNS** (`yorkpulse-alerts`) | SNS topic subscribed to `yorkpulse.app@gmail.com`. All CloudWatch alarms notify this topic. |
 | Observability | **CloudWatch** | Structured JSON logs from FastAPI. Alarms for 5xx errors, high CPU, memory, WAF blocked request spikes — all routed to SNS. |
 | IAM | **IAM Roles + OIDC** | Least-privilege roles for the ECS task and for the GitHub Actions deploy pipeline. |
@@ -105,7 +105,7 @@ This demonstrates true multi-cloud capability — the same app running on two di
 
 ### AWS — What's Possible
 
-- **Secrets injection**: `SUPABASE_URL`, `SUPABASE_KEY`, `JWT_SECRET_KEY`, `REDIS_URL`, `SMTP_PASSWORD`, `GEMINI_API_KEY`, ElastiCache auth token — all in Secrets Manager, referenced in the ECS task definition. The container never sees them in plain text at build time.
+- **Secrets injection**: `SUPABASE_URL`, `SUPABASE_KEY`, `JWT_SECRET_KEY`, `REDIS_URL`, `SMTP_PASSWORD`, ElastiCache auth token — all in Secrets Manager, referenced in the ECS task definition. The container never sees them in plain text at build time.
 - **WAF**: AWS WAF attached to the ALB with AWS managed rule groups (AWSManagedRulesCommonRuleSet, AWSManagedRulesSQLiRuleSet). Blocked requests logged to CloudWatch. $5/month covered by credits.
 - **ElastiCache Redis** (cache.t3.micro): VPC-internal Redis with `transit_encryption_enabled = true` and an auth token stored in Secrets Manager. Same VPC as ECS → sub-millisecond latency, no public endpoint needed. Enables rate-limiting middleware in `backend/app/main.py`.
 - **SNS alerting**: SNS topic `yorkpulse-alerts` subscribed to `yorkpulse.app@gmail.com`. Every CloudWatch alarm (5xx spike, high CPU, WAF blocked request surge, memory pressure) notifies this topic.
@@ -163,7 +163,6 @@ No `AWS_ACCESS_KEY_ID`, no `AZURE_CLIENT_SECRET` stored in GitHub. Both clouds u
 | `SUPABASE_KEY` | FastAPI | AWS Secrets Manager → ECS env |
 | `SUPABASE_URL` | Next.js | Azure Key Vault → Container Apps env |
 | `SUPABASE_ANON_KEY` | Next.js | Azure Key Vault → Container Apps env |
-| `GEMINI_API_KEY` | FastAPI | AWS Secrets Manager → ECS env |
 | `SMTP_PASSWORD` | FastAPI (email OTP) | AWS Secrets Manager → ECS env |
 | `ELASTICACHE_AUTH_TOKEN` | FastAPI | AWS Secrets Manager → ECS env (never hardcoded) |
 | `CORS_ORIGINS` | FastAPI | ECS task definition env (non-secret) |
