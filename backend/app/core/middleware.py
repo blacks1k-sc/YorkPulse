@@ -34,18 +34,20 @@ _global_signup_times: list[float] = []  # in-process fallback
 
 def _get_real_ip(request: Request) -> str:
     """
-    Extract the real client IP from X-Forwarded-For.
-    Render's load balancer PREPENDS the real client IP as the first entry.
-    Any entries after the first were set by the client or intermediate proxies
-    and cannot be trusted. Taking the first entry gives us the real public IP.
+    Extract the real client IP.
+    Priority:
+      1. CF-Connecting-IP — set by Cloudflare, contains the real client IP,
+         not spoofable because Cloudflare overwrites any client-supplied value.
+      2. X-Forwarded-For[0] — fallback for direct Render access (no Cloudflare).
+      3. request.client.host — last resort (Render's internal LB IP).
     """
+    cf_ip = request.headers.get("CF-Connecting-IP")
+    if cf_ip:
+        return cf_ip.strip()
     forwarded = request.headers.get("X-Forwarded-For")
     if forwarded:
-        # First entry = real client IP prepended by Render's LB
-        ip = forwarded.split(",")[0].strip()
-    else:
-        ip = request.client.host if request.client else "unknown"
-    return ip
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
 
 
 class TimingMiddleware(BaseHTTPMiddleware):
