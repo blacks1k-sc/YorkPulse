@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2, Loader2, Shield, Users, ShoppingBag, FileText, MessageSquare, Flag, ChevronLeft, ChevronRight, BookOpen, Image, Search, Compass } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -264,6 +264,111 @@ interface SignupAttempt {
   was_blocked: boolean;
 }
 
+// Groups signup attempts into attack sessions separated by 30-min gaps.
+// Oldest group = Attack 1, newest = Attack N. Each is collapsible.
+function AttemptsView({ data, loading, page, onPrev, onNext }: {
+  data: PagedResult<SignupAttempt> | null;
+  loading: boolean;
+  page: number;
+  onPrev: () => void;
+  onNext: () => void;
+}) {
+  const [openGroups, setOpenGroups] = useState<Set<number>>(new Set());
+
+  const groups = useMemo(() => {
+    if (!data) return [];
+    // Sort oldest → newest so new records flow to the bottom
+    const sorted = [...data.items].sort(
+      (a, b) => new Date(a.attempted_at).getTime() - new Date(b.attempted_at).getTime()
+    );
+    const clusters: SignupAttempt[][] = [];
+    const GAP_MS = 30 * 60 * 1000; // 30 minutes
+    for (const attempt of sorted) {
+      const t = new Date(attempt.attempted_at).getTime();
+      const last = clusters[clusters.length - 1];
+      const lastT = last ? new Date(last[last.length - 1].attempted_at).getTime() : 0;
+      if (!last || t - lastT > GAP_MS) clusters.push([attempt]);
+      else last.push(attempt);
+    }
+    return clusters;
+  }, [data]);
+
+  // Open only the last group by default
+  useEffect(() => {
+    if (groups.length > 0) setOpenGroups(new Set([groups.length - 1]));
+  }, [groups.length]);
+
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>;
+  if (!data) return null;
+
+  function toggle(i: number) {
+    setOpenGroups(prev => {
+      const next = new Set(prev);
+      next.has(i) ? next.delete(i) : next.add(i);
+      return next;
+    });
+  }
+
+  return (
+    <div className="space-y-3">
+      {groups.map((group, i) => {
+        const label = `Attack ${i + 1}`;
+        const isOpen = openGroups.has(i);
+        const blockedCount = group.filter(a => a.was_blocked).length;
+        const start = fmtDateTime(group[0].attempted_at);
+        const end = fmtDateTime(group[group.length - 1].attempted_at);
+        return (
+          <div key={i} className="border border-gray-200 rounded-lg overflow-hidden">
+            <button
+              onClick={() => toggle(i)}
+              className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+            >
+              <div className="flex items-center gap-3">
+                <span className="font-semibold text-sm text-gray-800">{label}</span>
+                <span className="text-xs text-gray-400">{start} → {end}</span>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-gray-200 text-gray-600">{group.length} attempts</span>
+                {blockedCount > 0 && (
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-500">{blockedCount} blocked</span>
+                )}
+              </div>
+              <ChevronRight className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? "rotate-90" : ""}`} />
+            </button>
+            {isOpen && (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-200 text-gray-400 text-left bg-white">
+                      <th className="pb-2 pt-3 px-4 font-medium">Email</th>
+                      <th className="pb-2 pt-3 pr-4 font-medium">IP Address</th>
+                      <th className="pb-2 pt-3 pr-4 font-medium">Time</th>
+                      <th className="pb-2 pt-3 pr-4 font-medium">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {group.map((a) => (
+                      <tr key={a.id} className="border-b border-gray-200/50 hover:bg-gray-100/30">
+                        <td className="py-2 px-4 text-gray-700">{a.email}</td>
+                        <td className="py-2 pr-4 font-mono text-xs text-gray-500">{a.ip_address}</td>
+                        <td className="py-2 pr-4 text-gray-400 whitespace-nowrap">{fmtDateTime(a.attempted_at)}</td>
+                        <td className="py-2 pr-4">
+                          {a.was_blocked
+                            ? <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-400">blocked</span>
+                            : <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400">sent</span>}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        );
+      })}
+      <Pagination page={page} hasMore={data.has_more} total={data.total} perPage={data.per_page} onPrev={onPrev} onNext={onNext} />
+    </div>
+  );
+}
+
 function UsersTab() {
   const [view, setView] = useState<"signins" | "signups" | "attempts">("signins");
 
@@ -374,41 +479,13 @@ function UsersTab() {
           view="signups"
         />
       ) : (
-        <div>
-          {attemptsLoading ? (
-            <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
-          ) : !attemptsData ? null : (
-            <>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-200 text-gray-400 text-left">
-                      <th className="pb-2 pr-4 font-medium">Email</th>
-                      <th className="pb-2 pr-4 font-medium">IP Address</th>
-                      <th className="pb-2 pr-4 font-medium">Time</th>
-                      <th className="pb-2 font-medium">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {attemptsData.items.map((a) => (
-                      <tr key={a.id} className="border-b border-gray-200/50 hover:bg-gray-100/30">
-                        <td className="py-2 pr-4 text-gray-700">{a.email}</td>
-                        <td className="py-2 pr-4 font-mono text-xs text-gray-500">{a.ip_address}</td>
-                        <td className="py-2 pr-4 text-gray-400 whitespace-nowrap">{fmtDateTime(a.attempted_at)}</td>
-                        <td className="py-2">
-                          {a.was_blocked
-                            ? <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-400">blocked</span>
-                            : <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400">sent</span>}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <Pagination page={attemptsPage} hasMore={attemptsData.has_more} total={attemptsData.total} perPage={attemptsData.per_page} onPrev={() => setAttemptsPage(p => p - 1)} onNext={() => setAttemptsPage(p => p + 1)} />
-            </>
-          )}
-        </div>
+        <AttemptsView
+          data={attemptsData}
+          loading={attemptsLoading}
+          page={attemptsPage}
+          onPrev={() => setAttemptsPage(p => p - 1)}
+          onNext={() => setAttemptsPage(p => p + 1)}
+        />
       )}
     </div>
   );
