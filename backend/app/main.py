@@ -6,6 +6,12 @@ from collections.abc import AsyncIterator
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+# Configure logging before anything else so all INFO logs appear in Render
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
+)
+
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -45,6 +51,23 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     # Startup
     logger.info("Starting %s...", settings.app_name)
+
+    # Push notification startup diagnostics
+    vapid_key = settings.vapid_private_key.strip()
+    if not vapid_key:
+        logger.error("PUSH [startup] VAPID_PRIVATE_KEY is NOT SET — push notifications disabled")
+    elif "BEGIN" in vapid_key:
+        logger.warning("PUSH [startup] VAPID_PRIVATE_KEY is PEM format — will auto-convert (replace with base64url scalar for reliability)")
+    else:
+        logger.info("PUSH [startup] VAPID_PRIVATE_KEY OK (base64url, length=%d)", len(vapid_key))
+    try:
+        from sqlalchemy import text
+        async with async_session_maker() as db:
+            result = await db.execute(text("SELECT COUNT(*) FROM push_subscriptions"))
+            count = result.scalar()
+            logger.info("PUSH [startup] %d push subscription(s) in DB", count)
+    except Exception as exc:
+        logger.error("PUSH [startup] could not query push_subscriptions: %s", exc)
 
     # Run initial cleanup on startup (disabled for faster startup)
     # try:
