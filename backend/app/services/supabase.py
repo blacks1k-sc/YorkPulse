@@ -147,6 +147,7 @@ class SupabaseAuthService:
     _TEST_ACCOUNTS: dict[str, str] = {
         "proftest@yorku.ca": "371649",
         "yorkpulse.app@gmail.com": "102938",
+        "test234@yorku.ca": "564738",
     }
 
     async def send_otp(self, email: str, force_dev_mode: bool = False) -> tuple[bool, str]:
