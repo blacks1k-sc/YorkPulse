@@ -29,6 +29,24 @@ PHASE 3 — Terraform: Azure Container Apps + Key Vault + Azure Monitor
 - WAF: active with 3 managed rule groups (IP Reputation, CRS, Known Bad Inputs)
 - CloudWatch logs: /ecs/yorkpulse-backend active, SNS email subscription confirmed
 
+## DNS + Traffic Cutover Status (as of 2026-03-26) — DEFERRED
+**NOT yet cut over.** Production traffic still runs through the old stack:
+- `api.yorkpulse.com` Cloudflare CNAME still points to **Render** (not the ALB)
+- Frontend (`NEXT_PUBLIC_API_URL`) still calls the **Render** backend URL
+- The ECS backend is live and healthy but receives zero real user traffic
+
+**Why deferred**: Cutting over mid-project would couple three risky changes (DNS, frontend config,
+backend) without the CI/CD safety net that Phase 4 provides. Deferring until the full stack
+is validated end-to-end reduces the blast radius of a failed cutover.
+
+**Planned cutover order** (after Phase 3 + Phase 4 are complete):
+1. Update `NEXT_PUBLIC_API_URL` → `https://api.yorkpulse.com` in Azure Key Vault / Vercel env
+2. Deploy Azure frontend (Phase 3) with the new API URL
+3. Set up CI/CD pipeline (Phase 4) so rollback is one pipeline re-run
+4. Flip Cloudflare CNAME: `api.yorkpulse.com` → ALB DNS
+5. Point `yorkpulse.com` DNS to Azure Container Apps (replaces Vercel)
+6. Monitor for 24h, then shut down Render + Vercel
+
 ## Phase Checklist
 - [x] Phase 0   → CLAUDE.md, DECISIONS.md, SECURITY.md, COMMANDS.md, COST.md
 - [x] Phase 0.5 → infra/bootstrap/main.tf → S3 bucket + DynamoDB lock (run once manually)

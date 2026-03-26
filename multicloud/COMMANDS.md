@@ -510,3 +510,88 @@
   --push sends the image directly to ECR (no separate docker push needed).
 **When you use it**: For every manual image build intended for ECS. Run from backend/ directory.
 **Expected output**: Build output ending with "pushed" confirmation and the ECR image digest.
+
+---
+
+## DNS + Traffic Cutover Sequence (execute AFTER Phase 3 + Phase 4 are complete)
+
+> Current state: api.yorkpulse.com Cloudflare CNAME points to Render. Frontend calls Render URL.
+> ECS backend is live but receives zero user traffic. See DECISIONS.md #015 for why cutover is deferred.
+> Execute these steps IN ORDER. Validate each before proceeding to the next.
+
+---
+
+**Step 1 — Update NEXT_PUBLIC_API_URL in frontend config**
+Change `NEXT_PUBLIC_API_URL` from the Render URL to `https://api.yorkpulse.com` in:
+- Azure Key Vault (for the Azure Container Apps frontend — Phase 3)
+- Vercel environment variables (if Vercel frontend is still active during transition)
+Do NOT redeploy yet — just update the config value.
+
+---
+
+**Step 2 — Deploy Azure frontend with new API URL**
+After Phase 3 is complete, trigger a redeploy of the Azure Container Apps frontend.
+The new frontend build will use `https://api.yorkpulse.com` as its API base.
+Validate: open the Azure frontend URL → confirm API calls return data (even if the CNAME
+still points to Render — the frontend should work with either backend during the overlap period).
+
+---
+
+**Step 3 — Confirm CI/CD pipeline (Phase 4) is operational**
+The pipeline must be able to deploy and roll back before DNS is flipped.
+Validate: trigger a test deploy via GitHub Actions → confirm it completes → confirm rollback works.
+Do NOT flip DNS without a tested rollback path.
+
+---
+
+**Step 4 — Flip Cloudflare CNAME: api.yorkpulse.com → ALB**
+In Cloudflare dashboard → DNS → edit `api.yorkpulse.com`:
+```
+Type:    CNAME
+Name:    api
+Target:  yorkpulse-prod-alb-399906510.us-east-1.elb.amazonaws.com
+TTL:     Auto (or 60 seconds for faster propagation)
+Proxy:   DNS only (grey cloud) — WAF is on the ALB, not Cloudflare
+```
+Validate propagation: `dig api.yorkpulse.com CNAME +short`
+Expected: the ALB DNS name.
+
+---
+
+**Step 5 — Point yorkpulse.com to Azure Container Apps**
+Update the root domain DNS to point to the Azure frontend (replaces Vercel):
+```
+Type:    A (or CNAME depending on Azure's assigned domain)
+Name:    @
+Target:  <Azure Container Apps assigned domain or IP>
+```
+Validate: `curl -I https://yorkpulse.com` → check response headers for Azure origin.
+
+---
+
+**Step 6 — Monitor for 24 hours**
+Watch these in parallel:
+```bash
+# Live ECS logs
+aws logs tail /ecs/yorkpulse-backend --region us-east-1 --follow
+
+# ALB 5xx count (should be near 0)
+aws cloudwatch get-metric-statistics \
+  --namespace AWS/ApplicationELB \
+  --metric-name HTTPCode_ELB_5XX_Count \
+  --dimensions Name=LoadBalancer,Value=$(aws elbv2 describe-load-balancers \
+    --names yorkpulse-prod-alb --query 'LoadBalancers[0].LoadBalancerArn' \
+    --output text | awk -F: '{print $6}') \
+  --start-time $(date -u -v-1H +%Y-%m-%dT%H:%M:%SZ) \
+  --end-time $(date -u +%Y-%m-%dT%H:%M:%SZ) \
+  --period 300 --statistics Sum --region us-east-1
+```
+If error rate spikes → rollback: revert Cloudflare CNAME to Render URL immediately.
+
+---
+
+**Step 7 — Shut down Render + Vercel**
+Only after 24h of clean metrics:
+- Render: Dashboard → Service → Settings → Delete Service
+- Vercel: Dashboard → Project → Settings → Delete Project
+Remove Render and Vercel env vars from any remaining references in codebase.

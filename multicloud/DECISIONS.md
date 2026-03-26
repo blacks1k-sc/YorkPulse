@@ -562,5 +562,43 @@ variables — it expects JSON, not CSV. This isn't obvious from the ECS console 
 looks like a plain string. I fixed it by using Terraform's jsonencode() which guarantees
 well-formed JSON output and makes the intent explicit in the infrastructure code."
 
+---
+
+## Decision 015 — Defer DNS and Traffic Cutover Until After Phase 4
+
+**Decision**: Keep `api.yorkpulse.com` pointing to Render and the frontend calling the Render URL
+until Phase 3 (Azure) and Phase 4 (CI/CD) are complete. Do not cut over DNS mid-project.
+
+**Current state (2026-03-26)**:
+- `api.yorkpulse.com` Cloudflare CNAME → Render (not ALB)
+- `NEXT_PUBLIC_API_URL` in frontend → Render URL
+- ECS backend is live and healthy but receives zero user traffic
+
+**Why Not Cut Over Now**:
+A DNS cutover mid-project requires three coordinated changes at once: DNS flip, frontend API URL
+update, and backend readiness validation. Without CI/CD (Phase 4), rolling back any one of these
+is a manual multi-step operation. If the ECS backend has a bug under real load, rollback requires
+manually flipping Cloudflare DNS, redeploying the frontend with the old URL, and hoping caches
+clear fast enough. That risk is unnecessary when Phase 4 is one phase away.
+
+The Golden Rule: the app must stay live. Deferring the cutover costs nothing — Render is still
+running and students are unaffected. Rushing the cutover could cause an outage.
+
+**Planned Cutover Order** (execute in sequence, validate each step before the next):
+1. Update `NEXT_PUBLIC_API_URL` → `https://api.yorkpulse.com` in Azure Key Vault and Vercel env
+2. Deploy Azure Container Apps frontend (Phase 3) pointing at the new API URL
+3. Complete Phase 4 CI/CD so any rollback is a single pipeline re-run
+4. Flip Cloudflare CNAME: `api.yorkpulse.com` → ALB DNS (Render traffic drops to zero)
+5. Point `yorkpulse.com` DNS to Azure Container Apps (replaces Vercel)
+6. Monitor error rates + latency in CloudWatch for 24 hours
+7. Shut down Render backend + Vercel frontend
+
+**Interview Talking Point**:
+"I kept the old stack running in parallel throughout the migration. The ECS backend went live
+and passed health checks, but I didn't flip DNS until CI/CD was in place. That way, if anything
+went wrong after the cutover, rollback was a one-command pipeline re-run — not a 3am manual
+DNS edit. Zero-downtime migrations aren't just about the cutover moment; they're about having
+a tested rollback path before you pull the trigger."
+
 > More decisions added as project progresses.
 > Each phase ends with a "What You Learned" retrospective.
