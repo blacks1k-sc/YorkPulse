@@ -6,9 +6,25 @@ import logging
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from app.core.config import settings
 from app.services.redis import rate_limiter, redis_service
 
 logger = logging.getLogger(__name__)
+
+
+def _cors_headers(request: Request) -> dict:
+    """Return CORS headers for early-exit responses (rate limits, etc).
+    CORSMiddleware runs AFTER RateLimitMiddleware so 429s need headers manually.
+    """
+    origin = request.headers.get("origin", "")
+    if origin in settings.cors_origins:
+        return {
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+        }
+    return {}
 
 # Auth endpoints get a much stricter limit than the global one.
 # 10 requests per 10 minutes per IP — allows a real user to retry a few
@@ -94,7 +110,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     content='{"detail": "Signup temporarily unavailable. Please try again in a minute."}',
                     status_code=429,
                     media_type="application/json",
-                    headers={"Retry-After": str(GLOBAL_SIGNUP_WINDOW)},
+                    headers={"Retry-After": str(GLOBAL_SIGNUP_WINDOW), **_cors_headers(request)},
                 )
 
         # Strict limit on auth endpoints
@@ -108,7 +124,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     content='{"detail": "Too many requests. Please wait 10 minutes."}',
                     status_code=429,
                     media_type="application/json",
-                    headers={"Retry-After": str(AUTH_RATE_LIMIT_WINDOW)},
+                    headers={"Retry-After": str(AUTH_RATE_LIMIT_WINDOW), **_cors_headers(request)},
                 )
 
         # Global limit for everything
@@ -128,6 +144,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     "X-RateLimit-Remaining": "0",
                     "X-RateLimit-Reset": str(info["reset_in"]),
                     "Retry-After": str(info["reset_in"]),
+                    **_cors_headers(request),
                 },
             )
 
