@@ -48,6 +48,11 @@ GLOBAL_SIGNUP_WINDOW = 60  # 1 minute
 _global_signup_times: list[float] = []  # in-process fallback
 
 
+RATE_LIMIT_WHITELIST = {
+    "142.117.32.144",  # dev/admin IP
+}
+
+
 def _get_real_ip(request: Request) -> str:
     """
     Extract the real client IP.
@@ -100,6 +105,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next) -> Response:
         real_ip = _get_real_ip(request)
         path = request.url.path
+
+        # Whitelisted IPs skip all rate limiting (dev/admin)
+        if real_ip in RATE_LIMIT_WHITELIST:
+            return await call_next(request)
 
         # Global signup rate limit — blocks distributed botnets rotating IPs
         if path == "/api/v1/auth/signup":
