@@ -50,14 +50,15 @@ jobs:
       # --exit-zero = always exit 0 so pipeline continues; issues appear in logs.
       - name: Run Bandit (Python SAST)
         run: |
-          pip install bandit safety
+          pip install bandit "safety>=3.0.0"
           bandit -r backend/ -ll --exit-zero
 
       # Safety: checks backend/requirements.txt against a CVE database of known
-      # vulnerable Python packages. --exit-code 0 = report but don't block.
+      # vulnerable Python packages. --continue-on-error = report but don't block.
+      # safety scan replaces the deprecated safety check command (v3+ syntax).
       - name: Run Safety (dependency CVE audit)
         run: |
-          safety check -r backend/requirements.txt --exit-code 0
+          safety scan -r backend/requirements.txt --continue-on-error
 
       # Docker Buildx: needed for --platform linux/amd64 cross-platform builds
       # on GitHub's ubuntu-latest runners (which are x86_64, same as ECS Fargate).
