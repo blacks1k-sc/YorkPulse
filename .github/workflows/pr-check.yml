@@ -33,13 +33,14 @@ jobs:
       # Bandit: Python SAST — scans for common security bugs in backend Python code.
       - name: Run Bandit (Python SAST)
         run: |
-          pip install bandit safety
+          pip install bandit "safety>=3.0.0"
           bandit -r backend/ -ll --exit-zero
 
       # Safety: checks backend/requirements.txt against known CVE database.
+      # safety scan replaces the deprecated safety check command (v3+ syntax).
       - name: Run Safety (dependency CVE audit)
         run: |
-          safety check -r backend/requirements.txt --exit-code 0
+          safety scan -r backend/requirements.txt --continue-on-error
 
       # Docker Buildx: required for --platform linux/amd64 cross-platform builds.
       - name: Set up Docker Buildx
