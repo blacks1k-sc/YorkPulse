@@ -15,6 +15,12 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Build args for Next.js public env vars — must be declared here so Docker
+# passes them through to the build. NEXT_PUBLIC_* vars are baked in at build
+# time; without ARG declared, --build-arg is silently ignored.
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
 # Build the application
 RUN npm run build
 

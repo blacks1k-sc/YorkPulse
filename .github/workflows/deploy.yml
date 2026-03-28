@@ -205,10 +205,13 @@ jobs:
 
       # Build for linux/amd64 (Azure Container Apps runs on Linux x86_64).
       # Tag with :latest + :<sha> for the same rollback capability as ECR.
+      # --build-arg bakes NEXT_PUBLIC_API_URL into the image at build time —
+      # required for Next.js client-side code (runtime env vars don't reach the browser).
       - name: Build and push frontend image to ACR
         run: |
           docker buildx build \
             --platform linux/amd64 \
+            --build-arg NEXT_PUBLIC_API_URL=https://api.yorkpulse.com \
             -t yorkpulseacr.azurecr.io/yorkpulse-frontend:latest \
             -t yorkpulseacr.azurecr.io/yorkpulse-frontend:${{ github.sha }} \
             --push \
