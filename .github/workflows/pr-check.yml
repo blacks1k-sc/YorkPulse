@@ -1,0 +1,72 @@
+# .github/workflows/pr-check.yml
+# Runs security scanning on every pull request targeting main.
+# This gives early feedback on CVEs and SAST findings before code is merged —
+# no deploy steps run here, only the scan job from deploy.yml.
+
+name: PR Security Check
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Security Scan (identical to the scan job in deploy.yml)
+  # Runs Bandit, Safety, Trivy, and Checkov on the PR branch.
+  # All scans are non-blocking (exit-zero / soft_fail) — findings appear in
+  # the PR checks UI as annotations without blocking merge.
+  # ---------------------------------------------------------------------------
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Bandit: Python SAST — scans for common security bugs in backend Python code.
+      - name: Run Bandit (Python SAST)
+        run: |
+          pip install bandit safety
+          bandit -r backend/ -ll --exit-zero
+
+      # Safety: checks backend/requirements.txt against known CVE database.
+      - name: Run Safety (dependency CVE audit)
+        run: |
+          safety check -r backend/requirements.txt --exit-code 0
+
+      # Docker Buildx: required for --platform linux/amd64 cross-platform builds.
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Build backend image locally so Trivy has something to scan.
+      # Does not push to ECR — this is a scan-only build.
+      - name: Build backend image for scanning
+        run: |
+          docker buildx build \
+            --platform linux/amd64 \
+            -t yorkpulse-backend:scan \
+            --load \
+            ./backend
+
+      # Trivy: scans the built image for OS + language library CVEs.
+      - name: Run Trivy (container CVE scan)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: yorkpulse-backend:scan
+          format: table
+          exit-code: 0
+          severity: CRITICAL,HIGH
+
+      # Checkov: static analysis for Terraform misconfigurations.
+      - name: Run Checkov (Terraform IaC scan)
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: multicloud/infra/aws
+          soft_fail: true
