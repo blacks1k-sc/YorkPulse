@@ -1,0 +1,227 @@
+# .github/workflows/deploy.yml
+# Full CI/CD pipeline for YorkPulse multi-cloud deployment.
+# Triggered on push to main when backend, frontend, or infra files change.
+#
+# Three jobs run in sequence:
+#   1. security-scan  — SAST + dependency audit + container CVE scan + IaC misconfig check
+#   2. deploy-backend — Build + push to ECR → force ECS redeploy → smoke test
+#   3. deploy-frontend — Build + push to ACR → update Azure Container App → smoke test
+
+name: Deploy YorkPulse
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - "multicloud/**"
+
+# Prevent multiple deploys from running simultaneously.
+# cancel-in-progress: false means a queued deploy waits rather than being killed —
+# safer than cancelling a deploy that's halfway through an ECS rollout.
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1: Security Scan
+  # Runs SAST (Bandit), dependency audit (Safety), container CVE scan (Trivy),
+  # and Terraform misconfiguration check (Checkov) — all non-blocking (exit-zero)
+  # so the pipeline reports issues without stopping a deploy for low-severity findings.
+  # ---------------------------------------------------------------------------
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Bandit: Python SAST tool — scans for common security issues in Python code.
+      # -ll = report medium and high severity only (skip low noise).
+      # --exit-zero = always exit 0 so pipeline continues; issues appear in logs.
+      - name: Run Bandit (Python SAST)
+        run: |
+          pip install bandit safety
+          bandit -r backend/ -ll --exit-zero
+
+      # Safety: checks backend/requirements.txt against a CVE database of known
+      # vulnerable Python packages. --exit-code 0 = report but don't block.
+      - name: Run Safety (dependency CVE audit)
+        run: |
+          safety check -r backend/requirements.txt --exit-code 0
+
+      # Docker Buildx: needed for --platform linux/amd64 cross-platform builds
+      # on GitHub's ubuntu-latest runners (which are x86_64, same as ECS Fargate).
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Build the backend image locally for scanning — don't push to ECR yet.
+      # This is a dry-run build to catch Dockerfile issues and give Trivy an image to scan.
+      - name: Build backend image for scanning
+        run: |
+          docker buildx build \
+            --platform linux/amd64 \
+            -t yorkpulse-backend:scan \
+            --load \
+            ./backend
+
+      # Trivy: scans the built Docker image for known CVEs in OS packages and language libs.
+      # exit-code: 0 = report findings but don't fail the pipeline.
+      # severity: CRITICAL,HIGH = only surface the most important issues.
+      - name: Run Trivy (container CVE scan)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: yorkpulse-backend:scan
+          format: table
+          exit-code: 0
+          severity: CRITICAL,HIGH
+
+      # Checkov: static analysis for Terraform files.
+      # Checks for common misconfigs (open security groups, unencrypted S3, etc.).
+      # soft_fail: true = report issues without blocking the deploy.
+      - name: Run Checkov (Terraform IaC scan)
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: multicloud/infra/aws
+          soft_fail: true
+
+  # ---------------------------------------------------------------------------
+  # Job 2: Deploy Backend (AWS)
+  # Builds the FastAPI image, pushes to ECR with two tags (:latest + :<sha>),
+  # forces an ECS rolling redeploy, waits for stabilization, then smoke tests.
+  # Runs only after security-scan passes.
+  # ---------------------------------------------------------------------------
+  deploy-backend:
+    name: Deploy Backend to AWS ECS
+    runs-on: ubuntu-latest
+    needs: security-scan
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Authenticate to AWS using OIDC — no stored access keys.
+      # The IAM role (AWS_ROLE_ARN) trusts GitHub's OIDC provider and allows
+      # this specific repo/branch to assume it. Zero long-lived credentials.
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      # Exchange the AWS credentials for a temporary ECR login token (valid 12h).
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # Build for linux/amd64 (ECS Fargate is x86_64 — critical when building on
+      # any ARM runner or Apple Silicon dev machine). Tag with both :latest for
+      # convenience and :<sha> for immutable rollback capability.
+      - name: Build and push backend image to ECR
+        run: |
+          docker buildx build \
+            --platform linux/amd64 \
+            -t 062677866920.dkr.ecr.us-east-1.amazonaws.com/yorkpulse-backend:latest \
+            -t 062677866920.dkr.ecr.us-east-1.amazonaws.com/yorkpulse-backend:${{ github.sha }} \
+            --push \
+            ./backend
+
+      # Tell ECS to start a new deployment using the latest task definition.
+      # ECS will pull the new :latest image and perform a rolling replace
+      # (old tasks stay up until new tasks pass health checks).
+      - name: Force ECS redeploy
+        run: |
+          aws ecs update-service \
+            --cluster yorkpulse-prod-cluster \
+            --service yorkpulse-prod-backend \
+            --force-new-deployment \
+            --region us-east-1
+
+      # Block until ECS reports the service as stable (all desired tasks running
+      # and passing ALB health checks). Times out after ~10 minutes by default.
+      - name: Wait for ECS service to stabilize
+        run: |
+          aws ecs wait services-stable \
+            --cluster yorkpulse-prod-cluster \
+            --services yorkpulse-prod-backend \
+            --region us-east-1
+
+      # Hit the /health endpoint through the ALB to confirm the new container
+      # is live and responding. --retry 5 --retry-delay 10 = up to 50s of retries
+      # to give the ALB time to register the new target. --fail = non-zero exit on 4xx/5xx.
+      - name: Smoke test backend health endpoint
+        run: |
+          curl --retry 5 --retry-delay 10 --fail \
+            http://yorkpulse-prod-alb-399906510.us-east-1.elb.amazonaws.com/api/v1/health
+
+  # ---------------------------------------------------------------------------
+  # Job 3: Deploy Frontend (Azure)
+  # Builds the Next.js SSR image, pushes to ACR with two tags (:latest + :<sha>),
+  # updates the Azure Container App to use the new image, then smoke tests.
+  # Runs only after deploy-backend succeeds — ensures the API is live first.
+  # ---------------------------------------------------------------------------
+  deploy-frontend:
+    name: Deploy Frontend to Azure Container Apps
+    runs-on: ubuntu-latest
+    needs: deploy-backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Authenticate to Azure using a Service Principal stored as GitHub secrets.
+      # clientId / clientSecret / tenantId / subscriptionId come from the
+      # yorkpulse-terraform SP created during Phase 3.
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: >-
+            {
+              "clientId": "${{ secrets.AZURE_CLIENT_ID }}",
+              "clientSecret": "${{ secrets.AZURE_CLIENT_SECRET }}",
+              "tenantId": "${{ secrets.AZURE_TENANT_ID }}",
+              "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+            }
+
+      # Exchange the Azure credentials for an ACR push token.
+      # ACR tokens expire after 3 hours — this step always fetches a fresh one.
+      - name: Login to Azure Container Registry
+        run: |
+          az acr login --name yorkpulseacr
+
+      # Build for linux/amd64 (Azure Container Apps runs on Linux x86_64).
+      # Tag with :latest + :<sha> for the same rollback capability as ECR.
+      - name: Build and push frontend image to ACR
+        run: |
+          docker buildx build \
+            --platform linux/amd64 \
+            -t yorkpulseacr.azurecr.io/yorkpulse-frontend:latest \
+            -t yorkpulseacr.azurecr.io/yorkpulse-frontend:${{ github.sha }} \
+            --push \
+            ./frontend
+
+      # Tell Azure Container Apps to pull the new :latest image.
+      # Container Apps performs a rolling update — old replica stays up until
+      # the new replica passes its health probe.
+      - name: Update Azure Container App
+        run: |
+          az containerapp update \
+            --name yorkpulse-frontend \
+            --resource-group yorkpulse-prod \
+            --image yorkpulseacr.azurecr.io/yorkpulse-frontend:latest
+
+      # Hit the Container App URL to confirm the new frontend is serving.
+      # --retry 5 --retry-delay 10 = up to 50s of retries to account for
+      # Azure's cold-start / DNS propagation after the replica swap.
+      - name: Smoke test frontend URL
+        run: |
+          curl --retry 5 --retry-delay 10 --fail \
+            https://yorkpulse-frontend.wonderfulplant-691f2e03.canadacentral.azurecontainerapps.io
