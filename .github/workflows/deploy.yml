@@ -18,6 +18,7 @@ on:
       - "frontend/**"
       - "multicloud/**"
       - ".github/workflows/**"
+  workflow_dispatch: # allow manual trigger from GitHub Actions UI
 
 # Prevent multiple deploys from running simultaneously.
 # cancel-in-progress: false means a queued deploy waits rather than being killed —
