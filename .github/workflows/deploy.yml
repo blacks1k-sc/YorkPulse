@@ -17,6 +17,7 @@ on:
       - "backend/**"
       - "frontend/**"
       - "multicloud/**"
+      - ".github/workflows/**"
 
 # Prevent multiple deploys from running simultaneously.
 # cancel-in-progress: false means a queued deploy waits rather than being killed —
