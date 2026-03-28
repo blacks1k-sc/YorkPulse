@@ -187,16 +187,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Authenticate to Azure using a Service Principal stored as GitHub secrets.
-      # Using individual parameters instead of a JSON creds block — avoids JSON
-      # parse failures when secret values contain special characters.
+      # Authenticate to Azure using a Service Principal.
+      # AZURE_CREDENTIALS is a single secret containing the full SP JSON:
+      # {"clientId":"...","clientSecret":"...","tenantId":"...","subscriptionId":"..."}
+      # Storing as one secret avoids inline JSON construction and OIDC confusion
+      # (individual params in azure/login@v1 trigger OIDC mode, not SP+secret mode).
       - name: Login to Azure
         uses: azure/login@v1
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       # Exchange the Azure credentials for an ACR push token.
       # ACR tokens expire after 3 hours — this step always fetches a fresh one.
