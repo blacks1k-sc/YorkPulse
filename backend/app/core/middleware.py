@@ -9,6 +9,23 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from app.core.config import settings
 from app.services.redis import rate_limiter, redis_service
 
+# Cached set for O(1) origin lookup
+_CORS_ORIGINS: set[str] = set()
+
+
+def _cors_headers(request: Request) -> dict[str, str]:
+    """Return CORS headers for the request origin if it's in the allowed list."""
+    global _CORS_ORIGINS
+    if not _CORS_ORIGINS:
+        _CORS_ORIGINS = set(settings.cors_origins)
+    origin = request.headers.get("origin", "")
+    if origin in _CORS_ORIGINS:
+        return {
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Credentials": "true",
+        }
+    return {}
+
 logger = logging.getLogger(__name__)
 
 # Auth endpoints get a much stricter per-IP limit.
@@ -108,7 +125,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     content='{"detail": "Too many requests. Please wait before trying again."}',
                     status_code=429,
                     media_type="application/json",
-                    headers={"Retry-After": str(settings.rate_limit_auth_window_seconds)},
+                    headers={"Retry-After": str(settings.rate_limit_auth_window_seconds), **_cors_headers(request)},
                 )
 
         # Global limit for all other endpoints
@@ -128,6 +145,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     "X-RateLimit-Remaining": "0",
                     "X-RateLimit-Reset": str(info["reset_in"]),
                     "Retry-After": str(info["reset_in"]),
+                    **_cors_headers(request),
                 },
             )
 
