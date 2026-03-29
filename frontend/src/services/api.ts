@@ -73,6 +73,19 @@ interface VerifyIdResponse {
   message: string;
 }
 
+/** Extract a readable message from a FastAPI error response.
+ *  detail can be a string ("Not found") or a validation array
+ *  ([{loc,msg,type}, ...]) — both must produce a human-readable string.
+ */
+function parseErrorDetail(detail: unknown, fallback = "An unexpected error occurred"): string {
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail) && detail.length > 0) {
+    const first = detail[0];
+    if (first && typeof first.msg === "string") return first.msg;
+  }
+  return fallback;
+}
+
 class ApiClient {
   private baseUrl: string;
   private getToken: (() => string | null) | null = null;
@@ -137,7 +150,7 @@ class ApiClient {
       const error: ApiError = await response.json().catch(() => ({
         detail: "An unexpected error occurred",
       }));
-      throw new Error(error.detail);
+      throw new Error(parseErrorDetail(error.detail));
     }
 
     if (response.status === 204) {
@@ -209,6 +222,12 @@ class ApiClient {
     });
 
     if (response.status === 401) {
+      if (!this.isRefreshing) {
+        const refreshed = await this._tryRefresh();
+        if (refreshed) {
+          return this.postFormData<T>(endpoint, formData);
+        }
+      }
       this.onUnauthorized?.();
       throw new Error("Unauthorized");
     }
@@ -217,7 +236,7 @@ class ApiClient {
       const error: ApiError = await response.json().catch(() => ({
         detail: "An unexpected error occurred",
       }));
-      throw new Error(error.detail);
+      throw new Error(parseErrorDetail(error.detail));
     }
 
     return response.json();
