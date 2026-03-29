@@ -36,7 +36,7 @@ import type {
   ResidenceParticipant,
 } from "@/types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.yorkpulse.com";
 const API_PREFIX = "/api/v1";
 
 interface ApiError {
