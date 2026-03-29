@@ -26,8 +26,8 @@ class Settings(BaseSettings):
     # JWT
     jwt_secret_key: str = "your-super-secret-key-change-in-production"
     jwt_algorithm: str = "HS256"
-    access_token_expire_minutes: int = 120  # 2 hours
-    refresh_token_expire_days: int = 7
+    access_token_expire_minutes: int = 1440  # 24 hours
+    refresh_token_expire_days: int = 30     # 1 month — reduces OTP email frequency
 
     # Supabase
     supabase_url: str = ""
@@ -68,11 +68,12 @@ class Settings(BaseSettings):
     vapid_contact_email: str = "yorkpulse.app@gmail.com"
 
     # Rate Limiting
-    rate_limit_requests: int = 12          # General endpoints: 12 req / 60s per IP
+    rate_limit_requests: int = 12              # General endpoints: 12 req / 60s per IP
     rate_limit_window_seconds: int = 60
-    rate_limit_auth_requests: int = 3      # Auth endpoints: 3 req / 60s per IP
+    rate_limit_auth_requests: int = 5          # Auth per-email: 5 req / 60s (brute-force guard)
+    rate_limit_auth_ip_requests: int = 30      # Auth per-IP: 30 req / 60s (campus shared IPs)
     rate_limit_auth_window_seconds: int = 60
-    rate_limit_whitelist_ips: str = ""     # Comma-separated IPs exempt from all rate limits
+    rate_limit_whitelist_ips: str = ""         # Comma-separated IPs exempt from all rate limits
 
 
 @lru_cache

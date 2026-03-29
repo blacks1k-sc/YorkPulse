@@ -79,8 +79,10 @@ if (typeof window !== "undefined") {
   Promise.resolve().then(() => {
     const finishHydration = () => {
       const state = useAuthStore.getState();
-      // Clear expired tokens immediately so the user sees the landing page
-      if (state.isAuthenticated && isTokenExpired(state.accessToken)) {
+      // Only hard-logout if access token is expired AND there is no refresh token
+      // to fall back on. If a refresh token exists, keep the session alive —
+      // the API client will silently refresh on the first 401.
+      if (state.isAuthenticated && isTokenExpired(state.accessToken) && !state.refreshToken) {
         state.logout();
       }
       state.setHydrated();
@@ -88,7 +90,7 @@ if (typeof window !== "undefined") {
 
     useAuthStore.persist.onFinishHydration(finishHydration);
 
-    // If already hydrated (e.g., no persisted state), set immediately
+    // If already hydrated (e.g., no persisted state), run immediately
     if (useAuthStore.persist.hasHydrated()) {
       finishHydration();
     }

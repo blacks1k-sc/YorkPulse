@@ -1,5 +1,6 @@
 """FastAPI middleware for rate limiting and other cross-cutting concerns."""
 
+import json
 import time
 import logging
 
@@ -66,6 +67,23 @@ def _parse_whitelist() -> set[str]:
     return {ip.strip() for ip in raw.split(",") if ip.strip()}
 
 
+async def _get_email_from_body(request: Request) -> str | None:
+    """
+    Extract email from a JSON request body for per-email rate limiting.
+    Starlette caches request.body() so downstream handlers can still read it.
+    Returns None if body is not JSON, missing email, or any error occurs.
+    """
+    try:
+        body = await request.body()
+        if body:
+            data = json.loads(body)
+            email = str(data.get("email", "")).lower().strip()
+            return email or None
+    except Exception:
+        pass
+    return None
+
+
 class TimingMiddleware(BaseHTTPMiddleware):
     """Log request timing and real client IP on every request."""
 
@@ -94,8 +112,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     """
     Three-tier rate limiting:
       1. Whitelisted IPs (admin/dev): no limit at all.
-      2. Auth endpoints: strict — settings.rate_limit_auth_requests / settings.rate_limit_auth_window_seconds per IP.
-      3. Everything else: relaxed — settings.rate_limit_requests / settings.rate_limit_window_seconds per IP.
+      2. Auth endpoints: dual check —
+           - Per-email: 5 req/60s (prevents brute-force on a single account)
+           - Per-IP:    30 req/60s (allows shared campus/dorm networks)
+      3. Everything else: 12 req/60s per IP.
     """
 
     def __init__(self, app):
@@ -114,12 +134,14 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if real_ip in self._whitelist:
             return await call_next(request)
 
-        # Strict limit on auth endpoints
+        # Dual-key limit on auth endpoints
         if path in AUTH_ENDPOINTS:
-            blocked = await self._check_auth_limit(real_ip, path)
+            email = await _get_email_from_body(request)
+            blocked, reason = await self._check_auth_limit(real_ip, path, email)
             if blocked:
                 logger.warning(
-                    "AUTH RATE LIMIT EXCEEDED: ip=%s path=%s", real_ip, path
+                    "AUTH RATE LIMIT EXCEEDED: ip=%s email=%s path=%s reason=%s",
+                    real_ip, email or "unknown", path, reason,
                 )
                 return Response(
                     content='{"detail": "Too many requests. Please wait before trying again."}',
@@ -155,31 +177,60 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         response.headers["X-RateLimit-Reset"] = str(info["reset_in"])
         return response
 
-    async def _check_auth_limit(self, ip: str, path: str) -> bool:
+    async def _check_auth_limit(self, ip: str, path: str, email: str | None) -> tuple[bool, str]:
         """
-        Returns True (blocked) if this IP has exceeded the auth rate limit.
-        Uses Redis; falls back to in-process sliding window if Redis is down.
+        Dual-key auth rate limiting.
+        Returns (blocked: bool, reason: str).
+
+        Per-email limit (rate_limit_auth_requests / window):
+          Prevents an attacker from brute-forcing a specific account.
+          Key is the email address — unaffected by shared IPs.
+
+        Per-IP limit (rate_limit_auth_ip_requests / window):
+          Broad cap to prevent mass account enumeration from one IP.
+          Set high enough (30/60s) that a campus WiFi full of students
+          logging in simultaneously never hits it.
         """
-        limit = settings.rate_limit_auth_requests
         window = settings.rate_limit_auth_window_seconds
-        key = f"auth_rate:{window}:{ip}"
+        email_limit = settings.rate_limit_auth_requests      # 5 per email
+        ip_limit = settings.rate_limit_auth_ip_requests      # 30 per IP
+
         try:
-            current = await redis_service.incr(key)
-            if current == 1:
-                await redis_service.expire(key, window)
-            if current > limit:
+            # --- Per-email check (only when email is present) ---
+            if email:
+                email_key = f"auth_rate:email:{window}:{email}"
+                email_count = await redis_service.incr(email_key)
+                if email_count == 1:
+                    await redis_service.expire(email_key, window)
+                if email_count > email_limit:
+                    logger.warning(
+                        "AUTH EMAIL FLOOD: email=%s count=%d path=%s", email, email_count, path
+                    )
+                    return True, "email"
+
+            # --- Per-IP check ---
+            ip_key = f"auth_rate:ip:{window}:{ip}"
+            ip_count = await redis_service.incr(ip_key)
+            if ip_count == 1:
+                await redis_service.expire(ip_key, window)
+            if ip_count > ip_limit:
                 logger.warning(
-                    "AUTH FLOOD DETECTED: ip=%s count=%d path=%s", ip, current, path,
+                    "AUTH IP FLOOD: ip=%s count=%d path=%s", ip, ip_count, path
                 )
-            return current > limit
+                return True, "ip"
+
+            return False, ""
+
         except Exception:
+            # In-process fallback when Redis is unavailable — IP-only sliding window
             now = time.time()
             window_start = now - window
             times = _ip_request_counts.get(ip, [])
             times = [t for t in times if t > window_start]
             times.append(now)
             _ip_request_counts[ip] = times
-            return len(times) > limit
+            blocked = len(times) > ip_limit
+            return blocked, "ip_fallback"
 
     def _get_identifier(self, request: Request, real_ip: str) -> str:
         user_id = getattr(request.state, "user_id", None)

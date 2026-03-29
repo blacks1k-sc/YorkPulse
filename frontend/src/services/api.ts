@@ -76,7 +76,10 @@ interface VerifyIdResponse {
 class ApiClient {
   private baseUrl: string;
   private getToken: (() => string | null) | null = null;
+  private getRefreshToken: (() => string | null) | null = null;
+  private onTokenRefreshed: ((accessToken: string, refreshToken: string) => void) | null = null;
   private onUnauthorized: (() => void) | null = null;
+  private isRefreshing = false;
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
@@ -86,13 +89,22 @@ class ApiClient {
     this.getToken = getter;
   }
 
+  setRefreshTokenGetter(getter: () => string | null) {
+    this.getRefreshToken = getter;
+  }
+
+  setTokenRefreshedHandler(handler: (accessToken: string, refreshToken: string) => void) {
+    this.onTokenRefreshed = handler;
+  }
+
   setUnauthorizedHandler(handler: () => void) {
     this.onUnauthorized = handler;
   }
 
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    isRetry = false
   ): Promise<T> {
     const headers: HeadersInit = {
       "Content-Type": "application/json",
@@ -110,6 +122,13 @@ class ApiClient {
     });
 
     if (response.status === 401) {
+      // Don't try to refresh if this is already a retry or a refresh request itself
+      if (!isRetry && !endpoint.includes("/auth/refresh") && !this.isRefreshing) {
+        const refreshed = await this._tryRefresh();
+        if (refreshed) {
+          return this.request<T>(endpoint, options, true);
+        }
+      }
       this.onUnauthorized?.();
       throw new Error("Unauthorized");
     }
@@ -126,6 +145,24 @@ class ApiClient {
     }
 
     return response.json();
+  }
+
+  private async _tryRefresh(): Promise<boolean> {
+    const refreshToken = this.getRefreshToken?.();
+    if (!refreshToken) return false;
+    this.isRefreshing = true;
+    try {
+      const data = await this.post<{ access_token: string; refresh_token: string }>(
+        "/auth/refresh",
+        { refresh_token: refreshToken }
+      );
+      this.onTokenRefreshed?.(data.access_token, data.refresh_token);
+      return true;
+    } catch {
+      return false;
+    } finally {
+      this.isRefreshing = false;
+    }
   }
 
   async get<T>(endpoint: string): Promise<T> {

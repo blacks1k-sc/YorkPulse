@@ -14,6 +14,10 @@ function AuthInitializer() {
   useEffect(() => {
     // Connect auth store to API client
     api.setTokenGetter(() => useAuthStore.getState().accessToken);
+    api.setRefreshTokenGetter(() => useAuthStore.getState().refreshToken);
+    api.setTokenRefreshedHandler((accessToken, refreshToken) => {
+      useAuthStore.getState().setTokens(accessToken, refreshToken);
+    });
     api.setUnauthorizedHandler(() => {
       useAuthStore.getState().logout();
     });
