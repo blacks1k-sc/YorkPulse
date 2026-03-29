@@ -68,8 +68,11 @@ class Settings(BaseSettings):
     vapid_contact_email: str = "yorkpulse.app@gmail.com"
 
     # Rate Limiting
-    rate_limit_requests: int = 100
+    rate_limit_requests: int = 12          # General endpoints: 12 req / 60s per IP
     rate_limit_window_seconds: int = 60
+    rate_limit_auth_requests: int = 3      # Auth endpoints: 3 req / 60s per IP
+    rate_limit_auth_window_seconds: int = 60
+    rate_limit_whitelist_ips: str = ""     # Comma-separated IPs exempt from all rate limits
 
 
 @lru_cache

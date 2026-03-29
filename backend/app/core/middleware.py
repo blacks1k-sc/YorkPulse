@@ -6,21 +6,22 @@ import logging
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from app.core.config import settings
 from app.services.redis import rate_limiter, redis_service
 
 logger = logging.getLogger(__name__)
 
-# Auth endpoints get a much stricter limit than the global one.
-# 10 requests per 10 minutes per IP — allows a real user to retry a few
-# times but makes a flood script hit the wall almost immediately.
-AUTH_RATE_LIMIT_REQUESTS = 5
-AUTH_RATE_LIMIT_WINDOW = 600   # 10 minutes
+# Auth endpoints get a much stricter per-IP limit.
 AUTH_ENDPOINTS = {
     "/api/v1/auth/login",
     "/api/v1/auth/signup",
     "/api/v1/auth/resend-otp",
     "/api/v1/auth/verify-otp",
+    "/api/v1/auth/admin-login",
 }
+
+# Health check is always exempt — ALB probes should never be rate-limited.
+EXEMPT_ENDPOINTS = {"/api/v1/health"}
 
 # In-process fallback for when Redis is unavailable
 _ip_request_counts: dict[str, list[float]] = {}
@@ -28,18 +29,24 @@ _ip_request_counts: dict[str, list[float]] = {}
 
 def _get_real_ip(request: Request) -> str:
     """
-    Extract the real client IP from X-Forwarded-For.
-    Render's load balancer PREPENDS the real client IP as the first entry.
-    Any entries after the first were set by the client or intermediate proxies
-    and cannot be trusted. Taking the first entry gives us the real public IP.
+    Extract the real client IP.
+    Priority: CF-Connecting-IP (Cloudflare) → X-Forwarded-For first entry → direct.
+    CF-Connecting-IP is the most trustworthy when behind Cloudflare.
+    X-Forwarded-For first entry is used when behind ALB only.
     """
+    cf_ip = request.headers.get("CF-Connecting-IP")
+    if cf_ip:
+        return cf_ip.strip()
     forwarded = request.headers.get("X-Forwarded-For")
     if forwarded:
-        # First entry = real client IP prepended by Render's LB
-        ip = forwarded.split(",")[0].strip()
-    else:
-        ip = request.client.host if request.client else "unknown"
-    return ip
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
+def _parse_whitelist() -> set[str]:
+    """Parse whitelisted IPs from config (comma-separated)."""
+    raw = settings.rate_limit_whitelist_ips
+    return {ip.strip() for ip in raw.split(",") if ip.strip()}
 
 
 class TimingMiddleware(BaseHTTPMiddleware):
@@ -68,14 +75,27 @@ class TimingMiddleware(BaseHTTPMiddleware):
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """
-    Two-tier rate limiting:
-      1. Auth endpoints: strict — 10 req / 10 min per real IP
-      2. Everything else: relaxed — 100 req / 60 sec per real IP or user ID
+    Three-tier rate limiting:
+      1. Whitelisted IPs (admin/dev): no limit at all.
+      2. Auth endpoints: strict — settings.rate_limit_auth_requests / settings.rate_limit_auth_window_seconds per IP.
+      3. Everything else: relaxed — settings.rate_limit_requests / settings.rate_limit_window_seconds per IP.
     """
+
+    def __init__(self, app):
+        super().__init__(app)
+        self._whitelist = _parse_whitelist()
 
     async def dispatch(self, request: Request, call_next) -> Response:
         real_ip = _get_real_ip(request)
         path = request.url.path
+
+        # Health checks always pass through
+        if path in EXEMPT_ENDPOINTS:
+            return await call_next(request)
+
+        # Whitelisted IPs bypass all rate limits
+        if real_ip in self._whitelist:
+            return await call_next(request)
 
         # Strict limit on auth endpoints
         if path in AUTH_ENDPOINTS:
@@ -85,13 +105,13 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     "AUTH RATE LIMIT EXCEEDED: ip=%s path=%s", real_ip, path
                 )
                 return Response(
-                    content='{"detail": "Too many requests. Please wait 10 minutes."}',
+                    content='{"detail": "Too many requests. Please wait before trying again."}',
                     status_code=429,
                     media_type="application/json",
-                    headers={"Retry-After": str(AUTH_RATE_LIMIT_WINDOW)},
+                    headers={"Retry-After": str(settings.rate_limit_auth_window_seconds)},
                 )
 
-        # Global limit for everything
+        # Global limit for all other endpoints
         identifier = self._get_identifier(request, real_ip)
         is_allowed, info = await rate_limiter.is_allowed(identifier, path)
 
@@ -119,30 +139,29 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
     async def _check_auth_limit(self, ip: str, path: str) -> bool:
         """
-        Returns True (blocked) if this IP has exceeded 10 requests
-        to auth endpoints in the last 10 minutes.
-        Uses Redis sliding window; falls back to in-process list.
+        Returns True (blocked) if this IP has exceeded the auth rate limit.
+        Uses Redis; falls back to in-process sliding window if Redis is down.
         """
-        key = f"auth_rate:{ip}"
+        limit = settings.rate_limit_auth_requests
+        window = settings.rate_limit_auth_window_seconds
+        key = f"auth_rate:{window}:{ip}"
         try:
             current = await redis_service.incr(key)
             if current == 1:
-                await redis_service.expire(key, AUTH_RATE_LIMIT_WINDOW)
-            if current > AUTH_RATE_LIMIT_REQUESTS:
+                await redis_service.expire(key, window)
+            if current > limit:
                 logger.warning(
-                    "AUTH FLOOD DETECTED: ip=%s count=%d path=%s",
-                    ip, current, path,
+                    "AUTH FLOOD DETECTED: ip=%s count=%d path=%s", ip, current, path,
                 )
-            return current > AUTH_RATE_LIMIT_REQUESTS
+            return current > limit
         except Exception:
-            # Redis unavailable — sliding window in process memory
             now = time.time()
-            window_start = now - AUTH_RATE_LIMIT_WINDOW
+            window_start = now - window
             times = _ip_request_counts.get(ip, [])
-            times = [t for t in times if t > window_start]  # prune old
+            times = [t for t in times if t > window_start]
             times.append(now)
             _ip_request_counts[ip] = times
-            return len(times) > AUTH_RATE_LIMIT_REQUESTS
+            return len(times) > limit
 
     def _get_identifier(self, request: Request, real_ip: str) -> str:
         user_id = getattr(request.state, "user_id", None)
