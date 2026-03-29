@@ -510,7 +510,7 @@ export function CreateModal() {
                           <button
                             type="button"
                             onClick={() => { setShowPhotoMenu(false); setIsCameraOpen(true); }}
-                            className="flex items-center gap-2 w-full px-4 py-3 text-sm text-white hover:bg-white/10 transition-colors"
+                            className="flex items-center gap-2 w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                           >
                             <Camera className="w-4 h-4" />
                             Take Photo
@@ -518,7 +518,7 @@ export function CreateModal() {
                           <button
                             type="button"
                             onClick={() => { setShowPhotoMenu(false); fileInputRef.current?.click(); }}
-                            className="flex items-center gap-2 w-full px-4 py-3 text-sm text-white hover:bg-white/10 transition-colors"
+                            className="flex items-center gap-2 w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                           >
                             <Upload className="w-4 h-4" />
                             Upload Photo
