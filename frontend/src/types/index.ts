@@ -455,3 +455,40 @@ export interface GigProfile {
   active_offerings: number;
   active_requests: number;
 }
+
+// Admin Persona types
+export interface PersonaUser {
+  id: string;
+  name: string;
+  email: string;
+  program: string | null;
+  bio: string | null;
+  avatar_url: string | null;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface PendingRequestItem {
+  participant_id: string;
+  quest_id: string;
+  quest_activity: string;
+  persona_id: string;
+  persona_name: string;
+  requester_id: string;
+  requester_name: string;
+  requester_avatar: string | null;
+  message: string | null;
+  requested_at: string;
+}
+
+export interface PersonaConversationItem {
+  conversation_id: string;
+  persona_id: string;
+  persona_name: string;
+  other_user_id: string;
+  other_user_name: string;
+  other_user_avatar: string | null;
+  last_message_content: string | null;
+  last_message_at: string | null;
+  status: string;
+}

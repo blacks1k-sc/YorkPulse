@@ -10,7 +10,7 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 from app.core.middleware import RateLimitMiddleware, TimingMiddleware
-from app.api.routes import auth, buddy, courses, dashboard, feedback, gigs, health, map, marketplace, messaging, push_notifications, reports, residences, reviews, transactions, vault
+from app.api.routes import admin_personas, auth, buddy, courses, dashboard, feedback, gigs, health, map, marketplace, messaging, push_notifications, reports, residences, reviews, transactions, vault
 from app.services.redis import redis_service
 from app.core.database import async_session_maker
 
@@ -116,6 +116,7 @@ app.include_router(gigs.router, prefix=settings.api_prefix)
 app.include_router(map.router, prefix=settings.api_prefix)
 app.include_router(residences.router, prefix=settings.api_prefix)
 app.include_router(push_notifications.router, prefix=settings.api_prefix)
+app.include_router(admin_personas.router, prefix=settings.api_prefix)
 
 
 @app.get("/")

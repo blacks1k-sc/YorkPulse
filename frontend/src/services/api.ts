@@ -1144,6 +1144,55 @@ class ApiClient {
     unsubscribe: (endpoint: string) =>
       this.post<void>("/push/unsubscribe", { endpoint }),
   };
+
+  // Admin persona endpoints
+  adminPersonas = {
+    listPersonas: () =>
+      this.get<import("@/types").PersonaUser[]>("/admin/personas"),
+
+    createPersona: (data: { name: string; program?: string; bio?: string }) =>
+      this.post<import("@/types").PersonaUser>("/admin/personas", data),
+
+    deactivatePersona: (id: string) =>
+      this.delete<void>(`/admin/personas/${id}`),
+
+    createPersonaQuest: (personaId: string, data: {
+      category: string;
+      activity: string;
+      description?: string;
+      start_time: string;
+      location: string;
+      vibe_level: string;
+      max_participants: number;
+      requires_approval: boolean;
+      custom_category?: string;
+      custom_vibe_level?: string;
+    }) =>
+      this.post<import("@/types").SideQuest>(`/admin/personas/${personaId}/quests`, data),
+
+    listPendingRequests: () =>
+      this.get<import("@/types").PendingRequestItem[]>("/admin/personas/quest-requests"),
+
+    decideJoinRequest: (questId: string, participantId: string, action: "accept" | "reject") =>
+      this.post<import("@/types").QuestParticipant>(
+        `/admin/quests/${questId}/participants/${participantId}/decide`,
+        { action }
+      ),
+
+    listPersonaConversations: () =>
+      this.get<import("@/types").PersonaConversationItem[]>("/admin/personas/conversations"),
+
+    getConversationMessages: (convId: string) =>
+      this.get<{ messages: import("@/types").Message[]; has_more: boolean }>(
+        `/messages/conversations/${convId}/messages`
+      ),
+
+    replyAsPersona: (convId: string, personaId: string, content: string) =>
+      this.post<import("@/types").Message>(
+        `/admin/conversations/${convId}/reply-as/${personaId}`,
+        { content }
+      ),
+  };
 }
 
 export const api = new ApiClient(API_URL);

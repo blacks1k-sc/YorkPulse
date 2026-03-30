@@ -65,6 +65,13 @@ class User(Base, UUIDMixin, TimestampMixin):
         nullable=False,
     )
 
+    # Persona flag — marks accounts controlled by admin for platform seeding
+    is_persona: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+    )
+
     # Profile (name is immutable after verification)
     name: Mapped[str] = mapped_column(
         String(100),
