@@ -8,11 +8,8 @@ import {
   Loader2,
   ImagePlus,
   X,
-  Camera,
-  Upload,
 } from "lucide-react";
 import { api } from "@/services/api";
-import { CameraModal } from "@/components/ui/camera-modal";
 import {
   Dialog,
   DialogContent,
@@ -79,8 +76,6 @@ export function CreateModal() {
   const [condition, setCondition] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
-  const [showPhotoMenu, setShowPhotoMenu] = useState(false);
-  const [isCameraOpen, setIsCameraOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Vault specific
@@ -107,8 +102,6 @@ export function CreateModal() {
     setPrice("");
     setCondition("");
     setImages([]);
-    setShowPhotoMenu(false);
-    setIsCameraOpen(false);
     setVaultImages([]);
   };
 
@@ -174,24 +167,7 @@ export function CreateModal() {
     setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleCameraCapture = async (file: File) => {
-    if (images.length >= 5) return;
-    setIsUploadingImage(true);
-    try {
-      const { public_url } = await api.marketplace.uploadImageDirect(file);
-      setImages((prev) => [...prev, public_url]);
-    } catch (error) {
-      toast({
-        title: "Upload failed",
-        description: error instanceof Error ? error.message : "Failed to upload image",
-        variant: "destructive",
-      });
-    } finally {
-      setIsUploadingImage(false);
-    }
-  };
-
-  const handleVaultImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+const handleVaultImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
@@ -454,11 +430,6 @@ export function CreateModal() {
               {/* Image Upload */}
               <div className="space-y-2">
                 <Label>Photos (up to 5)</Label>
-                <CameraModal
-                  open={isCameraOpen}
-                  onClose={() => setIsCameraOpen(false)}
-                  onCapture={handleCameraCapture}
-                />
                 <div className="flex flex-wrap gap-2">
                   {images.map((url, index) => (
                     <div
@@ -480,52 +451,26 @@ export function CreateModal() {
                     </div>
                   ))}
                   {images.length < 5 && (
-                    <div className="relative">
-                      <button
-                        type="button"
-                        onClick={() => setShowPhotoMenu((v) => !v)}
-                        disabled={isUploadingImage}
-                        className="w-20 h-20 rounded-lg border-2 border-dashed border-gray-200 hover:border-red-500/50 transition-colors flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-red-400"
-                      >
-                        {isUploadingImage ? (
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                        ) : (
-                          <>
-                            <ImagePlus className="w-5 h-5" />
-                            <span className="text-[10px]">Add</span>
-                          </>
-                        )}
-                      </button>
-                      {showPhotoMenu && (
-                        <div className="absolute top-full left-0 mt-2 w-40 rounded-xl bg-white border border-gray-100 shadow-xl overflow-hidden z-50">
-                          <button
-                            type="button"
-                            onClick={() => { setShowPhotoMenu(false); setIsCameraOpen(true); }}
-                            className="flex items-center gap-2 w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                          >
-                            <Camera className="w-4 h-4" />
-                            Take Photo
-                          </button>
-                          {/* Use <label> to trigger file picker — programmatic .click()
-                              is blocked on iOS Safari without a direct user gesture. */}
-                          <label
-                            className="flex items-center gap-2 w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
-                            onClick={() => setShowPhotoMenu(false)}
-                          >
-                            <Upload className="w-4 h-4" />
-                            Upload Photo
-                            <input
-                              ref={fileInputRef}
-                              type="file"
-                              accept="image/jpeg,image/png,image/webp"
-                              multiple
-                              className="hidden"
-                              onChange={handleImageUpload}
-                            />
-                          </label>
-                        </div>
+                    <label
+                      className={`w-20 h-20 rounded-lg border-2 border-dashed border-gray-200 hover:border-red-500/50 transition-colors flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-red-400 ${isUploadingImage ? "pointer-events-none" : "cursor-pointer"}`}
+                    >
+                      {isUploadingImage ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : (
+                        <>
+                          <ImagePlus className="w-5 h-5" />
+                          <span className="text-[10px]">Add</span>
+                        </>
                       )}
-                    </div>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        multiple
+                        className="hidden"
+                        onChange={handleImageUpload}
+                      />
+                    </label>
                   )}
                 </div>
               </div>
