@@ -386,11 +386,10 @@ export function CreateModal() {
                     </div>
                   ))}
                   {vaultImages.length < 10 && (
-                    <button
-                      type="button"
-                      onClick={() => vaultFileInputRef.current?.click()}
-                      disabled={isUploadingVaultImage}
-                      className="w-20 h-20 rounded-lg border-2 border-dashed border-white/20 hover:border-[#E31837]/50 transition-colors flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-[#E31837]"
+                    // Use <label> so tapping directly triggers the file picker —
+                    // programmatic .click() is blocked on iOS Safari.
+                    <label
+                      className={`w-20 h-20 rounded-lg border-2 border-dashed border-gray-200 hover:border-[#E31837]/50 transition-colors flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-[#E31837] ${isUploadingVaultImage ? "pointer-events-none" : "cursor-pointer"}`}
                     >
                       {isUploadingVaultImage ? (
                         <Loader2 className="w-5 h-5 animate-spin" />
@@ -400,7 +399,15 @@ export function CreateModal() {
                           <span className="text-[10px]">Add</span>
                         </>
                       )}
-                    </button>
+                      <input
+                        ref={vaultFileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        multiple
+                        className="hidden"
+                        onChange={handleVaultImageUpload}
+                      />
+                    </label>
                   )}
                 </div>
               </div>
@@ -455,14 +462,6 @@ export function CreateModal() {
               {/* Image Upload */}
               <div className="space-y-2">
                 <Label>Photos (up to 5)</Label>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  multiple
-                  className="hidden"
-                  onChange={handleImageUpload}
-                />
                 <CameraModal
                   open={isCameraOpen}
                   onClose={() => setIsCameraOpen(false)}
@@ -494,7 +493,7 @@ export function CreateModal() {
                         type="button"
                         onClick={() => setShowPhotoMenu((v) => !v)}
                         disabled={isUploadingImage}
-                        className="w-20 h-20 rounded-lg border-2 border-dashed border-white/20 hover:border-red-500/50 transition-colors flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-red-400"
+                        className="w-20 h-20 rounded-lg border-2 border-dashed border-gray-200 hover:border-red-500/50 transition-colors flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-red-400"
                       >
                         {isUploadingImage ? (
                           <Loader2 className="w-5 h-5 animate-spin" />
@@ -515,14 +514,23 @@ export function CreateModal() {
                             <Camera className="w-4 h-4" />
                             Take Photo
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => { setShowPhotoMenu(false); fileInputRef.current?.click(); }}
-                            className="flex items-center gap-2 w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                          {/* Use <label> to trigger file picker — programmatic .click()
+                              is blocked on iOS Safari without a direct user gesture. */}
+                          <label
+                            className="flex items-center gap-2 w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+                            onClick={() => setShowPhotoMenu(false)}
                           >
                             <Upload className="w-4 h-4" />
                             Upload Photo
-                          </button>
+                            <input
+                              ref={fileInputRef}
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp"
+                              multiple
+                              className="hidden"
+                              onChange={handleImageUpload}
+                            />
+                          </label>
                         </div>
                       )}
                     </div>
