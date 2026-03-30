@@ -217,7 +217,10 @@ jobs:
             --push \
             ./frontend
 
-      # Tell Azure Container Apps to pull the new :latest image.
+      # Tell Azure Container Apps to pull the new image by its exact SHA tag.
+      # Using :latest here would NOT trigger a new revision — Container Apps
+      # only creates a new revision when the image reference changes. The SHA
+      # tag is unique per build so each push gets a distinct revision.
       # Container Apps performs a rolling update — old replica stays up until
       # the new replica passes its health probe.
       - name: Update Azure Container App
@@ -225,7 +228,7 @@ jobs:
           az containerapp update \
             --name yorkpulse-frontend \
             --resource-group yorkpulse-prod \
-            --image yorkpulseacr.azurecr.io/yorkpulse-frontend:latest
+            --image yorkpulseacr.azurecr.io/yorkpulse-frontend:${{ github.sha }}
 
       # Hit the Container App URL to confirm the new frontend is serving.
       # --retry 5 --retry-delay 10 = up to 50s of retries to account for
