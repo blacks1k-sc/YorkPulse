@@ -332,7 +332,8 @@ function StatsOverlay({
   buildingsLoading: boolean;
 }) {
   const questsWithCoords = quests.filter(q => q.latitude && q.longitude);
-  const categoryCounts = questsWithCoords.reduce((acc, quest) => {
+  // Count all quests by category (not just mapped ones) for accurate sidebar numbers
+  const categoryCounts = quests.reduce((acc, quest) => {
     acc[quest.category] = (acc[quest.category] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
@@ -357,7 +358,7 @@ function StatsOverlay({
         <div className="mb-4">
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-bold text-[#E31837]">
-              {questsWithCoords.length}
+              {quests.length}
             </span>
             <span className="text-sm text-gray-500">active quests</span>
           </div>
