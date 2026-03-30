@@ -360,14 +360,6 @@ export function CreateModal() {
             <>
               <div className="space-y-2">
                 <Label>Photos (up to 10)</Label>
-                <input
-                  ref={vaultFileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  multiple
-                  className="hidden"
-                  onChange={handleVaultImageUpload}
-                />
                 <div className="flex flex-wrap gap-2">
                   {vaultImages.map((url, index) => (
                     <div key={index} className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-100">
@@ -505,7 +497,7 @@ export function CreateModal() {
                         )}
                       </button>
                       {showPhotoMenu && (
-                        <div className="absolute bottom-full left-0 mb-2 w-40 rounded-xl bg-white border border-gray-100 shadow-xl overflow-hidden z-50">
+                        <div className="absolute top-full left-0 mt-2 w-40 rounded-xl bg-white border border-gray-100 shadow-xl overflow-hidden z-50">
                           <button
                             type="button"
                             onClick={() => { setShowPhotoMenu(false); setIsCameraOpen(true); }}
