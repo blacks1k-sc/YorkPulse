@@ -74,6 +74,7 @@ class Settings(BaseSettings):
     rate_limit_auth_ip_requests: int = 30      # Auth per-IP: 30 req / 60s (campus shared IPs)
     rate_limit_auth_window_seconds: int = 60
     rate_limit_whitelist_ips: str = ""         # Comma-separated IPs exempt from all rate limits
+    blocked_ips: str = ""                      # Comma-separated IPs permanently blocked (403)
 
 
 @lru_cache

@@ -67,6 +67,12 @@ def _parse_whitelist() -> set[str]:
     return {ip.strip() for ip in raw.split(",") if ip.strip()}
 
 
+def _parse_blocklist() -> set[str]:
+    """Parse permanently blocked IPs from config (comma-separated)."""
+    raw = settings.blocked_ips
+    return {ip.strip() for ip in raw.split(",") if ip.strip()}
+
+
 async def _get_email_from_body(request: Request) -> str | None:
     """
     Extract email from a JSON request body for per-email rate limiting.
@@ -121,6 +127,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     def __init__(self, app):
         super().__init__(app)
         self._whitelist = _parse_whitelist()
+        self._blocklist = _parse_blocklist()
 
     async def dispatch(self, request: Request, call_next) -> Response:
         real_ip = _get_real_ip(request)
@@ -129,6 +136,16 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         # Health checks always pass through
         if path in EXEMPT_ENDPOINTS:
             return await call_next(request)
+
+        # Permanently blocked IPs — hard 403, no further processing
+        if real_ip in self._blocklist:
+            logger.warning("BLOCKED IP REQUEST: ip=%s path=%s", real_ip, path)
+            return Response(
+                content='{"detail": "Access denied."}',
+                status_code=403,
+                media_type="application/json",
+                headers=_cors_headers(request),
+            )
 
         # Whitelisted IPs bypass all rate limits
         if real_ip in self._whitelist:
