@@ -29,7 +29,6 @@ import { useAuthStore } from "@/stores/auth";
 import { useUser } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { LocationPickerWrapper } from "@/components/LocationPickerWrapper";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { QuestCategory, VibeLevel } from "@/types";
 
 const categories: { value: QuestCategory; label: string; icon: typeof Dumbbell; color: string }[] = [
@@ -66,8 +65,8 @@ export function CreateQuestModal() {
   const adminCreateMutation = useAdminCreateQuest();
   const { data: personas } = usePersonas(isAdmin);
 
-  // Admin: which identity to post as. null = post as self (admin account).
-  const [postAsPersonaId, setPostAsPersonaId] = useState<string | null>(null);
+  // Admin: display name override — matched against persona names at submit time.
+  const [postAsName, setPostAsName] = useState("");
 
   // Form state
   const [category, setCategory] = useState<QuestCategory>("gym");
@@ -104,7 +103,7 @@ export function CreateQuestModal() {
     setCustomVibeLevel("");
     setMaxParticipants(2);
     setRequiresApproval(true);
-    setPostAsPersonaId(null);
+    setPostAsName("");
   };
 
   const handleClose = () => {
@@ -189,18 +188,19 @@ export function CreateQuestModal() {
 
     try {
       if (isAdmin) {
-        await adminCreateMutation.mutateAsync({ personaId: postAsPersonaId, data: questData });
+        const matchedPersona = postAsName.trim()
+          ? personas?.find((p) => p.name.toLowerCase() === postAsName.trim().toLowerCase()) ?? null
+          : null;
+        await adminCreateMutation.mutateAsync({ personaId: matchedPersona?.id ?? null, data: questData });
       } else {
         await createMutation.mutateAsync(questData);
       }
 
-      const postedAs = postAsPersonaId
-        ? personas?.find((p) => p.id === postAsPersonaId)?.name ?? "persona"
-        : "you";
+      const postedAs = postAsName.trim() || null;
 
       toast({
         title: "Quest created!",
-        description: isAdmin && postAsPersonaId
+        description: isAdmin && postedAs
           ? `Posted as ${postedAs}`
           : "Your side quest has been posted",
       });
@@ -267,48 +267,21 @@ export function CreateQuestModal() {
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="p-4 space-y-6">
-              {/* Admin: Post as selector */}
+              {/* Admin: display name override */}
               {isAdmin && (
-                <div className="space-y-2 p-3 rounded-xl bg-amber-50 border border-amber-200">
-                  <Label className="flex items-center gap-1.5 text-amber-700 font-semibold text-xs uppercase tracking-wide">
-                    <Shield className="w-3.5 h-3.5" />
-                    Admin — Post as
+                <div className="space-y-1.5">
+                  <Label htmlFor="postAsName" className="flex items-center gap-1.5 text-xs text-amber-600 font-medium">
+                    <Shield className="w-3 h-3" />
+                    Display name (leave blank to post as yourself)
                   </Label>
-                  <Select
-                    value={postAsPersonaId ?? "self"}
-                    onValueChange={(v) => setPostAsPersonaId(v === "self" ? null : v)}
-                  >
-                    <SelectTrigger className="bg-white border-amber-200 focus:ring-amber-300">
-                      <SelectValue placeholder="Select poster…" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="self">
-                        <span className="font-medium">{user?.name ?? "Yourself"}</span>
-                        <span className="ml-1.5 text-xs text-gray-400">(admin account)</span>
-                      </SelectItem>
-                      {personas && personas.length > 0 && (
-                        <>
-                          <div className="px-2 py-1 text-[11px] text-gray-400 font-medium uppercase tracking-wide">
-                            Personas
-                          </div>
-                          {personas.map((p) => (
-                            <SelectItem key={p.id} value={p.id}>
-                              {p.name}
-                              {p.program && (
-                                <span className="ml-1.5 text-xs text-gray-400">{p.program}</span>
-                              )}
-                            </SelectItem>
-                          ))}
-                        </>
-                      )}
-                    </SelectContent>
-                  </Select>
-                  {postAsPersonaId && (
-                    <p className="text-xs text-amber-600">
-                      Quest will appear posted by{" "}
-                      <strong>{personas?.find((p) => p.id === postAsPersonaId)?.name}</strong>
-                    </p>
-                  )}
+                  <Input
+                    id="postAsName"
+                    placeholder="e.g. Alex M."
+                    value={postAsName}
+                    onChange={(e) => setPostAsName(e.target.value)}
+                    maxLength={60}
+                    className="border-amber-200 focus-visible:ring-amber-300"
+                  />
                 </div>
               )}
 
