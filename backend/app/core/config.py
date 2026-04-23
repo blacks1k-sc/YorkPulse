@@ -68,7 +68,7 @@ class Settings(BaseSettings):
     vapid_contact_email: str = "yorkpulse.app@gmail.com"
 
     # Rate Limiting
-    rate_limit_requests: int = 12              # General endpoints: 12 req / 60s per IP
+    rate_limit_requests: int = 30              # General endpoints: 30 req / 60s per IP
     rate_limit_window_seconds: int = 60
     rate_limit_auth_requests: int = 5          # Auth per-email: 5 req / 60s (brute-force guard)
     rate_limit_auth_ip_requests: int = 30      # Auth per-IP: 30 req / 60s (campus shared IPs)

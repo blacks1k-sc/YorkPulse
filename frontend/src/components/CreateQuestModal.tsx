@@ -15,6 +15,7 @@ import {
   Clock,
   Users,
   Zap,
+  Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,9 +24,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useUIStore } from "@/stores/ui";
-import { useCreateQuest } from "@/hooks/useQuests";
+import { useCreateQuest, useAdminCreateQuest, usePersonas } from "@/hooks/useQuests";
+import { useAuthStore } from "@/stores/auth";
 import { cn } from "@/lib/utils";
 import { LocationPickerWrapper } from "@/components/LocationPickerWrapper";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { QuestCategory, VibeLevel } from "@/types";
 
 const categories: { value: QuestCategory; label: string; icon: typeof Dumbbell; color: string }[] = [
@@ -54,7 +57,15 @@ const timeQuickOptions = [
 export function CreateQuestModal() {
   const { isCreateModalOpen, createModalType, closeCreateModal } = useUIStore();
   const { toast } = useToast();
+  const { user } = useAuthStore();
+  const isAdmin = user?.is_admin === true;
+
   const createMutation = useCreateQuest();
+  const adminCreateMutation = useAdminCreateQuest();
+  const { data: personas } = usePersonas(isAdmin);
+
+  // Admin: which identity to post as. null = post as self (admin account).
+  const [postAsPersonaId, setPostAsPersonaId] = useState<string | null>(null);
 
   // Form state
   const [category, setCategory] = useState<QuestCategory>("gym");
@@ -91,6 +102,7 @@ export function CreateQuestModal() {
     setCustomVibeLevel("");
     setMaxParticipants(2);
     setRequiresApproval(true);
+    setPostAsPersonaId(null);
   };
 
   const handleClose = () => {
@@ -157,26 +169,38 @@ export function CreateQuestModal() {
       return;
     }
 
+    const questData = {
+      category,
+      custom_category: category === "custom" ? customCategory : undefined,
+      activity: activity.trim(),
+      description: description.trim() || undefined,
+      start_time: startTime,
+      end_time: endTime || undefined,
+      location: locationData.name.trim(),
+      latitude: locationData.lat || undefined,
+      longitude: locationData.lng || undefined,
+      vibe_level: vibeLevel,
+      custom_vibe_level: vibeLevel === "custom" ? customVibeLevel : undefined,
+      max_participants: maxParticipants,
+      requires_approval: requiresApproval,
+    };
+
     try {
-      await createMutation.mutateAsync({
-        category,
-        custom_category: category === "custom" ? customCategory : undefined,
-        activity: activity.trim(),
-        description: description.trim() || undefined,
-        start_time: startTime,
-        end_time: endTime || undefined,
-        location: locationData.name.trim(),
-        latitude: locationData.lat || undefined,
-        longitude: locationData.lng || undefined,
-        vibe_level: vibeLevel,
-        custom_vibe_level: vibeLevel === "custom" ? customVibeLevel : undefined,
-        max_participants: maxParticipants,
-        requires_approval: requiresApproval,
-      });
+      if (isAdmin) {
+        await adminCreateMutation.mutateAsync({ personaId: postAsPersonaId, data: questData });
+      } else {
+        await createMutation.mutateAsync(questData);
+      }
+
+      const postedAs = postAsPersonaId
+        ? personas?.find((p) => p.id === postAsPersonaId)?.name ?? "persona"
+        : "you";
 
       toast({
         title: "Quest created!",
-        description: "Your side quest has been posted",
+        description: isAdmin && postAsPersonaId
+          ? `Posted as ${postedAs}`
+          : "Your side quest has been posted",
       });
 
       handleClose();
@@ -241,6 +265,51 @@ export function CreateQuestModal() {
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="p-4 space-y-6">
+              {/* Admin: Post as selector */}
+              {isAdmin && (
+                <div className="space-y-2 p-3 rounded-xl bg-amber-50 border border-amber-200">
+                  <Label className="flex items-center gap-1.5 text-amber-700 font-semibold text-xs uppercase tracking-wide">
+                    <Shield className="w-3.5 h-3.5" />
+                    Admin — Post as
+                  </Label>
+                  <Select
+                    value={postAsPersonaId ?? "self"}
+                    onValueChange={(v) => setPostAsPersonaId(v === "self" ? null : v)}
+                  >
+                    <SelectTrigger className="bg-white border-amber-200 focus:ring-amber-300">
+                      <SelectValue placeholder="Select poster…" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="self">
+                        <span className="font-medium">{user?.name ?? "Yourself"}</span>
+                        <span className="ml-1.5 text-xs text-gray-400">(admin account)</span>
+                      </SelectItem>
+                      {personas && personas.length > 0 && (
+                        <>
+                          <div className="px-2 py-1 text-[11px] text-gray-400 font-medium uppercase tracking-wide">
+                            Personas
+                          </div>
+                          {personas.map((p) => (
+                            <SelectItem key={p.id} value={p.id}>
+                              {p.name}
+                              {p.program && (
+                                <span className="ml-1.5 text-xs text-gray-400">{p.program}</span>
+                              )}
+                            </SelectItem>
+                          ))}
+                        </>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  {postAsPersonaId && (
+                    <p className="text-xs text-amber-600">
+                      Quest will appear posted by{" "}
+                      <strong>{personas?.find((p) => p.id === postAsPersonaId)?.name}</strong>
+                    </p>
+                  )}
+                </div>
+              )}
+
               {/* Category Pills */}
               <div className="space-y-2">
                 <Label>Category</Label>
@@ -487,10 +556,10 @@ export function CreateQuestModal() {
               {/* Submit Button */}
               <Button
                 type="submit"
-                disabled={createMutation.isPending}
+                disabled={createMutation.isPending || adminCreateMutation.isPending}
                 className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-semibold py-3"
               >
-                {createMutation.isPending ? (
+                {(createMutation.isPending || adminCreateMutation.isPending) ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Creating...

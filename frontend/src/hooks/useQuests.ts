@@ -233,6 +233,64 @@ export function useSendQuestMessage() {
   });
 }
 
+// Admin hooks
+
+export function usePersonas(enabled = true) {
+  return useQuery({
+    queryKey: ["admin", "personas"],
+    queryFn: () => api.personas.listPersonas(),
+    enabled,
+  });
+}
+
+export function useAdminCreateQuest() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      personaId,
+      data,
+    }: {
+      personaId: string | null;
+      data: {
+        category: QuestCategory;
+        custom_category?: string;
+        activity: string;
+        description?: string;
+        start_time: string;
+        end_time?: string;
+        location: string;
+        latitude?: number;
+        longitude?: number;
+        vibe_level?: VibeLevel;
+        custom_vibe_level?: string;
+        max_participants?: number;
+        requires_approval?: boolean;
+      };
+    }) => {
+      if (personaId) {
+        return api.personas.createPersonaQuest(personaId, {
+          category: data.category,
+          custom_category: data.custom_category,
+          activity: data.activity,
+          description: data.description,
+          start_time: data.start_time,
+          location: data.location,
+          vibe_level: data.vibe_level ?? "chill",
+          max_participants: data.max_participants ?? 2,
+          requires_approval: data.requires_approval ?? true,
+          custom_vibe_level: data.custom_vibe_level,
+        });
+      }
+      return api.quests.createQuest(data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["quests", "list"] });
+      queryClient.invalidateQueries({ queryKey: ["quests", "my-quests"] });
+    },
+  });
+}
+
 // Legacy exports for backwards compatibility
 export {
   useQuests as useBuddyRequests,
