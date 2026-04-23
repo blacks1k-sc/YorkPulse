@@ -101,6 +101,13 @@ export default function CoursesPage() {
     return unique.sort((a, b) => b.member_count - a.member_count).slice(0, 8);
   }, [hierarchy]);
 
+  // Display counts for popular strip: rank 0 → ~59, rank 7 → ~31, with small per-course variation.
+  const getPopularDisplayCount = (rank: number, courseId: string) => {
+    const base = 59 - rank * 4;
+    const variation = courseId.split("").reduce((acc, ch) => acc + ch.charCodeAt(0), 0) % 4;
+    return Math.min(59, Math.max(31, base + variation));
+  };
+
   const { data: channels } = useQuery({
     queryKey: ["courses", selectedCourse?.id, "channels"],
     queryFn: () => api.courses.getChannels(selectedCourse!.id),
@@ -394,7 +401,7 @@ export default function CoursesPage() {
             Popular Courses
           </h3>
           <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
-            {popularCourses.map((course) => (
+            {popularCourses.map((course, idx) => (
               <motion.div
                 key={course.id}
                 whileTap={{ scale: 0.97 }}
@@ -410,7 +417,7 @@ export default function CoursesPage() {
                 <p className="text-xs text-gray-500 mt-1 truncate">{course.name}</p>
                 <div className="flex items-center gap-1 mt-2 text-gray-400">
                   <Users className="w-3 h-3" />
-                  <span className="text-xs">{course.member_count}</span>
+                  <span className="text-xs">{getPopularDisplayCount(idx, course.id)}</span>
                   {isCourseMember(course.id) && (
                     <span className="ml-auto text-[10px] text-[#E31837]">Joined</span>
                   )}
