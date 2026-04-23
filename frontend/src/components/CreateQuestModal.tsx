@@ -29,7 +29,7 @@ import { useAuthStore } from "@/stores/auth";
 import { useUser } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { LocationPickerWrapper } from "@/components/LocationPickerWrapper";
-import type { QuestCategory, VibeLevel } from "@/types";
+import type { QuestCategory, VibeLevel, PersonaUser } from "@/types";
 
 const categories: { value: QuestCategory; label: string; icon: typeof Dumbbell; color: string }[] = [
   { value: "gym", label: "Gym", icon: Dumbbell, color: "bg-red-500/20 text-red-400 border-red-500/30" },
@@ -189,7 +189,7 @@ export function CreateQuestModal() {
     try {
       if (isAdmin) {
         const matchedPersona = postAsName.trim()
-          ? personas?.find((p) => p.name.toLowerCase() === postAsName.trim().toLowerCase()) ?? null
+          ? (personas as PersonaUser[] | undefined)?.find((p: PersonaUser) => p.name.toLowerCase() === postAsName.trim().toLowerCase()) ?? null
           : null;
         await adminCreateMutation.mutateAsync({ personaId: matchedPersona?.id ?? null, data: questData });
       } else {

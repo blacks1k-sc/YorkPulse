@@ -238,7 +238,7 @@ export function useSendQuestMessage() {
 export function usePersonas(enabled = true) {
   return useQuery({
     queryKey: ["admin", "personas"],
-    queryFn: () => api.personas.listPersonas(),
+    queryFn: () => api.adminPersonas.listPersonas(),
     enabled,
   });
 }
@@ -269,7 +269,7 @@ export function useAdminCreateQuest() {
       };
     }) => {
       if (personaId) {
-        return api.personas.createPersonaQuest(personaId, {
+        return api.adminPersonas.createPersonaQuest(personaId, {
           category: data.category,
           custom_category: data.custom_category,
           activity: data.activity,
