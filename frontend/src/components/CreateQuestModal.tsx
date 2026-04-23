@@ -26,6 +26,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useUIStore } from "@/stores/ui";
 import { useCreateQuest, useAdminCreateQuest, usePersonas } from "@/hooks/useQuests";
 import { useAuthStore } from "@/stores/auth";
+import { useUser } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { LocationPickerWrapper } from "@/components/LocationPickerWrapper";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -58,7 +59,8 @@ export function CreateQuestModal() {
   const { isCreateModalOpen, createModalType, closeCreateModal } = useUIStore();
   const { toast } = useToast();
   const { user } = useAuthStore();
-  const isAdmin = user?.is_admin === true;
+  const { data: freshUser } = useUser();
+  const isAdmin = (freshUser?.is_admin ?? user?.is_admin) === true;
 
   const createMutation = useCreateQuest();
   const adminCreateMutation = useAdminCreateQuest();
