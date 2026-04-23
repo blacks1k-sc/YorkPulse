@@ -25,6 +25,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useUIStore } from "@/stores/ui";
 import { useCreateQuest, useAdminCreateQuest, usePersonas } from "@/hooks/useQuests";
+import { api } from "@/services/api";
 import { useAuthStore } from "@/stores/auth";
 import { useUser } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
@@ -188,10 +189,20 @@ export function CreateQuestModal() {
 
     try {
       if (isAdmin) {
-        const matchedPersona = postAsName.trim()
-          ? (personas as PersonaUser[] | undefined)?.find((p: PersonaUser) => p.name.toLowerCase() === postAsName.trim().toLowerCase()) ?? null
-          : null;
-        await adminCreateMutation.mutateAsync({ personaId: matchedPersona?.id ?? null, data: questData });
+        let personaId: string | null = null;
+        if (postAsName.trim()) {
+          const existingPersona = (personas as PersonaUser[] | undefined)?.find(
+            (p: PersonaUser) => p.name.toLowerCase() === postAsName.trim().toLowerCase()
+          );
+          if (existingPersona) {
+            personaId = existingPersona.id;
+          } else {
+            // Create a new persona with the typed name on-the-fly
+            const newPersona = await api.adminPersonas.createPersona({ name: postAsName.trim() });
+            personaId = newPersona.id;
+          }
+        }
+        await adminCreateMutation.mutateAsync({ personaId, data: questData });
       } else {
         await createMutation.mutateAsync(questData);
       }
